@@ -84,9 +84,12 @@ export default function GameRoomPage() {
             setRoom(prev => prev ? { ...prev, status: 'playing' } : null);
         });
 
-        // Listen for game state updates
+        // Listen for game state updates (dice rolls, moves, turn changes)
         const unsubState = on('game:state', (data: unknown) => {
             const { state } = data as { state: LudoGameState };
+            console.log('Game state update:', state.turnPhase, 'currentPlayer:', state.currentPlayer, 'myIndex:', myPlayerIndex);
+            console.log('Movable tokens from backend:', state.movableTokens);
+
             setGameState(state);
             setRolling(false);
 
@@ -114,15 +117,27 @@ export default function GameRoomPage() {
             }
         });
 
+        // Listen for token move animations (optional - just log for now)
+        const unsubTokenMove = on('game:tokenMove', (data: unknown) => {
+            console.log('Token move animation data received:', data);
+            // Animation can be added later - state is already updated via game:state
+        });
+
         // Listen for winner
-        const unsubWinner = on('game:winner', () => {
-            // Game over handled in gameState
+        const unsubWinner = on('game:winner', (data: unknown) => {
+            const { winner } = data as { winner: { position: number; username: string } };
+            // Update room status
+            if (room) {
+                setRoom({ ...room, status: 'finished' });
+            }
         });
 
         // Listen for errors
         const unsubError = on('error', (data: unknown) => {
             const { message } = data as { message: string };
+            console.error('Socket error:', message);
             setError(message);
+            setRolling(false);
             setTimeout(() => setError(''), 3000);
         });
 
@@ -130,6 +145,7 @@ export default function GameRoomPage() {
             unsubRoom();
             unsubStart();
             unsubState();
+            unsubTokenMove();
             unsubWinner();
             unsubError();
         };
