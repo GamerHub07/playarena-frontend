@@ -42,31 +42,72 @@ export const HOME_TOKEN_POSITIONS = [
 
 // The 52-cell main track path coordinates (clockwise from RED start)
 // Each entry is [row, col] on the 15x15 grid
+// RED starts at 0, GREEN at 13, YELLOW at 26, BLUE at 39
 export const MAIN_TRACK: [number, number][] = [
-    // RED side going up (cells 0-5)
-    [6, 1], [6, 2], [6, 3], [6, 4], [6, 5],
-    // Turn up to GREEN
-    [5, 6], [4, 6], [3, 6], [2, 6], [1, 6], [0, 6],
-    // GREEN side going right (cells 11-12)
-    [0, 7], [0, 8],
-    // Turn down
-    [1, 8], [2, 8], [3, 8], [4, 8], [5, 8],
-    // GREEN side going down (cells 18-23)
-    [6, 9], [6, 10], [6, 11], [6, 12], [6, 13],
-    // Turn right to BLUE
-    [6, 14], [7, 14], [8, 14],
-    // BLUE side going left (cells 27-32)
-    [8, 13], [8, 12], [8, 11], [8, 10], [8, 9],
-    // Turn down
-    [9, 8], [10, 8], [11, 8], [12, 8], [13, 8], [14, 8],
-    // BLUE side going down (cells 39-40)
-    [14, 7], [14, 6],
-    // Turn up
-    [13, 6], [12, 6], [11, 6], [10, 6], [9, 6],
-    // YELLOW side going up (cells 47-51)
-    [8, 5], [8, 4], [8, 3], [8, 2], [8, 1], [8, 0],
-    // Back to RED start area
-    [7, 0],
+    // RED start (position 0) going right
+    [6, 1],   // 0 - RED START
+    [6, 2],   // 1
+    [6, 3],   // 2
+    [6, 4],   // 3
+    [6, 5],   // 4
+    // Turn up toward GREEN
+    [5, 6],   // 5
+    [4, 6],   // 6
+    [3, 6],   // 7
+    [2, 6],   // 8 - SAFE
+    [1, 6],   // 9
+    [0, 6],   // 10
+    // Turn right at top
+    [0, 7],   // 11
+    [0, 8],   // 12
+    // GREEN start (position 13) going down
+    [1, 8],   // 13 - GREEN START
+    [2, 8],   // 14
+    [3, 8],   // 15
+    [4, 8],   // 16
+    [5, 8],   // 17
+    // Turn right toward YELLOW
+    [6, 9],   // 18
+    [6, 10],  // 19
+    [6, 11],  // 20
+    [6, 12],  // 21 - SAFE
+    [6, 13],  // 22
+    [6, 14],  // 23
+    // Turn down at right side
+    [7, 14],  // 24
+    [8, 14],  // 25
+    // YELLOW start (position 26) going left
+    [8, 13],  // 26 - YELLOW START
+    [8, 12],  // 27
+    [8, 11],  // 28
+    [8, 10],  // 29
+    [8, 9],   // 30
+    // Turn down toward BLUE
+    [9, 8],   // 31
+    [10, 8],  // 32
+    [11, 8],  // 33
+    [12, 8],  // 34 - SAFE
+    [13, 8],  // 35
+    [14, 8],  // 36
+    // Turn left at bottom
+    [14, 7],  // 37
+    [14, 6],  // 38
+    // BLUE start (position 39) going up
+    [13, 6],  // 39 - BLUE START
+    [12, 6],  // 40
+    [11, 6],  // 41
+    [10, 6],  // 42
+    [9, 6],   // 43
+    // Turn left toward RED
+    [8, 5],   // 44
+    [8, 4],   // 45
+    [8, 3],   // 46
+    [8, 2],   // 47 - SAFE
+    [8, 1],   // 48
+    [8, 0],   // 49
+    // Turn up at left side
+    [7, 0],   // 50
+    [6, 0],   // 51 - completes the circuit back to RED home entry
 ];
 
 // Starting positions for each color on the main track

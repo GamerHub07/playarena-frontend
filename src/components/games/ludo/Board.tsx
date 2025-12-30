@@ -90,15 +90,42 @@ export default function Board({
                     <div className="grid grid-cols-2 gap-2 p-2 rounded-lg" style={{ backgroundColor: colorInfo.light }}>
                         {[0, 1, 2, 3].map(slotIdx => {
                             const tokenData = homeTokens.find(t => t.idx === slotIdx);
-                            const isSelectable = tokenData && isMyTurn && playerIndex === currentPlayerIndex && selectableTokens.includes(tokenData.idx);
+                            // Check if this specific token is in the selectable list
+                            const isSelectable = !!(
+                                tokenData &&
+                                isMyTurn &&
+                                playerIndex === currentPlayerIndex &&
+                                gameState.turnPhase === 'move' &&
+                                selectableTokens.includes(tokenData.idx)
+                            );
+
                             return (
-                                <div key={slotIdx} className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-white" style={{ boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}>
+                                <div
+                                    key={slotIdx}
+                                    className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-white"
+                                    style={{ boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}
+                                >
                                     {tokenData && (
-                                        <button
-                                            onClick={() => isSelectable && onTokenClick(tokenData.idx)}
-                                            disabled={!isSelectable}
-                                            className={`w-6 h-6 md:w-8 md:h-8 rounded-full border-2 border-white transition-all ${isSelectable ? 'animate-bounce cursor-pointer ring-2 ring-yellow-400' : ''}`}
-                                            style={{ backgroundColor: colorInfo.bg, boxShadow: isSelectable ? `0 0 10px ${colorInfo.bg}` : '0 2px 4px rgba(0,0,0,0.3)' }}
+                                        <div
+                                            onClick={() => {
+                                                if (isSelectable) {
+                                                    onTokenClick(tokenData.idx);
+                                                }
+                                            }}
+                                            className={`
+                                                w-6 h-6 md:w-8 md:h-8 rounded-full border-2 border-white 
+                                                transition-transform duration-150
+                                                ${isSelectable
+                                                    ? 'cursor-pointer ring-2 ring-yellow-400 hover:scale-110 shadow-lg'
+                                                    : 'cursor-default'
+                                                }
+                                            `}
+                                            style={{
+                                                backgroundColor: colorInfo.bg,
+                                                boxShadow: isSelectable
+                                                    ? `0 0 15px ${colorInfo.bg}`
+                                                    : '0 2px 4px rgba(0,0,0,0.3)',
+                                            }}
                                         />
                                     )}
                                 </div>
@@ -147,10 +174,28 @@ export default function Board({
                 {tokens.length > 0 && (
                     <div className="absolute inset-0 flex items-center justify-center z-10">
                         {tokens.length === 1 ? (
-                            <Token color={tokens[0].color} selectable={tokens[0].selectable} onClick={() => tokens[0].selectable && onTokenClick(tokens[0].tokenIndex)} />
+                            <Token
+                                color={tokens[0].color}
+                                selectable={tokens[0].selectable}
+                                onClick={() => {
+                                    console.log('Token clicked', tokens[0].tokenIndex);
+                                    tokens[0].selectable && onTokenClick(tokens[0].tokenIndex);
+                                }}
+                            />
                         ) : (
                             <div className="flex flex-wrap gap-0.5 justify-center">
-                                {tokens.map((t, i) => <Token key={i} color={t.color} selectable={t.selectable} onClick={() => t.selectable && onTokenClick(t.tokenIndex)} small />)}
+                                {tokens.map((t, i) => (
+                                    <Token
+                                        key={i}
+                                        color={t.color}
+                                        selectable={t.selectable}
+                                        onClick={() => {
+                                            console.log('Token clicked', t.tokenIndex);
+                                            t.selectable && onTokenClick(t.tokenIndex);
+                                        }}
+                                        small
+                                    />
+                                ))}
                             </div>
                         )}
                     </div>
@@ -221,12 +266,26 @@ export default function Board({
 function Token({ color, selectable, onClick, small = false }: { color: ColorKey; selectable: boolean; onClick: () => void; small?: boolean }) {
     const colorInfo = COLORS[color];
     const size = small ? 'w-4 h-4' : 'w-7 h-7';
+
     return (
-        <button
-            onClick={onClick}
-            disabled={!selectable}
-            className={`${size} rounded-full transition-all ${selectable ? 'cursor-pointer animate-bounce ring-2 ring-yellow-400 z-20' : ''}`}
-            style={{ backgroundColor: colorInfo.bg, border: '2px solid #ffffff', boxShadow: selectable ? `0 0 12px ${colorInfo.bg}` : '0 2px 4px rgba(0,0,0,0.3)' }}
+        <div
+            onClick={() => {
+                if (selectable) {
+                    onClick();
+                }
+            }}
+            className={`
+                ${size} rounded-full transition-transform duration-150
+                ${selectable
+                    ? 'cursor-pointer ring-2 ring-yellow-400 z-20 hover:scale-110'
+                    : 'cursor-default'
+                }
+            `}
+            style={{
+                backgroundColor: colorInfo.bg,
+                border: '2px solid #ffffff',
+                boxShadow: selectable ? `0 0 12px ${colorInfo.bg}` : '0 2px 4px rgba(0,0,0,0.3)',
+            }}
         />
     );
 }

@@ -21,6 +21,7 @@ export interface LudoGameState {
     canRollAgain: boolean;
     turnPhase: 'roll' | 'move' | 'wait';
     winner: number | null;
+    movableTokens?: number[]; // Tokens that can be moved after rolling
 }
 
 export const PLAYER_COLORS: Record<number, { name: PlayerColor; hex: string; bg: string }> = {
