@@ -79,6 +79,7 @@ export default function Board({
         const homeTokens = getHomeTokens(playerIndex);
         const player = players[playerIndex];
         const isCurrentTurn = playerIndex === gameState.currentPlayer;
+        // console.log('turnPhase in click:', gameState?.turnPhase);
 
         return (
             <div
@@ -100,11 +101,7 @@ export default function Board({
                             );
 
                             return (
-                                <div
-                                    key={slotIdx}
-                                    className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-white"
-                                    style={{ boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}
-                                >
+                                <div key={slotIdx} className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-white pointer-events-none" style={{ boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}>
                                     {tokenData && (
                                         <div
                                             onClick={() => {
@@ -116,7 +113,7 @@ export default function Board({
                                                 w-6 h-6 md:w-8 md:h-8 rounded-full border-2 border-white 
                                                 transition-transform duration-150
                                                 ${isSelectable
-                                                    ? 'cursor-pointer ring-2 ring-yellow-400 hover:scale-110 shadow-lg'
+                                                    ? 'cursor-pointer ring-2 ring-yellow-400 hover:scale-110 shadow-lg pointer-events-auto'
                                                     : 'cursor-default'
                                                 }
                                             `}
@@ -169,10 +166,10 @@ export default function Board({
 
         return (
             <div className="w-full h-full flex items-center justify-center relative rounded-sm" style={{ backgroundColor: bgColor, border: '1px solid #d0d0d0' }}>
-                {isSafe && !isStart && <span className="text-amber-500 text-sm font-bold absolute">★</span>}
-                {isStart && <span className="text-white text-sm font-bold absolute">→</span>}
+                {isSafe && !isStart && <span className="text-amber-500 text-sm font-bold absolute z-0 pointer-events-none">★</span>}
+                {isStart && <span className="text-white text-sm font-bold absolute z-0 pointer-events-none">→</span>}
                 {tokens.length > 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <div className="absolute inset-0 flex items-center justify-center z-20">
                         {tokens.length === 1 ? (
                             <Token
                                 color={tokens[0].color}
