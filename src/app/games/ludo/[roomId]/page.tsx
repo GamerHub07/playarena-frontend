@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import WaitingRoom from '@/components/games/ludo/WaitingRoom';
@@ -60,33 +60,28 @@ export default function GameRoomPage() {
         fetchRoom();
     }, [roomCode, guest, guestLoading, router]);
 
-    // Socket connection
+    // Keep players ref in sync for socket listeners to avoid dependency loop
+    const playersRef = useRef(players);
     useEffect(() => {
-        if (!guest || !isConnected || !room) return;
+        playersRef.current = players;
+    }, [players]);
 
-        // Join socket room
-        emit('room:join', {
-            roomCode,
-            sessionId: guest.sessionId,
-            username: guest.username,
-        });
+    // Socket listeners
+    useEffect(() => {
+        if (!guest || !isConnected) return;
 
         // Listen for room updates
         const unsubRoom = on('room:update', (data: unknown) => {
             const { players: updatedPlayers, status } = data as { players: Player[]; status: string };
             setPlayers(updatedPlayers);
-            if (room) {
-                setRoom({ ...room, status: status as Room['status'] });
-            }
+            setRoom(prev => prev ? { ...prev, status: status as Room['status'] } : null);
         });
 
         // Listen for game start
         const unsubStart = on('game:start', (data: unknown) => {
             const { state } = data as { state: LudoGameState };
             setGameState(state);
-            if (room) {
-                setRoom({ ...room, status: 'playing' });
-            }
+            setRoom(prev => prev ? { ...prev, status: 'playing' } : null);
         });
 
         // Listen for game state updates
@@ -95,10 +90,14 @@ export default function GameRoomPage() {
             setGameState(state);
             setRolling(false);
 
+            // Calculate my index using ref to avoid dependency loop
+            const currentPlayers = playersRef.current;
+            const myIdx = currentPlayers.findIndex(p => p.sessionId === guest.sessionId);
+
             // Check if it's my turn and I need to select a token
-            if (state.turnPhase === 'move' && state.currentPlayer === myPlayerIndex) {
+            if (state.turnPhase === 'move' && state.currentPlayer === myIdx) {
                 // Get movable tokens from state (simplified)
-                const playerState = state.players[myPlayerIndex];
+                const playerState = state.players[myIdx];
                 if (playerState && state.diceValue) {
                     const movable: number[] = [];
                     playerState.tokens.forEach((token, idx) => {
@@ -134,7 +133,24 @@ export default function GameRoomPage() {
             unsubWinner();
             unsubError();
         };
-    }, [guest, isConnected, room, emit, on, roomCode, myPlayerIndex]);
+    }, [guest, isConnected, on]); // Removed room/players/myPlayerIndex dependencies
+
+    // Socket join room - Separate effect to prevent loops
+    useEffect(() => {
+        if (!guest || !isConnected || loading) return;
+
+        console.log('Joining room:', roomCode);
+        emit('room:join', {
+            roomCode,
+            sessionId: guest.sessionId,
+            username: guest.username,
+        });
+
+        return () => {
+            console.log('Leaving room:', roomCode);
+            emit('room:leave', {});
+        };
+    }, [isConnected, guest, loading, roomCode, emit]); // Depend on stable props/flags only
 
     const handleStartGame = useCallback(() => {
         emit('game:start', { roomCode });
@@ -152,10 +168,10 @@ export default function GameRoomPage() {
     }, [emit, roomCode, gameState]);
 
     const handleTokenClick = useCallback((tokenIndex: number) => {
-        if (!gameState || gameState.turnPhase !== 'move') return;
+        console.log('tokenIndex', tokenIndex);
         emit('game:action', { roomCode, action: 'move', data: { tokenIndex } });
         setSelectableTokens([]);
-    }, [emit, roomCode, gameState]);
+    }, [emit, roomCode]);
 
     if (loading || guestLoading) {
         return (
