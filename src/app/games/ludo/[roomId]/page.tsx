@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import confetti from 'canvas-confetti';
 import Header from '@/components/layout/Header';
 import WaitingRoom from '@/components/games/ludo/WaitingRoom';
 import Board from '@/components/games/ludo/Board';
@@ -127,9 +128,7 @@ export default function GameRoomPage() {
         const unsubWinner = on('game:winner', (data: unknown) => {
             const { winner } = data as { winner: { position: number; username: string } };
             // Update room status
-            if (room) {
-                setRoom({ ...room, status: 'finished' });
-            }
+            setRoom(prev => prev ? { ...prev, status: 'finished' } : null);
         });
 
         // Listen for errors
@@ -150,6 +149,36 @@ export default function GameRoomPage() {
             unsubError();
         };
     }, [guest, isConnected, on]); // Removed room/players/myPlayerIndex dependencies
+
+    // Celebration effect
+    useEffect(() => {
+        // Trigger as soon as we have a winner in the game state
+        if (gameState?.winner !== null && gameState?.winner !== undefined) {
+            console.log('Triggering celebration effect for winner:', gameState.winner);
+            const duration = 15 * 1000;
+            const animationEnd = Date.now() + duration;
+            // High zIndex to ensure visibility over valid UI elements
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+            const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+            const interval: any = setInterval(function () {
+                const timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                const particleCount = 50 * (timeLeft / duration);
+
+                // since particles fall down, start a bit higher than random
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+                confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+            }, 250);
+
+            return () => clearInterval(interval);
+        }
+    }, [gameState?.winner]);
 
     // Socket join room - Separate effect to prevent loops
     useEffect(() => {
@@ -245,10 +274,44 @@ export default function GameRoomPage() {
                     />
                 )}
 
-                {/* Game Board */}
-                {isPlaying && gameState && guest && (
-                    <div className="w-full max-w-7xl mx-auto">
-                        <div className="flex flex-col lg:flex-row gap-6 items-start justify-center">
+                {/* Game Board (Visible during play and when finished) */}
+                {(isPlaying || isFinished) && gameState && guest && (
+                    <div className="w-full max-w-7xl mx-auto relative">
+                        {/* Game Over Overlay */}
+                        {isFinished && gameState.winner !== null && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px]">
+                                <div className="max-w-md w-full mx-4 text-center animate-in fade-in zoom-in duration-300">
+                                    <Card className="p-8 bg-[#1a1a1a] border-2 border-[#333] shadow-2xl">
+                                        <div className="text-6xl mb-4 animate-bounce">🏆</div>
+                                        <h2 className="text-3xl font-bold text-white mb-2">
+                                            {gameState.winner === myPlayerIndex ? 'You Won! 🎉' : 'Game Over!'}
+                                        </h2>
+                                        <p className="text-[#bbb] mb-8 text-lg">
+                                            {gameState.winner === myPlayerIndex ? (
+                                                <span>Congratulations on your victory!</span>
+                                            ) : (
+                                                <>
+                                                    <span
+                                                        className="font-semibold"
+                                                        style={{ color: PLAYER_COLORS[gameState.winner]?.hex }}
+                                                    >
+                                                        {players[gameState.winner]?.username}
+                                                    </span> wins!
+                                                </>
+                                            )}
+                                        </p>
+                                        <button
+                                            onClick={() => router.push('/games/ludo')}
+                                            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                                        >
+                                            Play Again
+                                        </button>
+                                    </Card>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className={`flex flex-col lg:flex-row gap-6 items-start justify-center transition-all ${isFinished ? 'brightness-50 pointer-events-none' : ''}`}>
                             {/* Left Panel - Controls */}
                             <div className="w-full lg:w-48 flex flex-col gap-4 order-2 lg:order-1">
                                 {/* This is handled inside Board now */}
@@ -288,7 +351,7 @@ export default function GameRoomPage() {
                                         <Dice
                                             value={gameState.diceValue || gameState.lastRoll}
                                             rolling={rolling}
-                                            canRoll={gameState.currentPlayer === myPlayerIndex && gameState.turnPhase === 'roll'}
+                                            canRoll={!isFinished && gameState.currentPlayer === myPlayerIndex && gameState.turnPhase === 'roll'}
                                             onRoll={handleRollDice}
                                             playerColor={PLAYER_COLORS[myPlayerIndex]?.name || 'red'}
                                         />
@@ -304,30 +367,6 @@ export default function GameRoomPage() {
                                 </Card>
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {/* Game Over */}
-                {isFinished && gameState && gameState.winner !== null && (
-                    <div className="max-w-md mx-auto text-center">
-                        <Card className="p-8">
-                            <div className="text-6xl mb-4">🏆</div>
-                            <h2 className="text-2xl font-bold text-white mb-2">Game Over!</h2>
-                            <p className="text-[#888] mb-6">
-                                <span
-                                    className="font-semibold"
-                                    style={{ color: PLAYER_COLORS[gameState.winner]?.hex }}
-                                >
-                                    {players[gameState.winner]?.username}
-                                </span> wins!
-                            </p>
-                            <button
-                                onClick={() => router.push('/games/ludo')}
-                                className="text-[#3b82f6] hover:underline"
-                            >
-                                Play Again
-                            </button>
-                        </Card>
                     </div>
                 )}
             </main>

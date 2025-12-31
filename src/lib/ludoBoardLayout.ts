@@ -28,8 +28,8 @@ export const PLAYER_COLOR_MAP: Record<number, ColorKey> = {
 export const HOME_BASES: Record<ColorKey, { startRow: number; startCol: number }> = {
     RED: { startRow: 0, startCol: 0 },
     GREEN: { startRow: 0, startCol: 9 },
-    YELLOW: { startRow: 9, startCol: 0 },
-    BLUE: { startRow: 9, startCol: 9 },
+    BLUE: { startRow: 9, startCol: 0 },
+    YELLOW: { startRow: 9, startCol: 9 },
 };
 
 // Token positions within home base (relative to home base start)
