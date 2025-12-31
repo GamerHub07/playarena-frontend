@@ -19,6 +19,8 @@ interface BoardProps {
     currentSessionId: string;
     onTokenClick: (tokenIndex: number) => void;
     selectableTokens: number[];
+    getAnimatedTokenPosition?: (playerIndex: number, tokenIndex: number) => { row: number; col: number } | null;
+    isAnimating?: boolean;
 }
 
 export default function Board({
@@ -27,6 +29,8 @@ export default function Board({
     currentSessionId,
     onTokenClick,
     selectableTokens,
+    getAnimatedTokenPosition,
+    isAnimating = false,
 }: BoardProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const currentPlayerIndex = players.findIndex(p => p.sessionId === currentSessionId);
@@ -50,7 +54,7 @@ export default function Board({
             .filter(({ token }) => token.zone === 'home');
     };
 
-    // Get tokens on board
+    // Get tokens on board - uses animated positions when available
     const getTokensAtPosition = (row: number, col: number) => {
         const tokens: Array<{ playerIndex: number; tokenIndex: number; color: ColorKey; selectable: boolean }> = [];
         Object.entries(gameState.players).forEach(([idx, playerState]) => {
@@ -59,13 +63,28 @@ export default function Board({
             if (!color) return;
             playerState.tokens.forEach((token, tokenIdx) => {
                 if (token.zone === 'home') return;
-                const pos = getTokenGridPosition(playerIndex, token.zone, token.index, tokenIdx);
+
+                // Check for animated position first
+                let pos: { row: number; col: number } | null = null;
+                if (getAnimatedTokenPosition) {
+                    const animPos = getAnimatedTokenPosition(playerIndex, tokenIdx);
+                    if (animPos) {
+                        pos = animPos;
+                    }
+                }
+
+                // Fall back to game state position
+                if (!pos) {
+                    pos = getTokenGridPosition(playerIndex, token.zone, token.index, tokenIdx);
+                }
+
                 if (pos && pos.row === row && pos.col === col) {
                     tokens.push({
                         playerIndex,
                         tokenIndex: tokenIdx,
                         color,
-                        selectable: isMyTurn && playerIndex === currentPlayerIndex && selectableTokens.includes(tokenIdx),
+                        // Disable selection during animation
+                        selectable: !isAnimating && isMyTurn && playerIndex === currentPlayerIndex && selectableTokens.includes(tokenIdx),
                     });
                 }
             });
