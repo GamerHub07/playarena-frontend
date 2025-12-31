@@ -201,16 +201,63 @@ export default function Board({
         );
     };
 
+    // Get finished tokens for a player
+    const getFinishedTokens = (playerIndex: number) => {
+        const playerState = gameState.players[playerIndex];
+        if (!playerState) return [];
+        return playerState.tokens
+            .map((token, idx) => ({ token, idx }))
+            .filter(({ token }) => token.zone === 'finish');
+    };
+
     // Center
-    const CenterArea = () => (
-        <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-0.5 p-1 bg-[#2a2a2a] rounded-lg">
-            <div /><div className="bg-[#43A047] rounded-sm" /><div />
-            <div className="bg-[#E53935] rounded-sm" />
-            <div className="bg-[#1a1a1a] rounded-full flex items-center justify-center"><span className="text-white text-base">🏠</span></div>
-            <div className="bg-[#FDD835] rounded-sm" />
-            <div /><div className="bg-[#1E88E5] rounded-sm" /><div />
-        </div>
-    );
+    const CenterArea = () => {
+        const renderFinished = (playerIndex: number) => {
+            const tokens = getFinishedTokens(playerIndex);
+            const color = PLAYER_COLOR_MAP[playerIndex];
+            if (!color || tokens.length === 0) return null;
+
+            return (
+                <div className="grid grid-cols-2 gap-0.5 justify-items-center items-center">
+                    {tokens.map((t, i) => (
+                        <Token
+                            key={i}
+                            color={color}
+                            selectable={false}
+                            onClick={() => { }}
+                            small
+                        />
+                    ))}
+                </div>
+            );
+        };
+
+        return (
+            <div className="w-full h-full grid grid-cols-3 grid-rows-3 gap-0.5 p-1 bg-[#2a2a2a] rounded-lg">
+                <div />
+                <div className="bg-[#43A047] rounded-sm flex items-center justify-center overflow-hidden relative">
+                    {renderFinished(1)}
+                </div>
+                <div />
+
+                <div className="bg-[#E53935] rounded-sm flex items-center justify-center overflow-hidden relative">
+                    {renderFinished(0)}
+                </div>
+                <div className="bg-[#1a1a1a] rounded-full flex items-center justify-center relative z-10 shadow-lg border-2 border-[#333]">
+                    <span className="text-white text-base">🏆</span>
+                </div>
+                <div className="bg-[#FDD835] rounded-sm flex items-center justify-center overflow-hidden relative">
+                    {renderFinished(2)}
+                </div>
+
+                <div />
+                <div className="bg-[#1E88E5] rounded-sm flex items-center justify-center overflow-hidden relative">
+                    {renderFinished(3)}
+                </div>
+                <div />
+            </div>
+        );
+    };
 
     return (
         <div className="flex flex-col items-center gap-4">
