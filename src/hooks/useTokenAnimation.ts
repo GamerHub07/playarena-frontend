@@ -17,6 +17,7 @@ export interface TokenMoveStep {
     stepNumber: number;
     totalSteps: number;
     captured?: boolean;
+    capturedTokens?: { playerIndex: number; tokenIndex: number }[];
 }
 
 /**
@@ -49,6 +50,7 @@ const ANIMATION_STEP_DELAY = 250; // ms between each step
  */
 export function useTokenAnimation(): UseTokenAnimationReturn {
     const [animatingTokens, setAnimatingTokens] = useState<Map<string, TokenAnimationState>>(new Map());
+    const [capturedOverrides, setCapturedOverrides] = useState<Map<string, { row: number; col: number }>>(new Map());
     const [isAnimating, setIsAnimating] = useState(false);
     const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -79,6 +81,21 @@ export function useTokenAnimation(): UseTokenAnimationReturn {
 
         setIsAnimating(true);
 
+        // Check for captures
+        const captureStep = steps.find(s => s.capturedTokens && s.capturedTokens.length > 0);
+        if (captureStep) {
+            // Determine where the capture happens (collision cell)
+            // It corresponds to the position of the step where capture happens
+            const collisionRow = captureStep.row;
+            const collisionCol = captureStep.col;
+
+            const overrides = new Map<string, { row: number; col: number }>();
+            captureStep.capturedTokens?.forEach(t => {
+                overrides.set(getTokenKey(t.playerIndex, t.tokenIndex), { row: collisionRow, col: collisionCol });
+            });
+            setCapturedOverrides(overrides);
+        }
+
         // Get starting position from first step
         const firstStep = steps[0];
         const tokenKey = getTokenKey(firstStep.playerIndex, firstStep.tokenIndex);
@@ -93,6 +110,7 @@ export function useTokenAnimation(): UseTokenAnimationReturn {
                     next.delete(tokenKey);
                     return next;
                 });
+                setCapturedOverrides(new Map()); // Clear overrides
                 setIsAnimating(false);
                 onComplete();
                 return;
@@ -130,14 +148,21 @@ export function useTokenAnimation(): UseTokenAnimationReturn {
      */
     const getTokenPosition = useCallback((playerIndex: number, tokenIndex: number): { row: number; col: number } | null => {
         const key = getTokenKey(playerIndex, tokenIndex);
-        const animState = animatingTokens.get(key);
 
+        // Priority 1: Animation state (moving token)
+        const animState = animatingTokens.get(key);
         if (animState && animState.isAnimating) {
             return { row: animState.currentRow, col: animState.currentCol };
         }
 
+        // Priority 2: Captured override (victim stuck at collision)
+        const override = capturedOverrides.get(key);
+        if (override) {
+            return override;
+        }
+
         return null;
-    }, [animatingTokens]);
+    }, [animatingTokens, capturedOverrides]);
 
     return {
         animatingTokens,
