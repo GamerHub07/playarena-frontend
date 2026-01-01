@@ -25,6 +25,15 @@ const GAMES: Game[] = [
         theme: 'bg-blue-500 text-white',
     },
     {
+        id: 'snakes',
+        title: 'Snakes & Ladders',
+        players: '2-4 Players',
+        image: '/games/s&l.png',
+        href: '/games/snake',
+        available: false,
+        theme: 'bg-green-500 text-white',
+    },
+    {
         id: 'chess',
         title: 'Chess',
         players: '2 Players',

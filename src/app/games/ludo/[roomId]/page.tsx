@@ -36,9 +36,6 @@ export default function GameRoomPage() {
     const [rolling, setRolling] = useState(false);
     const [selectableTokens, setSelectableTokens] = useState<number[]>([]);
 
-    // Ref to hold pending state that should be applied after animation
-    const pendingStateRef = useRef<LudoGameState | null>(null);
-
     const currentPlayer = players.find(p => p.sessionId === guest?.sessionId);
     const isHost = currentPlayer?.isHost || false;
     const myPlayerIndex = players.findIndex(p => p.sessionId === guest?.sessionId);
@@ -127,7 +124,7 @@ export default function GameRoomPage() {
             }
         });
 
-        // Listen for token move animations - animate step by step
+        // Listen for token move animations (optional - just log for now)
         const unsubTokenMove = on('game:tokenMove', (data: unknown) => {
             const { steps, finalState, captured } = data as { steps: TokenMoveStep[]; finalState: LudoGameState; captured?: boolean };
             console.log('Token move animation received:', steps.length, 'steps', captured ? '(CAPTURE!)' : '');
@@ -167,6 +164,8 @@ export default function GameRoomPage() {
                     }
                 }
             });
+            console.log('Token move animation data received:', data);
+            // Animation can be added later - state is already updated via game:state
         });
 
         // Listen for winner
@@ -373,8 +372,6 @@ export default function GameRoomPage() {
                                     currentSessionId={guest.sessionId}
                                     onTokenClick={handleTokenClick}
                                     selectableTokens={selectableTokens}
-                                    getAnimatedTokenPosition={getTokenPosition}
-                                    isAnimating={isAnimating}
                                 />
                             </div>
 
