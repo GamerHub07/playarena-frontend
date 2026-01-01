@@ -303,7 +303,7 @@ export default function Board({
                 <div
                     className="grid rounded-xl overflow-hidden bg-[#2a2a2a]"
                     style={{
-                        gridTemplateAreas: `"home-red path-top home-green" "path-left center path-right" "home-yellow path-bottom home-blue"`,
+                        gridTemplateAreas: `"home-red path-top home-green" "path-left center path-right" "home-blue path-bottom home-yellow"`,
                         gridTemplateColumns: '1fr 160px 1fr',
                         gridTemplateRows: '1fr 160px 1fr',
                         width: 'min(90vw, 600px)',
