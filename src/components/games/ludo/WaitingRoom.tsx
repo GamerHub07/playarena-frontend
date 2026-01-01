@@ -39,12 +39,12 @@ export default function WaitingRoom({
             <Card className="p-8">
                 {/* Room Code */}
                 <div className="text-center mb-8">
-                    <p className="text-sm text-[#888] mb-2">Room Code</p>
+                    <p className="text-sm text-[var(--text-muted)] mb-2">Room Code</p>
                     <button
                         onClick={copyCode}
                         className="group flex items-center justify-center gap-2 mx-auto cursor-pointer"
                     >
-                        <span className="text-4xl font-mono font-bold text-white tracking-widest">
+                        <span className="text-4xl font-mono font-bold text-[var(--dark)] tracking-widest">
                             {roomCode}
                         </span>
                         {copied ? (
@@ -53,7 +53,7 @@ export default function WaitingRoom({
                             </svg>
                         ) : (
                             <svg
-                                className="w-5 h-5 text-[#888] group-hover:text-[#3b82f6] transition-colors"
+                                className="w-5 h-5 text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -62,7 +62,7 @@ export default function WaitingRoom({
                             </svg>
                         )}
                     </button>
-                    <p className={`text-xs mt-2 transition-colors ${copied ? 'text-green-500 font-medium' : 'text-[#555]'}`}>
+                    <p className={`text-xs mt-2 transition-colors ${copied ? 'text-green-500 font-medium' : 'text-[var(--text-muted)]'}`}>
                         {copied ? 'Copied!' : 'Click to copy'}
                     </p>
                 </div>
@@ -70,8 +70,8 @@ export default function WaitingRoom({
                 {/* Players List */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-4">
-                        <p className="text-sm text-[#888]">Players</p>
-                        <p className="text-sm text-[#888]">{players.length}/{maxPlayers}</p>
+                        <p className="text-sm text-[var(--text-muted)]">Players</p>
+                        <p className="text-sm text-[var(--text-muted)]">{players.length}/{maxPlayers}</p>
                     </div>
 
                     <div className="space-y-3">
@@ -85,27 +85,27 @@ export default function WaitingRoom({
                                     className={`
                     flex items-center gap-3 p-4 rounded-lg border
                     ${player
-                                            ? 'bg-[#0f0f0f] border-[#2a2a2a]'
-                                            : 'bg-[#0f0f0f]/50 border-dashed border-[#2a2a2a]'
+                                            ? 'bg-[var(--surface-alt)] border-[var(--border)]'
+                                            : 'bg-[var(--surface-alt)]/50 border-dashed border-[var(--border)]'
                                         }
                   `}
                                 >
                                     <div
                                         className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                                        style={{ backgroundColor: player ? colorInfo.hex : '#2a2a2a' }}
+                                        style={{ backgroundColor: player ? colorInfo.hex : 'var(--border)' }}
                                     >
                                         {player ? player.username.charAt(0).toUpperCase() : '?'}
                                     </div>
                                     <div className="flex-1">
-                                        <p className={`font-medium ${player ? 'text-white' : 'text-[#555]'}`}>
+                                        <p className={`font-medium ${player ? 'text-[var(--dark)]' : 'text-[var(--text-muted)]'}`}>
                                             {player ? player.username : 'Waiting...'}
                                         </p>
                                         {player?.isHost && (
-                                            <span className="text-xs text-[#3b82f6]">Host</span>
+                                            <span className="text-xs text-[var(--primary)]">Host</span>
                                         )}
                                     </div>
                                     {player && (
-                                        <div className={`w-2 h-2 rounded-full ${player.isConnected ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+                                        <div className={`w-2 h-2 rounded-full ${player.isConnected ? 'bg-[var(--success)]' : 'bg-red-500'}`} />
                                     )}
                                 </div>
                             );
@@ -124,12 +124,12 @@ export default function WaitingRoom({
                             >
                                 {canStart ? 'Start Game' : `Need ${minPlayers - players.length} more player(s)`}
                             </Button>
-                            <p className="text-xs text-center text-[#555]">
+                            <p className="text-xs text-center text-[var(--text-muted)]">
                                 Share the room code with your friends
                             </p>
                         </>
                     ) : (
-                        <p className="text-center text-[#888]">
+                        <p className="text-center text-[var(--text-muted)]">
                             Waiting for host to start the game...
                         </p>
                     )}
