@@ -10,7 +10,6 @@ import Dice from '@/components/games/ludo/Dice';
 import Card from '@/components/ui/Card';
 import { useGuest } from '@/hooks/useGuest';
 import { useSocket } from '@/hooks/useSocket';
-import { useTokenAnimation, TokenMoveStep } from '@/hooks/useTokenAnimation';
 import { roomApi } from '@/lib/api';
 import { Room, Player } from '@/types/game';
 import { LudoGameState, PLAYER_COLORS } from '@/types/ludo';
@@ -22,7 +21,6 @@ export default function GameRoomPage() {
 
     const { guest, loading: guestLoading } = useGuest();
     const { isConnected, emit, on } = useSocket();
-    const { animateSteps, isAnimating, getTokenPosition } = useTokenAnimation();
 
     const [room, setRoom] = useState<Room | null>(null);
     const [gameState, setGameState] = useState<LudoGameState | null>(null);
@@ -31,9 +29,6 @@ export default function GameRoomPage() {
     const [error, setError] = useState('');
     const [rolling, setRolling] = useState(false);
     const [selectableTokens, setSelectableTokens] = useState<number[]>([]);
-
-    // Ref to hold pending state that should be applied after animation
-    const pendingStateRef = useRef<LudoGameState | null>(null);
 
     const currentPlayer = players.find(p => p.sessionId === guest?.sessionId);
     const isHost = currentPlayer?.isHost || false;
@@ -123,42 +118,10 @@ export default function GameRoomPage() {
             }
         });
 
-        // Listen for token move animations - animate step by step
+        // Listen for token move animations (optional - just log for now)
         const unsubTokenMove = on('game:tokenMove', (data: unknown) => {
-            const { steps, finalState } = data as { steps: TokenMoveStep[]; finalState: LudoGameState };
-            console.log('Token move animation received:', steps.length, 'steps');
-
-            // Store final state to apply after animation
-            pendingStateRef.current = finalState;
-
-            // Animate the steps
-            animateSteps(steps, () => {
-                // Animation complete - apply final state
-                if (pendingStateRef.current) {
-                    setGameState(pendingStateRef.current);
-                    pendingStateRef.current = null;
-
-                    // Update selectable tokens for next turn
-                    const currentPlayers = playersRef.current;
-                    const myIdx = currentPlayers.findIndex(p => p.sessionId === guest?.sessionId);
-                    if (finalState.turnPhase === 'move' && finalState.currentPlayer === myIdx) {
-                        const playerState = finalState.players[myIdx];
-                        if (playerState && finalState.diceValue) {
-                            const movable: number[] = [];
-                            playerState.tokens.forEach((token, idx) => {
-                                if (token.zone === 'home' && finalState.diceValue === 6) {
-                                    movable.push(idx);
-                                } else if (token.zone === 'path' || token.zone === 'safe') {
-                                    movable.push(idx);
-                                }
-                            });
-                            setSelectableTokens(movable);
-                        }
-                    } else {
-                        setSelectableTokens([]);
-                    }
-                }
-            });
+            console.log('Token move animation data received:', data);
+            // Animation can be added later - state is already updated via game:state
         });
 
         // Listen for winner
@@ -362,8 +325,6 @@ export default function GameRoomPage() {
                                     currentSessionId={guest.sessionId}
                                     onTokenClick={handleTokenClick}
                                     selectableTokens={selectableTokens}
-                                    getAnimatedTokenPosition={getTokenPosition}
-                                    isAnimating={isAnimating}
                                 />
                             </div>
 
