@@ -27,6 +27,7 @@ export default function GameRoomPage() {
     const { captureEffects, triggerCaptureEffect } = useGameEffects();
     const captureEffectRef = useRef(triggerCaptureEffect);
     captureEffectRef.current = triggerCaptureEffect;
+    const pendingStateRef = useRef<LudoGameState | null>(null);
 
     const [room, setRoom] = useState<Room | null>(null);
     const [gameState, setGameState] = useState<LudoGameState | null>(null);
