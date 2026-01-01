@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { LudoGameState } from '@/types/ludo';
 import { Player } from '@/types/game';
+import Token from '@/components/games/ludo/Token';
 import {
     COLORS,
     PLAYER_COLOR_MAP,
@@ -120,29 +121,15 @@ export default function Board({
                             );
 
                             return (
-                                <div key={slotIdx} className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-white pointer-events-none" style={{ boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}>
+                                <div key={slotIdx} className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center bg-white/90" style={{ boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)' }}>
                                     {tokenData && (
-                                        <div
-                                            onClick={() => {
-                                                if (isSelectable) {
-                                                    onTokenClick(tokenData.idx);
-                                                }
-                                            }}
-                                            className={`
-                                                w-6 h-6 md:w-8 md:h-8 rounded-full border-2 border-white 
-                                                transition-transform duration-150
-                                                ${isSelectable
-                                                    ? 'cursor-pointer ring-2 ring-yellow-400 hover:scale-110 shadow-lg pointer-events-auto'
-                                                    : 'cursor-default'
-                                                }
-                                            `}
-                                            style={{
-                                                backgroundColor: colorInfo.bg,
-                                                boxShadow: isSelectable
-                                                    ? `0 0 15px ${colorInfo.bg}`
-                                                    : '0 2px 4px rgba(0,0,0,0.3)',
-                                            }}
-                                        />
+                                        <div className="pointer-events-auto">
+                                            <Token
+                                                color={color}
+                                                selectable={isSelectable}
+                                                onClick={() => isSelectable && onTokenClick(tokenData.idx)}
+                                            />
+                                        </div>
                                     )}
                                 </div>
                             );
@@ -323,32 +310,5 @@ export default function Board({
                 </div>
             </div>
         </div>
-    );
-}
-
-function Token({ color, selectable, onClick, small = false }: { color: ColorKey; selectable: boolean; onClick: () => void; small?: boolean }) {
-    const colorInfo = COLORS[color];
-    const size = small ? 'w-4 h-4' : 'w-7 h-7';
-
-    return (
-        <div
-            onClick={() => {
-                if (selectable) {
-                    onClick();
-                }
-            }}
-            className={`
-                ${size} rounded-full transition-transform duration-150
-                ${selectable
-                    ? 'cursor-pointer ring-2 ring-yellow-400 z-20 hover:scale-110'
-                    : 'cursor-default'
-                }
-            `}
-            style={{
-                backgroundColor: colorInfo.bg,
-                border: '2px solid #ffffff',
-                boxShadow: selectable ? `0 0 12px ${colorInfo.bg}` : '0 2px 4px rgba(0,0,0,0.3)',
-            }}
-        />
     );
 }

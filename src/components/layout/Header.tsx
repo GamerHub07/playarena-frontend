@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useGuest } from '@/hooks/useGuest';
 import { useTheme } from '@/hooks/useTheme';
+import Logo from '@/components/ui/Logo';
 import { useState, useEffect } from 'react';
 
 export default function Header() {
@@ -35,13 +36,8 @@ export default function Header() {
         `}
             >
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2 group">
-                    <div className="w-10 h-10 bg-[var(--dark)] rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                        <span className="text-white font-bold text-xl">P</span>
-                    </div>
-                    <span className={`text-xl font-bold transition-colors ${scrolled ? 'text-[var(--dark)]' : 'text-[var(--dark)]'}`}>
-                        PlayArena
-                    </span>
+                <Link href="/" className="flex items-center">
+                    <Logo size="md" />
                 </Link>
 
                 {/* Right Side */}
@@ -59,12 +55,12 @@ export default function Header() {
                         aria-label="Toggle theme"
                     >
                         {theme === 'light' ? (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
                             </svg>
                         ) : (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.166a.75.75 0 00-1.06-1.06l-1.591 1.59a.75.75 0 101.06 1.061l1.591-1.59zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.834 18.894a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 10-1.061 1.06l1.59 1.591zM12 18a.75.75 0 01.75.75V21a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM7.758 17.303a.75.75 0 00-1.061-1.06l-1.591 1.59a.75.75 0 001.06 1.061l1.591-1.59zM6 12a.75.75 0 01-.75.75H3a.75.75 0 010-1.5h2.25A.75.75 0 016 12zM6.697 7.757a.75.75 0 001.06-1.06l-1.59-1.591a.75.75 0 00-1.061 1.06l1.59 1.591z" />
                             </svg>
                         )}
                     </button>
@@ -84,7 +80,7 @@ export default function Header() {
                             <button
                                 onClick={logout}
                                 className={`
-                  p-2.5 rounded-xl border hover:bg-red-50 hover:border-red-100 hover:text-red-500 transition-colors
+                  p-2.5 rounded-xl border hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 transition-colors
                   ${scrolled
                                         ? 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)]'
                                         : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] shadow-sm'
@@ -99,7 +95,7 @@ export default function Header() {
                     ) : (
                         <Link
                             href="/games/ludo"
-                            className="px-6 py-2.5 bg-[var(--primary)] text-white font-bold rounded-xl hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20"
+                            className="px-6 py-2.5 bg-[#FBBF24] text-gray-900 font-bold rounded-xl hover:scale-[1.03] hover:shadow-lg hover:shadow-amber-500/25 active:scale-[0.98] transition-all duration-200"
                         >
                             Play Now
                         </Link>
