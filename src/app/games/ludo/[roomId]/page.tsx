@@ -147,7 +147,8 @@ export default function GameRoomPage() {
             router.push('/games/ludo');
             return;
         }
-
+        // hel
+        //hbhjb
         const fetchRoom = async () => {
             try {
                 const res = await roomApi.get(roomCode);
