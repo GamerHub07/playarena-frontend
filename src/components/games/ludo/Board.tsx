@@ -48,6 +48,7 @@ export default function Board({
 
     // Get home tokens for a player
     const getHomeTokens = (playerIndex: number) => {
+        console.log('Getting home tokens for playerIndex:', playerIndex);
         const playerState = gameState.players[playerIndex];
         if (!playerState) return [];
         return playerState.tokens
