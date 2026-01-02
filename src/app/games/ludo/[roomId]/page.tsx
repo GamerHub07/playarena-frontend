@@ -12,7 +12,12 @@ import { useGuest } from '@/hooks/useGuest';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
 import { Room, Player } from '@/types/game';
-import { LudoGameState, PLAYER_COLORS } from '@/types/ludo';
+import { LudoGameState, PLAYER_COLORS, TokenPosition, PlayerState } from '@/types/ludo';
+import {
+    getTokenGridPosition,
+    START_POSITIONS,
+    PLAYER_COLOR_MAP
+} from '@/lib/ludoBoardLayout';
 
 export default function GameRoomPage() {
     const params = useParams();
@@ -29,6 +34,106 @@ export default function GameRoomPage() {
     const [error, setError] = useState('');
     const [rolling, setRolling] = useState(false);
     const [selectableTokens, setSelectableTokens] = useState<number[]>([]);
+
+    // Animation state
+    const [displayedPlayers, setDisplayedPlayers] = useState<Record<number, PlayerState> | null>(null);
+    const [animatingToken, setAnimatingToken] = useState<{
+        playerIndex: number;
+        tokenIndex: number;
+        path: { row: number; col: number }[];
+        currentStep: number;
+    } | null>(null);
+    // Refs for socket listeners to access latest state without re-binding
+    const displayedPlayersRef = useRef(displayedPlayers);
+    const animatingTokenRef = useRef(animatingToken);
+
+    useEffect(() => {
+        displayedPlayersRef.current = displayedPlayers;
+        animatingTokenRef.current = animatingToken;
+    }, [displayedPlayers, animatingToken]);
+
+    const animationRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Helper to calculate path between two positions
+    const computePath = (playerIndex: number, start: TokenPosition, end: TokenPosition): { row: number; col: number }[] => {
+        const path: { row: number; col: number }[] = [];
+        const color = PLAYER_COLOR_MAP[playerIndex];
+        if (!color) return [];
+
+        // 1. Home -> Path
+        if (start.zone === 'home' && (end.zone === 'path' || end.zone === 'safe')) {
+            // Skip adding the home start position to avoid delay
+            // The token will appear directly at the spawn point
+
+            // Initial spawn point
+            const trackIdx = START_POSITIONS[color];
+            const trackPos = getTokenGridPosition(playerIndex, 'path', trackIdx, 0);
+            if (trackPos) path.push(trackPos);
+
+            // If we are already at destination (just spawning), we are done with the "spawn" part
+            // But we might need to move further if the logic allows recursive moves (unlikely for spawn)
+            // Usually spawn puts you at START_POSITIONS.
+            if (end.zone === 'path' && end.index === trackIdx) return path;
+
+            // Continue from track start
+            start = { zone: 'path', index: trackIdx };
+        }
+
+        // 2. Path/Safe movement
+        // We simulate step by step
+        let currentZone = start.zone;
+        let currentIndex = start.index;
+
+        // Safety break
+        let steps = 0;
+        const maxSteps = 60;
+
+        // If we just spawned, we are already at path/START_POSITIONS.
+        // But we added that to path. 
+        // We shouldn't duplicate if the loop adds it again?
+        // Let's rely on the loop to add subsequent steps.
+
+        while (steps < maxSteps) {
+            if (currentZone === end.zone && currentIndex === end.index) break;
+
+            steps++;
+
+            // Logic to determine NEXT step
+            if (currentZone === 'path') {
+                // Check if we should enter safe zone
+                // Exit indices: Red 50->Safe, Green 11->Safe, Yellow 24->Safe, Blue 37->Safe
+                const exitIdx = (START_POSITIONS[color] - 2 + 52) % 52;
+
+                if (currentIndex === exitIdx && (end.zone === 'safe' || end.zone === 'finish')) {
+                    // Enter safe zone
+                    currentZone = 'safe';
+                    currentIndex = 0;
+                } else {
+                    // Move along path
+                    currentIndex = (currentIndex + 1) % 52;
+                }
+            } else if (currentZone === 'safe') {
+                if (currentIndex < 5) {
+                    currentIndex++;
+                }
+                if (currentIndex === 5) { // Reached end of safe
+                    if (end.zone === 'finish') {
+                        currentZone = 'finish';
+                        currentIndex = 0; // arbitrary
+                    }
+                }
+            } else if (currentZone === 'home') {
+                // Should have been handled above
+                break;
+            }
+
+            // Get grid pos for this new step
+            const pos = getTokenGridPosition(playerIndex, currentZone as any, currentIndex, 0);
+            if (pos) path.push(pos);
+        }
+
+        return path;
+    };
 
     const currentPlayer = players.find(p => p.sessionId === guest?.sessionId);
     const isHost = currentPlayer?.isHost || false;
@@ -94,24 +199,92 @@ export default function GameRoomPage() {
             setGameState(state);
             setRolling(false);
 
+            // Handle Animation Trigger
+            const currentDisplayed = displayedPlayersRef.current;
+
+            if (currentDisplayed) {
+                // Check if any token moved
+                let moveFound = false;
+                Object.entries(state.players).forEach(([pIdxStr, pState]) => {
+                    const pIdx = parseInt(pIdxStr);
+                    const oldPState = currentDisplayed[pIdx];
+                    if (!oldPState) return;
+
+                    pState.tokens.forEach((token, tIdx) => {
+                        const oldToken = oldPState.tokens[tIdx];
+
+                        const isCapture = (oldToken.zone !== 'home' && token.zone === 'home');
+                        const isMove = !isCapture && (oldToken.zone !== token.zone || oldToken.index !== token.index);
+
+                        if (isMove && !moveFound) {
+                            // Check if this token is already animating
+                            const currentAnim = animatingTokenRef.current;
+                            if (currentAnim && currentAnim.playerIndex === pIdx && currentAnim.tokenIndex === tIdx) {
+                                moveFound = true; // Already animating this, don't start another
+                                return;
+                            }
+
+                            moveFound = true;
+                            // Calculate path
+                            const path = computePath(pIdx, oldToken, token);
+                            if (path.length > 0) {
+                                console.log('Starting animation for', pIdx, tIdx, 'Path len:', path.length);
+                                setAnimatingToken({
+                                    playerIndex: pIdx,
+                                    tokenIndex: tIdx,
+                                    path,
+                                    currentStep: 0
+                                });
+                            }
+                        }
+                    });
+                });
+
+                if (!moveFound) {
+                    // No moves (or just continued animation), update immediately only if NOT animating?
+                    // If we are animating, we don't want to update displayedPlayers yet.
+                    if (!animatingTokenRef.current) {
+                        setDisplayedPlayers(state.players);
+                    }
+                }
+            } else {
+                // Initial load
+                setDisplayedPlayers(state.players);
+            }
+
             // Calculate my index using ref to avoid dependency loop
             const currentPlayers = playersRef.current;
             const myIdx = currentPlayers.findIndex(p => p.sessionId === guest.sessionId);
 
             // Check if it's my turn and I need to select a token
             if (state.turnPhase === 'move' && state.currentPlayer === myIdx) {
-                // Get movable tokens from state (simplified)
-                const playerState = state.players[myIdx];
-                if (playerState && state.diceValue) {
-                    const movable: number[] = [];
-                    playerState.tokens.forEach((token, idx) => {
-                        if (token.zone === 'home' && state.diceValue === 6) {
-                            movable.push(idx);
-                        } else if (token.zone === 'path' || token.zone === 'safe') {
-                            movable.push(idx);
-                        }
-                    });
-                    setSelectableTokens(movable);
+                // Get movable tokens from state using backend logic if available
+                if (state.movableTokens && state.movableTokens.length > 0) {
+                    setSelectableTokens(state.movableTokens);
+                } else {
+                    // Fallback to local calculation (mostly for initial state or robustness)
+                    // But now valid: Check if move is possible
+                    const playerState = state.players[myIdx];
+                    if (playerState && state.diceValue) {
+                        const movable: number[] = [];
+                        playerState.tokens.forEach((token, idx) => {
+                            // Basic fallback logic:
+                            if (token.zone === 'home' && state.diceValue === 6) {
+                                movable.push(idx);
+                            } else if (token.zone === 'path' || token.zone === 'safe') {
+                                // Improved check: if in safe zone, can we move?
+                                if (token.zone === 'safe') {
+                                    const remainingSteps = 5 - token.index;
+                                    if (state.diceValue! <= remainingSteps) {
+                                        movable.push(idx);
+                                    }
+                                } else {
+                                    movable.push(idx);
+                                }
+                            }
+                        });
+                        setSelectableTokens(movable);
+                    }
                 }
             } else {
                 setSelectableTokens([]);
@@ -149,6 +322,37 @@ export default function GameRoomPage() {
             unsubError();
         };
     }, [guest, isConnected, on]); // Removed room/players/myPlayerIndex dependencies
+
+    // Animation Loop
+    useEffect(() => {
+        if (!animatingToken || !gameState) return;
+
+        // Note: The render-phase derived state (effectivePlayers) handles the instantaneous visual sync
+        // at the last step. We still sync the actual state here when animation completes to be safe.
+        if (animatingToken.currentStep >= animatingToken.path.length - 1) {
+            setDisplayedPlayers(gameState.players);
+        }
+
+        const speedMs = 200; // Time per step
+
+        const timer = setInterval(() => {
+            setAnimatingToken(prev => {
+                if (!prev) return null;
+                const nextStep = prev.currentStep + 1;
+
+                if (nextStep >= prev.path.length) {
+                    // Animation complete
+                    clearInterval(timer);
+                    setDisplayedPlayers(gameState.players); // Sync visuals to real state
+                    return null;
+                }
+
+                return { ...prev, currentStep: nextStep };
+            });
+        }, speedMs);
+
+        return () => clearInterval(timer);
+    }, [animatingToken, gameState]);
 
     // Celebration effect
     useEffect(() => {
@@ -243,6 +447,14 @@ export default function GameRoomPage() {
     const isPlaying = room?.status === 'playing';
     const isFinished = room?.status === 'finished';
 
+    // Derived state: Use final game state immediately when animation reaches the last step
+    // This prevents a 1-frame overlap where both tokens are at the same cell
+    const effectivePlayers = (animatingToken && animatingToken.currentStep >= animatingToken.path.length - 1 && gameState)
+        ? gameState.players
+        : displayedPlayers;
+
+    const boardGameState = effectivePlayers && gameState ? { ...gameState, players: effectivePlayers } : gameState;
+
     return (
         <div className="min-h-screen bg-[#0f0f0f]">
             <Header />
@@ -320,11 +532,18 @@ export default function GameRoomPage() {
                             {/* Center - Board */}
                             <div className="order-1 lg:order-2 flex-shrink-0">
                                 <Board
-                                    gameState={gameState}
+                                    gameState={boardGameState!}
                                     players={players}
                                     currentSessionId={guest.sessionId}
                                     onTokenClick={handleTokenClick}
                                     selectableTokens={selectableTokens}
+                                    isAnimating={!!animatingToken}
+                                    getAnimatedTokenPosition={(pIdx, tIdx) => {
+                                        if (animatingToken && animatingToken.playerIndex === pIdx && animatingToken.tokenIndex === tIdx) {
+                                            return animatingToken.path[animatingToken.currentStep] || null;
+                                        }
+                                        return null;
+                                    }}
                                 />
                             </div>
 
