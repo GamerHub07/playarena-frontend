@@ -101,3 +101,21 @@ h4 {
 .shadow-card {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
 }
+
+@keyframes breathe {
+
+    0%,
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+
+    50% {
+        transform: scale(1.15);
+        filter: brightness(1.2);
+    }
+}
+
+.animate-breathe {
+    animation: breathe 1.5s ease-in-out infinite;
+}
