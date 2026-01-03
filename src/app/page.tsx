@@ -22,7 +22,7 @@ const GAMES: Game[] = [
         image: '/games/ludo.png',
         href: '/games/ludo',
         available: true,
-        theme: 'bg-blue-500 text-white',
+        theme: 'bg-[var(--primary)] text-gray-900',
     },
     {
         id: 'snakes',

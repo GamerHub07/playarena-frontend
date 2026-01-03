@@ -425,18 +425,18 @@ export default function GameRoomPage() {
 
     if (loading || guestLoading) {
         return (
-            <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-2 border-[#3b82f6] border-t-transparent rounded-full" />
+            <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full" />
             </div>
         );
     }
 
     if (error && !room) {
         return (
-            <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
                 <Card className="p-8 text-center">
                     <p className="text-red-500 mb-4">{error}</p>
-                    <button onClick={() => router.push('/games/ludo')} className="text-[#3b82f6]">
+                    <button onClick={() => router.push('/games/ludo')} className="text-[var(--primary)]">
                         Back to Ludo
                     </button>
                 </Card>
@@ -457,7 +457,7 @@ export default function GameRoomPage() {
     const boardGameState = effectivePlayers && gameState ? { ...gameState, players: effectivePlayers } : gameState;
 
     return (
-        <div className="min-h-screen bg-[#0f0f0f]">
+        <div className="min-h-screen bg-[var(--background)]">
             <Header />
 
             <main className="pt-24 pb-12 px-4">
@@ -469,8 +469,8 @@ export default function GameRoomPage() {
                 )}
 
                 {/* Connection Status */}
-                <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-[#888]">
-                    <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+                <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                    <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-[var(--success)]' : 'bg-red-500'}`} />
                     {isConnected ? 'Connected' : 'Connecting...'}
                 </div>
 
@@ -494,12 +494,12 @@ export default function GameRoomPage() {
                         {isFinished && gameState.winner !== null && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px]">
                                 <div className="max-w-md w-full mx-4 text-center animate-in fade-in zoom-in duration-300">
-                                    <Card className="p-8 bg-[#1a1a1a] border-2 border-[#333] shadow-2xl">
+                                    <Card className="p-8 bg-[var(--surface)] border-2 border-[var(--border)] shadow-2xl">
                                         <div className="text-6xl mb-4 animate-bounce">🏆</div>
-                                        <h2 className="text-3xl font-bold text-white mb-2">
+                                        <h2 className="text-3xl font-bold text-[var(--text)] mb-2">
                                             {gameState.winner === myPlayerIndex ? 'You Won! 🎉' : 'Game Over!'}
                                         </h2>
-                                        <p className="text-[#bbb] mb-8 text-lg">
+                                        <p className="text-[var(--text-muted)] mb-8 text-lg">
                                             {gameState.winner === myPlayerIndex ? (
                                                 <span>Congratulations on your victory!</span>
                                             ) : (
@@ -515,7 +515,7 @@ export default function GameRoomPage() {
                                         </p>
                                         <button
                                             onClick={() => router.push('/games/ludo')}
-                                            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                                            className="px-6 py-3 bg-[var(--primary)] hover:bg-[var(--secondary)] text-gray-900 rounded-lg font-semibold transition-colors"
                                         >
                                             Play Again
                                         </button>
@@ -551,11 +551,11 @@ export default function GameRoomPage() {
                             {/* Right Panel - Game Info */}
                             <div className="w-full lg:w-56 order-3">
                                 <Card className="p-5">
-                                    <h3 className="text-lg font-semibold text-white mb-4">Game Info</h3>
+                                    <h3 className="text-lg font-semibold text-[var(--text)] mb-4">Game Info</h3>
 
                                     {/* Current Player */}
                                     <div className="mb-6">
-                                        <p className="text-xs text-[#888] mb-2">Current Turn</p>
+                                        <p className="text-xs text-[var(--text-muted)] mb-2">Current Turn</p>
                                         <div
                                             className="px-3 py-2 rounded-lg text-white font-medium"
                                             style={{ backgroundColor: PLAYER_COLORS[gameState.currentPlayer]?.hex }}
@@ -567,7 +567,7 @@ export default function GameRoomPage() {
 
                                     {/* Dice */}
                                     <div className="mb-6">
-                                        <p className="text-xs text-[#888] mb-2">Dice</p>
+                                        <p className="text-xs text-[var(--text-muted)] mb-2">Dice</p>
                                         <Dice
                                             value={gameState.diceValue || gameState.lastRoll}
                                             rolling={rolling}
@@ -579,8 +579,8 @@ export default function GameRoomPage() {
 
                                     {/* Last Roll */}
                                     {gameState.lastRoll && (
-                                        <p className="text-sm text-[#888]">
-                                            Last roll: <span className="text-white font-bold">{gameState.lastRoll}</span>
+                                        <p className="text-sm text-[var(--text-muted)]">
+                                            Last roll: <span className="text-[var(--text)] font-bold">{gameState.lastRoll}</span>
                                             {gameState.lastRoll === 6 && ' 🎉'}
                                         </p>
                                     )}
@@ -588,8 +588,9 @@ export default function GameRoomPage() {
                             </div>
                         </div>
                     </div>
-                )}
-            </main>
-        </div>
+                )
+                }
+            </main >
+        </div >
     );
 }
