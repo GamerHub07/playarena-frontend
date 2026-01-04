@@ -17,6 +17,7 @@ import Dice from '@/components/games/monopoly/Dice';
 import PropertyCard from '@/components/games/monopoly/PropertyCard';
 import GameLogPanel, { GameLog } from '@/components/games/monopoly/GameLogPanel';
 import SellPropertyModal from '@/components/games/monopoly/SellPropertyModal';
+import BuildPanel from '@/components/games/monopoly/BuildPanel';
 
 export default function MonopolyGameRoom() {
     const params = useParams();
@@ -86,12 +87,12 @@ export default function MonopolyGameRoom() {
 
         const unsubState = on('game:state', (data: unknown) => {
             const { state } = data as { state: MonopolyGameState };
-            
+
             // Generate logs based on state changes
             if (prevStateRef.current && state) {
                 const prev = prevStateRef.current;
                 const newLogs: GameLog[] = [];
-                
+
                 // Check for dice roll
                 if (state.dice && (!prev.dice || state.dice[0] !== prev.dice[0] || state.dice[1] !== prev.dice[1])) {
                     const currentTurnPlayer = players[state.currentTurnIndex];
@@ -104,7 +105,7 @@ export default function MonopolyGameRoom() {
                         type: 'roll',
                     });
                 }
-                
+
                 // Check for card drawn - compare by ID to avoid duplicate logs
                 if (state.lastCard && (!prev.lastCard || state.lastCard.id !== prev.lastCard.id)) {
                     const currentTurnPlayer = players[state.currentTurnIndex];
@@ -115,7 +116,7 @@ export default function MonopolyGameRoom() {
                         type: 'card',
                     });
                 }
-                
+
                 // Check for property purchases
                 for (const square of state.board) {
                     const prevSquare = prev.board.find(s => s.id === square.id);
@@ -129,7 +130,7 @@ export default function MonopolyGameRoom() {
                         });
                     }
                 }
-                
+
                 // Check for jail
                 for (const [sessionId, playerState] of Object.entries(state.playerState)) {
                     const prevPlayer = prev.playerState[sessionId];
@@ -143,14 +144,14 @@ export default function MonopolyGameRoom() {
                         });
                     }
                 }
-                
+
                 // Check for rent paid (cash decreased for current player on owned property)
                 const currentTurnId = players[state.currentTurnIndex]?.sessionId;
                 if (currentTurnId && prev.playerState[currentTurnId] && state.playerState[currentTurnId]) {
                     const currentPlayerState = state.playerState[currentTurnId];
                     const prevPlayerState = prev.playerState[currentTurnId];
                     const cashDiff = prevPlayerState.cash - currentPlayerState.cash;
-                    
+
                     // If player lost money (not from buying), it's likely rent
                     if (cashDiff > 0 && state.phase !== 'DECISION') {
                         const landedSquare = state.board[currentPlayerState.position];
@@ -166,12 +167,12 @@ export default function MonopolyGameRoom() {
                         }
                     }
                 }
-                
+
                 if (newLogs.length > 0) {
                     setGameLogs(logs => [...logs, ...newLogs].slice(-50)); // Keep last 50 logs
                 }
             }
-            
+
             prevStateRef.current = state;
             setGameState(state);
             setRolling(false);
@@ -256,6 +257,14 @@ export default function MonopolyGameRoom() {
 
     const handleSellProperty = useCallback((propertyId: string) => {
         emit('game:action', { roomCode, action: 'SELL_PROPERTY', data: { propertyId } });
+    }, [emit, roomCode]);
+
+    const handleBuildHouse = useCallback((propertyId: string) => {
+        emit('game:action', { roomCode, action: 'BUILD_HOUSE', data: { propertyId } });
+    }, [emit, roomCode]);
+
+    const handleBuildHotel = useCallback((propertyId: string) => {
+        emit('game:action', { roomCode, action: 'BUILD_HOTEL', data: { propertyId } });
     }, [emit, roomCode]);
 
     // Get current turn player
@@ -429,7 +438,16 @@ export default function MonopolyGameRoom() {
                                         </Button>
                                     )}
                                 </Card>
-                                
+
+                                {/* Build Panel */}
+                                <BuildPanel
+                                    gameState={gameState}
+                                    mySessionId={guest.sessionId}
+                                    isMyTurn={isMyTurn()}
+                                    onBuildHouse={handleBuildHouse}
+                                    onBuildHotel={handleBuildHotel}
+                                />
+
                                 {/* Game Log */}
                                 <GameLogPanel logs={gameLogs} />
                             </div>
