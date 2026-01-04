@@ -49,7 +49,7 @@ export default function RootLayout({
       <head>
         <link rel="canonical" href="https://playarena.com" />
       </head>
-      <body className={`${inter.variable} ${spaceGrotesk.variable}`}>
+      <body className={`${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
         <Providers>
           {children}
           <Analytics />

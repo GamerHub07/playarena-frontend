@@ -43,12 +43,12 @@ const GAMES: Game[] = [
         theme: 'bg-gray-800 text-white',
     },
     {
-        id: 'carrom',
-        title: 'Carrom',
+        id: 'monopoly',
+        title: 'Monopoly',
         players: '2-4 Players',
         image: '/games/carrom.png',
-        href: '/games/carrom',
-        available: false,
+        href: '/games/monopoly',
+        available: true,
         theme: 'bg-amber-500 text-white',
     },
 ];
