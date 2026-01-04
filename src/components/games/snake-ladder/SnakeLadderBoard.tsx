@@ -122,7 +122,7 @@ export default function SnakeLadderBoard({
                     })}
                 </div>
 
-                {/* SVG Layer for Snakes & Ladders */}
+                {/* SVG Layer for Snakes & Laddders */}
                 <svg
                     className="absolute inset-0 pointer-events-none"
                     width={boardSize}
