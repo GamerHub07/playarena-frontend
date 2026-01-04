@@ -1,6 +1,7 @@
 'use client';
 
 import { PLAYER_COLORS, PlayerColor } from '@/types/ludo';
+import { useLudoTheme } from '@/contexts/LudoThemeContext';
 
 interface DiceProps {
     value: number | null;
@@ -21,6 +22,8 @@ const DOT_POSITIONS: Record<number, [number, number][]> = {
 };
 
 export default function Dice({ value, rolling, canRoll, onRoll, playerColor }: DiceProps) {
+    const { theme } = useLudoTheme();
+
     const colorInfo = PLAYER_COLORS[Object.keys(PLAYER_COLORS).find(
         k => PLAYER_COLORS[parseInt(k)].name === playerColor
     ) as unknown as number] || PLAYER_COLORS[0];
@@ -35,25 +38,65 @@ export default function Dice({ value, rolling, canRoll, onRoll, playerColor }: D
                 onClick={onRoll}
                 disabled={!canRoll || rolling}
                 className={`
-          relative w-24 h-24 bg-white rounded-2xl shadow-xl
+          relative w-24 h-24 rounded-xl
           transition-all duration-300 transform
           ${rolling ? 'animate-spin' : ''}
-          ${canRoll && !rolling ? 'hover:scale-110 hover:rotate-12 cursor-pointer' : 'opacity-60 cursor-not-allowed'}
+          ${canRoll && !rolling ? 'hover:scale-110 hover:rotate-12 cursor-pointer' : 'opacity-70 cursor-not-allowed'}
         `}
                 style={{
+                    background: theme.dice.background,
                     boxShadow: canRoll
-                        ? `0 8px 30px ${colorInfo.hex}60, 0 4px 10px rgba(0,0,0,0.2)`
-                        : '0 4px 10px rgba(0,0,0,0.2)',
-                    background: 'linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%)',
+                        ? `0 8px 20px ${theme.dice.shadowColor}, 
+                           0 4px 8px rgba(0,0,0,0.3),
+                           inset 0 2px 4px rgba(255,255,255,0.5),
+                           inset 0 -2px 4px rgba(0,0,0,0.2),
+                           0 0 20px ${colorInfo.hex}40`
+                        : `0 4px 8px rgba(0,0,0,0.2),
+                           inset 0 2px 4px rgba(255,255,255,0.3)`,
+                    border: `3px solid ${theme.dice.borderColor}`,
+                    borderRadius: '12px',
                 }}
             >
-                {/* 3D Edge Effect */}
+                {/* Texture overlay for themed dice */}
+                {theme.effects.useWoodTexture && (
+                    <div
+                        className="absolute inset-0 rounded-xl opacity-10 pointer-events-none"
+                        style={{
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30c20-5 30 5 60-5' stroke='%23000' stroke-opacity='0.2' fill='none'/%3E%3Cpath d='M0 15c15-3 30 6 60 0' stroke='%23000' stroke-opacity='0.15' fill='none'/%3E%3Cpath d='M0 45c25 5 35-8 60 3' stroke='%23000' stroke-opacity='0.18' fill='none'/%3E%3C/svg%3E")`,
+                            backgroundSize: '60px 60px',
+                        }}
+                    />
+                )}
+
+                {/* Edge bevel effect */}
                 <div
-                    className="absolute inset-0 rounded-2xl"
+                    className="absolute inset-0 rounded-xl"
                     style={{
-                        boxShadow: 'inset 2px 2px 6px rgba(255,255,255,0.8), inset -2px -2px 6px rgba(0,0,0,0.1)',
+                        boxShadow: 'inset 3px 3px 6px rgba(255,255,255,0.4), inset -3px -3px 6px rgba(0, 0, 0, 0.2)',
                     }}
                 />
+
+                {/* Decorative corner dots for vintage themes */}
+                {theme.effects.useGoldAccents && (
+                    <>
+                        <div
+                            className="absolute top-1.5 left-1.5 w-1.5 h-1.5 rounded-full opacity-30"
+                            style={{ backgroundColor: theme.ui.accentColor }}
+                        />
+                        <div
+                            className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full opacity-30"
+                            style={{ backgroundColor: theme.ui.accentColor }}
+                        />
+                        <div
+                            className="absolute bottom-1.5 left-1.5 w-1.5 h-1.5 rounded-full opacity-30"
+                            style={{ backgroundColor: theme.ui.accentColor }}
+                        />
+                        <div
+                            className="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 rounded-full opacity-30"
+                            style={{ backgroundColor: theme.ui.accentColor }}
+                        />
+                    </>
+                )}
 
                 {/* Dots Grid */}
                 <div className="absolute inset-4 grid grid-cols-3 grid-rows-3 gap-1">
@@ -67,9 +110,14 @@ export default function Dice({ value, rolling, canRoll, onRoll, playerColor }: D
                                 >
                                     {hasDot && (
                                         <div
-                                            className="w-4 h-4 rounded-full bg-[#1a1a1a] shadow-inner"
+                                            className="w-4 h-4 rounded-full"
                                             style={{
-                                                boxShadow: 'inset 1px 1px 2px rgba(0,0,0,0.5), 0 1px 1px rgba(255,255,255,0.3)',
+                                                background: `radial-gradient(circle at 30% 30%, ${theme.dice.dotColor} 0%, ${theme.dice.dotColor} 100%)`,
+                                                boxShadow: `
+                                                    inset 1px 1px 2px rgba(255,255,255,0.2),
+                                                    inset -1px -1px 2px rgba(0,0,0,0.3),
+                                                    0 1px 2px rgba(255,255,255,0.2)
+                                                `,
                                             }}
                                         />
                                     )}
@@ -84,9 +132,20 @@ export default function Dice({ value, rolling, canRoll, onRoll, playerColor }: D
             {canRoll && !rolling && (
                 <div
                     className="px-4 py-2 rounded-lg animate-pulse"
-                    style={{ backgroundColor: colorInfo.hex + '30' }}
+                    style={{
+                        backgroundColor: theme.ui.cardBackground,
+                        border: `2px solid ${theme.ui.accentColor}40`,
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                    }}
                 >
-                    <p className="text-sm font-medium" style={{ color: colorInfo.hex }}>
+                    <p
+                        className="text-sm font-medium"
+                        style={{
+                            color: theme.ui.textPrimary,
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                            fontFamily: theme.effects.fontFamily,
+                        }}
+                    >
                         🎲 Click to Roll!
                     </p>
                 </div>
@@ -94,8 +153,22 @@ export default function Dice({ value, rolling, canRoll, onRoll, playerColor }: D
 
             {/* Last Roll Display */}
             {value && !canRoll && (
-                <div className="text-white/60 text-sm">
-                    Rolled: <span className="font-bold text-white">{value}</span>
+                <div
+                    className="text-sm"
+                    style={{
+                        color: theme.ui.textSecondary,
+                        fontFamily: theme.effects.fontFamily,
+                    }}
+                >
+                    Rolled: <span
+                        className="font-bold"
+                        style={{
+                            color: theme.ui.accentColor,
+                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                        }}
+                    >
+                        {value}
+                    </span>
                 </div>
             )}
         </div>
