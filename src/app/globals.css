@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Define custom dark variant for class-based switching */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
     /* Warm Off-White Theme */
     --background: #FDFBF7;

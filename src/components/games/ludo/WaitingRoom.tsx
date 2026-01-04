@@ -79,21 +79,22 @@ export default function WaitingRoom({
                         >
                             {roomCode}
                         </span>
-                        {copied ? (
-                            <svg className="w-5 h-5" style={{ color: theme.playerColors.green.bg }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                        ) : (
-                            <svg
-                                className="w-5 h-5 transition-colors"
-                                style={{ color: theme.ui.textSecondary }}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                        )}
+                        {
+                            copied ? (
+                                <svg className="w-5 h-5" style={{ color: theme.playerColors.green.bg }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                            ) : (
+                                <svg
+                                    className="w-5 h-5 transition-colors"
+                                    style={{ color: theme.ui.textSecondary }}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                            )}
                     </button>
                     <p
                         className="text-xs mt-2 transition-colors"
@@ -111,7 +112,7 @@ export default function WaitingRoom({
                     <div className="flex items-center justify-between mb-4">
                         <p className="text-sm" style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}>Players</p>
                         <p className="text-sm" style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}>{players.length}/{maxPlayers}</p>
-                    </div>
+                    </div >
 
                     <div className="space-y-3">
                         {Array.from({ length: maxPlayers }).map((_, i) => {
@@ -153,67 +154,72 @@ export default function WaitingRoom({
                                         >
                                             {player ? player.username : 'Waiting...'}
                                         </p>
-                                        {player?.isHost && (
-                                            <span
-                                                className="text-xs"
-                                                style={{ color: theme.ui.accentColor, fontFamily: theme.effects.fontFamily }}
-                                            >
-                                                {theme.effects.useGoldAccents ? '★ Host' : '● Host'}
-                                            </span>
-                                        )}
-                                    </div>
+                                        {
+                                            player?.isHost && (
+                                                <span
+                                                    className="text-xs"
+                                                    style={{ color: theme.ui.accentColor, fontFamily: theme.effects.fontFamily }}
+                                                >
+                                                    {theme.effects.useGoldAccents ? '★ Host' : '● Host'}
+                                                </span>
+                                            )
+                                        }
+                                    </div >
                                     {player && (
                                         <div
                                             className="w-2 h-2 rounded-full"
                                             style={{ backgroundColor: player.isConnected ? theme.playerColors.green.bg : theme.playerColors.red.bg }}
                                         />
-                                    )}
-                                </div>
+                                    )
+                                    }
+                                </div >
                             );
                         })}
-                    </div>
-                </div>
+                    </div >
+                </div >
 
                 {/* Actions */}
-                <div className="space-y-3">
-                    {isHost ? (
-                        <>
-                            <button
-                                onClick={onStart}
-                                disabled={!canStart}
-                                className="w-full px-6 py-3 rounded-lg font-semibold transition-all"
-                                style={{
-                                    background: canStart
-                                        ? `linear-gradient(145deg, ${theme.ui.buttonGradientStart} 0%, ${theme.ui.buttonGradientEnd} 100%)`
-                                        : `linear-gradient(145deg, ${theme.ui.cardBackground} 0%, ${theme.ui.cardBackground} 100%)`,
-                                    color: canStart ? theme.ui.textPrimary : theme.ui.textMuted,
-                                    border: canStart ? `2px solid ${theme.ui.buttonBorder}` : `2px solid ${theme.ui.cardBorder}50`,
-                                    boxShadow: canStart ? '0 4px 12px rgba(0,0,0,0.3)' : 'none',
-                                    textShadow: canStart ? '1px 1px 2px rgba(0,0,0,0.4)' : 'none',
-                                    cursor: canStart ? 'pointer' : 'not-allowed',
-                                    opacity: canStart ? 1 : 0.7,
-                                    fontFamily: theme.effects.fontFamily,
-                                }}
-                            >
-                                {canStart
-                                    ? (theme.effects.useGoldAccents ? '✦ Start Game ✦' : '● Start Game ●')
-                                    : `Need ${minPlayers - players.length} more player(s)`}
-                            </button>
+                < div className="space-y-3" >
+                    {
+                        isHost ? (
+                            <>
+                                <button
+                                    onClick={onStart}
+                                    disabled={!canStart}
+                                    className="w-full px-6 py-3 rounded-lg font-semibold transition-all"
+                                    style={{
+                                        background: canStart
+                                            ? `linear-gradient(145deg, ${theme.ui.buttonGradientStart} 0%, ${theme.ui.buttonGradientEnd} 100%)`
+                                            : `linear-gradient(145deg, ${theme.ui.cardBackground} 0%, ${theme.ui.cardBackground} 100%)`,
+                                        color: canStart ? theme.ui.textPrimary : theme.ui.textMuted,
+                                        border: canStart ? `2px solid ${theme.ui.buttonBorder}` : `2px solid ${theme.ui.cardBorder}50`,
+                                        boxShadow: canStart ? '0 4px 12px rgba(0,0,0,0.3)' : 'none',
+                                        textShadow: canStart ? '1px 1px 2px rgba(0,0,0,0.4)' : 'none',
+                                        cursor: canStart ? 'pointer' : 'not-allowed',
+                                        opacity: canStart ? 1 : 0.7,
+                                        fontFamily: theme.effects.fontFamily,
+                                    }}
+                                >
+                                    {canStart
+                                        ? (theme.effects.useGoldAccents ? '✦ Start Game ✦' : '● Start Game ●')
+                                        : `Need ${minPlayers - players.length} more player(s)`}
+                                </button>
+                                <p
+                                    className="text-xs text-center"
+                                    style={{ color: theme.ui.textMuted, fontFamily: theme.effects.fontFamily }}
+                                >
+                                    Share the room code with your friends
+                                </p >
+                            </>
+                        ) : (
                             <p
-                                className="text-xs text-center"
-                                style={{ color: theme.ui.textMuted, fontFamily: theme.effects.fontFamily }}
+                                className="text-center"
+                                style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
                             >
-                                Share the room code with your friends
+
+                                Waiting for host to start the game...
                             </p>
-                        </>
-                    ) : (
-                        <p
-                            className="text-center"
-                            style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
-                        >
-                            Waiting for host to start the game...
-                        </p>
-                    )}
+                        )}
 
                     <button
                         onClick={onLeave}
@@ -227,15 +233,17 @@ export default function WaitingRoom({
                     >
                         Leave Room
                     </button>
-                </div>
+                </div >
 
                 {/* Decorative Footer */}
-                {theme.effects.useGoldAccents && (
-                    <div className="text-center mt-4">
-                        <span className="text-2xl" style={{ color: theme.ui.accentColor }}>❧ ✦ ❧</span>
-                    </div>
-                )}
-            </Card>
-        </div>
+                {
+                    theme.effects.useGoldAccents && (
+                        <div className="text-center mt-4">
+                            <span className="text-2xl" style={{ color: theme.ui.accentColor }}>❧ ✦ ❧</span>
+                        </div>
+                    )
+                }
+            </Card >
+        </div >
     );
 }
