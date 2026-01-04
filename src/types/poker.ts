@@ -1,23 +1,27 @@
 export type PokerPhase =
-  | 'preflop'
-  | 'flop'
-  | 'turn'
-  | 'river'
-  | 'showdown';
+  | "WAITING"
+  | "PREFLOP"
+  | "FLOP"
+  | "TURN"
+  | "RIVER"
+  | "SHOWDOWN"
+  | "ENDED";
 
 export interface PokerPlayerState {
+  sessionId: string;
+  username: string;
   chips: number;
   bet: number;
-  folded: boolean;
-  hand: string[];
+  status: "ACTIVE" | "FOLDED" | "ALL_IN";
+  hand?: string[]; // only sent to owning player
 }
 
-export interface PokerGameState {
+export interface PokerState {
   phase: PokerPhase;
-  pot: number;
   dealerIndex: number;
-  currentPlayer: number;
+  currentTurn: number | null; // 🔥 IMPORTANT
+  pot: number;
   communityCards: string[];
   players: PokerPlayerState[];
-  winner?: number;
+  winnerIndex?: number;
 }

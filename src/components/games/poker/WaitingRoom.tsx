@@ -1,9 +1,14 @@
 'use client';
 
 import Card from '@/components/ui/Card';
-import { Player } from '@/types/game';
 
-interface WaitingRoomProps {
+interface Player {
+  sessionId: string;
+  username: string;
+  isHost?: boolean;
+}
+
+interface PokerWaitingRoomProps {
   roomCode: string;
   players: Player[];
   isHost: boolean;
@@ -21,41 +26,60 @@ export default function WaitingRoom({
   maxPlayers,
   onStart,
   onLeave,
-}: WaitingRoomProps) {
+}: PokerWaitingRoomProps) {
   return (
-    <div className="pt-24 max-w-md mx-auto">
-      <Card className="p-6 text-center">
-        <h2 className="text-xl font-bold text-white mb-2">
-          Room Code: {roomCode}
-        </h2>
+    <div className="max-w-xl mx-auto">
+      <Card className="p-6">
+        <h2 className="text-2xl font-bold text-white mb-2">Poker Room</h2>
 
-        <p className="text-[#888] mb-4">
-          Players ({players.length}/{maxPlayers})
+        <p className="text-sm text-[#888] mb-4">
+          Room Code: <span className="font-mono text-white">{roomCode}</span>
         </p>
 
-        <ul className="mb-6">
-          {players.map(p => (
-            <li key={p.sessionId} className="text-white">
-              {p.username}
-            </li>
-          ))}
-        </ul>
+        <div className="mb-4">
+          <p className="text-xs text-[#888] mb-2">
+            Players ({players.length}/{maxPlayers})
+          </p>
 
-        {isHost && players.length >= minPlayers && (
+          <div className="space-y-2">
+            {players.map((p, idx) => (
+              <div
+                key={p.sessionId}
+                className="flex items-center justify-between px-3 py-2 rounded-lg bg-[#111] border border-[#222]"
+              >
+                <span className="text-white">
+                  {p.username}
+                  {p.isHost && ' 👑'}
+                </span>
+                <span className="text-xs text-[#888]">Seat {idx + 1}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          {isHost && players.length >= minPlayers && (
+            <button
+              onClick={onStart}
+              className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold"
+            >
+              Start Game
+            </button>
+          )}
+
           <button
-            onClick={onStart}
-            className="w-full mb-3 bg-blue-600 py-2 rounded"
+            onClick={onLeave}
+            className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold"
           >
-            Start Game
+            Leave Room
           </button>
-        )}
+        </div>
 
-        <button
-          onClick={onLeave}
-          className="w-full bg-gray-700 py-2 rounded"
-        >
-          Leave Room
-        </button>
+        {isHost && players.length < minPlayers && (
+          <p className="text-xs text-yellow-400 mt-3 text-center">
+            Waiting for more players to join…
+          </p>
+        )}
       </Card>
     </div>
   );

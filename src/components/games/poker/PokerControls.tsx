@@ -34,7 +34,7 @@ export default function PokerControls({ disabled, onAction }: Props) {
 
                     <Button
                         disabled={disabled}
-                        variant="danger"
+                        variant="ghost"
                         onClick={() => onAction('fold')}
                     >
                         Fold
