@@ -28,27 +28,27 @@ export default function GameCard({ title, description, players, status, href, ic
             className="p-6 relative overflow-hidden"
         >
             {status === 'coming-soon' && (
-                <div className="absolute top-4 right-4 px-2 py-1 bg-[#252525] rounded text-xs text-[#888]">
+                <div className="absolute top-4 right-4 px-2 py-1 bg-[var(--surface-alt)] rounded text-xs text-[var(--text-muted)]">
                     Coming Soon
                 </div>
             )}
 
             {/* Icon */}
-            <div className="w-14 h-14 bg-[#252525] rounded-xl flex items-center justify-center mb-4">
+            <div className="w-14 h-14 bg-[var(--surface-alt)] rounded-xl flex items-center justify-center mb-4">
                 {icon}
             </div>
 
             {/* Title */}
-            <h3 className="text-xl font-semibold text-white mb-2">{title}</h3>
+            <h3 className="text-xl font-semibold text-[var(--text)] mb-2">{title}</h3>
 
             {/* Description */}
-            <p className="text-[#888] text-sm mb-4 line-clamp-2">{description}</p>
+            <p className="text-[var(--text-muted)] text-sm mb-4 line-clamp-2">{description}</p>
 
             {/* Footer */}
-            <div className="flex items-center justify-between pt-4 border-t border-[#2a2a2a]">
-                <span className="text-sm text-[#888]">{players} Players</span>
+            <div className="flex items-center justify-between pt-4 border-t border-[var(--border)]">
+                <span className="text-sm text-[var(--text-muted)]">{players} Players</span>
                 {status === 'available' && (
-                    <span className="text-sm text-[#3b82f6] font-medium">Play Now →</span>
+                    <span className="text-sm text-[var(--primary)] font-medium">Play Now →</span>
                 )}
             </div>
         </Card>

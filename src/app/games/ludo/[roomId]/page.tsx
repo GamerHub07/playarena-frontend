@@ -451,7 +451,7 @@ export default function GameRoomPage() {
 
     if (loading || guestLoading) {
         return (
-            <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
                 <div className="animate-spin w-8 h-8 border-2 border-[#3b82f6] border-t-transparent rounded-full" />
             </div>
         );
@@ -459,7 +459,7 @@ export default function GameRoomPage() {
 
     if (error && !room) {
         return (
-            <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
+            <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
                 <Card className="p-8 text-center">
                     <p className="text-red-500 mb-4">{error}</p>
                     <button onClick={() => router.push('/games/ludo')} className="text-[#3b82f6]">
@@ -483,7 +483,7 @@ export default function GameRoomPage() {
     const boardGameState = effectivePlayers && gameState ? { ...gameState, players: effectivePlayers } : gameState;
 
     return (
-        <div className="min-h-screen bg-[#0f0f0f]">
+        <div className="min-h-screen bg-[var(--background)]">
             <Header />
 
             <main className="pt-24 pb-12 px-4">

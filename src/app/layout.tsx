@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
 import Providers from "@/components/Providers";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
 
@@ -49,11 +50,18 @@ export default function RootLayout({
       <head>
         <link rel="canonical" href="https://playarena.com" />
       </head>
-      <body className={`${inter.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
-        <Providers>
-          {children}
-          <Analytics />
-        </Providers>
+      <body className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Providers>
+            {children}
+            <Analytics />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );
