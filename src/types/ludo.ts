@@ -24,9 +24,10 @@ export interface LudoGameState {
     movableTokens?: number[]; // Tokens that can be moved after rolling
 }
 
+// Vintage/Classic color palette for player colors
 export const PLAYER_COLORS: Record<number, { name: PlayerColor; hex: string; bg: string }> = {
-    0: { name: 'red', hex: '#dc2626', bg: '#fef2f2' },
-    1: { name: 'green', hex: '#16a34a', bg: '#f0fdf4' },
-    2: { name: 'yellow', hex: '#ca8a04', bg: '#fefce8' },
-    3: { name: 'blue', hex: '#2563eb', bg: '#eff6ff' },
+    0: { name: 'red', hex: '#8B2635', bg: '#D4A5A5' },      // Burgundy red
+    1: { name: 'green', hex: '#2D5A3D', bg: '#A8C5B5' },    // Forest green
+    2: { name: 'yellow', hex: '#C9A227', bg: '#E8D9A0' },   // Antique gold
+    3: { name: 'blue', hex: '#2C4A6E', bg: '#A3B8CC' },     // Navy blue
 };

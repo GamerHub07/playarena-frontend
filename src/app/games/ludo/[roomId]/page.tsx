@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import WaitingRoom from '@/components/games/ludo/WaitingRoom';
 import Board from '@/components/games/ludo/Board';
 import Dice from '@/components/games/ludo/Dice';
+import ThemeSelector from '@/components/games/ludo/ThemeSelector';
 import Card from '@/components/ui/Card';
 import { useGuest } from '@/hooks/useGuest';
 import { useSocket } from '@/hooks/useSocket';
@@ -18,8 +19,20 @@ import {
     START_POSITIONS,
     PLAYER_COLOR_MAP
 } from '@/lib/ludoBoardLayout';
+import { LudoThemeProvider, useLudoTheme } from '@/contexts/LudoThemeContext';
 
+// Wrapper component that provides the theme context
 export default function GameRoomPage() {
+    return (
+        <LudoThemeProvider>
+            <GameRoomContent />
+        </LudoThemeProvider>
+    );
+}
+
+// Main game room content that uses the theme
+function GameRoomContent() {
+    const { theme, setThemeId } = useLudoTheme();
     const params = useParams();
     const router = useRouter();
     const roomCode = (params.roomId as string).toUpperCase();
@@ -44,6 +57,7 @@ export default function GameRoomPage() {
         currentStep: number;
     } | null>(null);
     const [leaderboard, setLeaderboard] = useState<Array<{ position: number; username: string; rank: number }>>([]);
+
     // Refs for socket listeners to access latest state without re-binding
     const displayedPlayersRef = useRef(displayedPlayers);
     const animatingTokenRef = useRef(animatingToken);
@@ -63,72 +77,47 @@ export default function GameRoomPage() {
 
         // 1. Home -> Path
         if (start.zone === 'home' && (end.zone === 'path' || end.zone === 'safe')) {
-            // Skip adding the home start position to avoid delay
-            // The token will appear directly at the spawn point
-
             // Initial spawn point
             const trackIdx = START_POSITIONS[color];
             const trackPos = getTokenGridPosition(playerIndex, 'path', trackIdx, 0);
             if (trackPos) path.push(trackPos);
 
-            // If we are already at destination (just spawning), we are done with the "spawn" part
-            // But we might need to move further if the logic allows recursive moves (unlikely for spawn)
-            // Usually spawn puts you at START_POSITIONS.
             if (end.zone === 'path' && end.index === trackIdx) return path;
-
-            // Continue from track start
             start = { zone: 'path', index: trackIdx };
         }
 
         // 2. Path/Safe movement
-        // We simulate step by step
         let currentZone = start.zone;
         let currentIndex = start.index;
-
-        // Safety break
         let steps = 0;
         const maxSteps = 60;
 
-        // If we just spawned, we are already at path/START_POSITIONS.
-        // But we added that to path. 
-        // We shouldn't duplicate if the loop adds it again?
-        // Let's rely on the loop to add subsequent steps.
-
         while (steps < maxSteps) {
             if (currentZone === end.zone && currentIndex === end.index) break;
-
             steps++;
 
-            // Logic to determine NEXT step
             if (currentZone === 'path') {
-                // Check if we should enter safe zone
-                // Exit indices: Red 50->Safe, Green 11->Safe, Yellow 24->Safe, Blue 37->Safe
                 const exitIdx = (START_POSITIONS[color] - 2 + 52) % 52;
-
                 if (currentIndex === exitIdx && (end.zone === 'safe' || end.zone === 'finish')) {
-                    // Enter safe zone
                     currentZone = 'safe';
                     currentIndex = 0;
                 } else {
-                    // Move along path
                     currentIndex = (currentIndex + 1) % 52;
                 }
             } else if (currentZone === 'safe') {
                 if (currentIndex < 5) {
                     currentIndex++;
                 }
-                if (currentIndex === 5) { // Reached end of safe
+                if (currentIndex === 5) {
                     if (end.zone === 'finish') {
                         currentZone = 'finish';
-                        currentIndex = 0; // arbitrary
+                        currentIndex = 0;
                     }
                 }
             } else if (currentZone === 'home') {
-                // Should have been handled above
                 break;
             }
 
-            // Get grid pos for this new step
             const pos = getTokenGridPosition(playerIndex, currentZone as any, currentIndex, 0);
             if (pos) path.push(pos);
         }
@@ -148,8 +137,7 @@ export default function GameRoomPage() {
             router.push('/games/ludo');
             return;
         }
-        // hel
-        //hbhjb
+
         const fetchRoom = async () => {
             try {
                 const res = await roomApi.get(roomCode);
@@ -168,7 +156,7 @@ export default function GameRoomPage() {
         fetchRoom();
     }, [roomCode, guest, guestLoading, router]);
 
-    // Keep players ref in sync for socket listeners to avoid dependency loop
+    // Keep players ref in sync
     const playersRef = useRef(players);
     useEffect(() => {
         playersRef.current = players;
@@ -178,34 +166,26 @@ export default function GameRoomPage() {
     useEffect(() => {
         if (!guest || !isConnected) return;
 
-        // Listen for room updates
         const unsubRoom = on('room:update', (data: unknown) => {
             const { players: updatedPlayers, status } = data as { players: Player[]; status: string };
             setPlayers(updatedPlayers);
             setRoom(prev => prev ? { ...prev, status: status as Room['status'] } : null);
         });
 
-        // Listen for game start
         const unsubStart = on('game:start', (data: unknown) => {
             const { state } = data as { state: LudoGameState };
             setGameState(state);
             setRoom(prev => prev ? { ...prev, status: 'playing' } : null);
         });
 
-        // Listen for game state updates (dice rolls, moves, turn changes)
         const unsubState = on('game:state', (data: unknown) => {
             const { state } = data as { state: LudoGameState };
-            console.log('Game state update:', state.turnPhase, 'currentPlayer:', state.currentPlayer, 'myIndex:', myPlayerIndex);
-            console.log('Movable tokens from backend:', state.movableTokens);
-
             setGameState(state);
             setRolling(false);
 
-            // Handle Animation Trigger
             const currentDisplayed = displayedPlayersRef.current;
 
             if (currentDisplayed) {
-                // Check if any token moved
                 let moveFound = false;
                 Object.entries(state.players).forEach(([pIdxStr, pState]) => {
                     const pIdx = parseInt(pIdxStr);
@@ -214,23 +194,19 @@ export default function GameRoomPage() {
 
                     pState.tokens.forEach((token, tIdx) => {
                         const oldToken = oldPState.tokens[tIdx];
-
                         const isCapture = (oldToken.zone !== 'home' && token.zone === 'home');
                         const isMove = !isCapture && (oldToken.zone !== token.zone || oldToken.index !== token.index);
 
                         if (isMove && !moveFound) {
-                            // Check if this token is already animating
                             const currentAnim = animatingTokenRef.current;
                             if (currentAnim && currentAnim.playerIndex === pIdx && currentAnim.tokenIndex === tIdx) {
-                                moveFound = true; // Already animating this, don't start another
+                                moveFound = true;
                                 return;
                             }
 
                             moveFound = true;
-                            // Calculate path
                             const path = computePath(pIdx, oldToken, token);
                             if (path.length > 0) {
-                                console.log('Starting animation for', pIdx, tIdx, 'Path len:', path.length);
                                 setAnimatingToken({
                                     playerIndex: pIdx,
                                     tokenIndex: tIdx,
@@ -243,29 +219,22 @@ export default function GameRoomPage() {
                 });
 
                 if (!moveFound) {
-                    // No moves (or just continued animation), update immediately only if NOT animating?
-                    // If we are animating, we don't want to update displayedPlayers yet.
                     if (!animatingTokenRef.current) {
                         setDisplayedPlayers(state.players);
                     }
                 }
             } else {
-                // Initial load
                 setDisplayedPlayers(state.players);
             }
 
-            // Calculate my index using ref to avoid dependency loop
             const currentPlayers = playersRef.current;
             const myIdx = currentPlayers.findIndex(p => p.sessionId === guest.sessionId);
 
-            // Check if it's my turn and I need to select a token
             if (state.turnPhase === 'move' && state.currentPlayer === myIdx) {
-                // Get movable tokens from state using backend logic if available
                 let tokensToSelect: number[] = [];
                 if (state.movableTokens && state.movableTokens.length > 0) {
                     tokensToSelect = state.movableTokens;
                 } else {
-                    // Fallback to local calculation (mostly for initial state or robustness)
                     const playerState = state.players[myIdx];
                     if (playerState && state.diceValue) {
                         playerState.tokens.forEach((token, idx) => {
@@ -287,33 +256,24 @@ export default function GameRoomPage() {
 
                 setSelectableTokens(tokensToSelect);
 
-                // Auto-move if only one option is available
                 if (tokensToSelect.length === 1) {
                     const tokenIndex = tokensToSelect[0];
-                    console.log(`Auto-moving single option: Token ${tokenIndex}`);
-
-                    // Small delay to let user see dice roll
                     setTimeout(() => {
-                        // Double check we are still in correct state
                         if (state.turnPhase === 'move' && state.currentPlayer === myIdx) {
                             emit('game:action', { roomCode, action: 'move', data: { tokenIndex } });
-                            setSelectableTokens([]); // Clear selection visually
+                            setSelectableTokens([]);
                         }
                     }, 500);
                 }
-
             } else {
                 setSelectableTokens([]);
             }
         });
 
-        // Listen for token move animations (optional - just log for now)
         const unsubTokenMove = on('game:tokenMove', (data: unknown) => {
             console.log('Token move animation data received:', data);
-            // Animation can be added later - state is already updated via game:state
         });
 
-        // Listen for winner
         const unsubWinner = on('game:winner', (data: unknown) => {
             const { winner, leaderboard: lb } = data as {
                 winner: { position: number; username: string },
@@ -323,21 +283,25 @@ export default function GameRoomPage() {
             if (lb) {
                 setLeaderboard(lb);
             } else if (winner) {
-                // Fallback if no leaderboard provided
                 setLeaderboard([{ ...winner, rank: 1 }]);
             }
 
-            // Update room status
             setRoom(prev => prev ? { ...prev, status: 'finished' } : null);
         });
 
-        // Listen for errors
         const unsubError = on('error', (data: unknown) => {
             const { message } = data as { message: string };
             console.error('Socket error:', message);
             setError(message);
             setRolling(false);
             setTimeout(() => setError(''), 3000);
+        });
+
+        // Listen for theme changes from host
+        const unsubTheme = on('room:theme', (data: unknown) => {
+            const { themeId } = data as { themeId: string };
+            console.log('Theme changed to:', themeId);
+            setThemeId(themeId);
         });
 
         return () => {
@@ -347,20 +311,19 @@ export default function GameRoomPage() {
             unsubTokenMove();
             unsubWinner();
             unsubError();
+            unsubTheme();
         };
-    }, [guest, isConnected, on]); // Removed room/players/myPlayerIndex dependencies
+    }, [guest, isConnected, on, setThemeId]);
 
     // Animation Loop
     useEffect(() => {
         if (!animatingToken || !gameState) return;
 
-        // Note: The render-phase derived state (effectivePlayers) handles the instantaneous visual sync
-        // at the last step. We still sync the actual state here when animation completes to be safe.
         if (animatingToken.currentStep >= animatingToken.path.length - 1) {
             setDisplayedPlayers(gameState.players);
         }
 
-        const speedMs = 200; // Time per step
+        const speedMs = 200;
 
         const timer = setInterval(() => {
             setAnimatingToken(prev => {
@@ -368,9 +331,8 @@ export default function GameRoomPage() {
                 const nextStep = prev.currentStep + 1;
 
                 if (nextStep >= prev.path.length) {
-                    // Animation complete
                     clearInterval(timer);
-                    setDisplayedPlayers(gameState.players); // Sync visuals to real state
+                    setDisplayedPlayers(gameState.players);
                     return null;
                 }
 
@@ -383,26 +345,19 @@ export default function GameRoomPage() {
 
     // Celebration effect
     useEffect(() => {
-        // Trigger as soon as we have a winner in the game state
         if (gameState?.winner !== null && gameState?.winner !== undefined) {
-            console.log('Triggering celebration effect for winner:', gameState.winner);
             const duration = 15 * 1000;
             const animationEnd = Date.now() + duration;
-            // High zIndex to ensure visibility over valid UI elements
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
 
             const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
             const interval: any = setInterval(function () {
                 const timeLeft = animationEnd - Date.now();
-
                 if (timeLeft <= 0) {
                     return clearInterval(interval);
                 }
-
                 const particleCount = 50 * (timeLeft / duration);
-
-                // since particles fall down, start a bit higher than random
                 confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
                 confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
             }, 250);
@@ -411,11 +366,10 @@ export default function GameRoomPage() {
         }
     }, [gameState?.winner]);
 
-    // Socket join room - Separate effect to prevent loops
+    // Socket join room
     useEffect(() => {
         if (!guest || !isConnected || loading) return;
 
-        console.log('Joining room:', roomCode);
         emit('room:join', {
             roomCode,
             sessionId: guest.sessionId,
@@ -423,10 +377,9 @@ export default function GameRoomPage() {
         });
 
         return () => {
-            console.log('Leaving room:', roomCode);
             emit('room:leave', {});
         };
-    }, [isConnected, guest, loading, roomCode, emit]); // Depend on stable props/flags only
+    }, [isConnected, guest, loading, roomCode, emit]);
 
     const handleStartGame = useCallback(() => {
         emit('game:start', { roomCode });
@@ -444,25 +397,50 @@ export default function GameRoomPage() {
     }, [emit, roomCode, gameState]);
 
     const handleTokenClick = useCallback((tokenIndex: number) => {
-        console.log('tokenIndex', tokenIndex);
         emit('game:action', { roomCode, action: 'move', data: { tokenIndex } });
         setSelectableTokens([]);
     }, [emit, roomCode]);
 
+    // Handle theme change (host only) - emits to all players via socket
+    const handleThemeChange = useCallback((themeId: string) => {
+        emit('room:theme', { themeId });
+    }, [emit]);
+
+    // Get theme colors
+    const getPlayerColor = (playerIndex: number) => {
+        const colorMap: Record<number, keyof typeof theme.playerColors> = {
+            0: 'red',
+            1: 'green',
+            2: 'yellow',
+            3: 'blue',
+        };
+        return theme.playerColors[colorMap[playerIndex]];
+    };
+
     if (loading || guestLoading) {
         return (
-            <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-2 border-[#3b82f6] border-t-transparent rounded-full" />
+            <div className="min-h-screen flex items-center justify-center" style={{ background: theme.board.background }}>
+                <div
+                    className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full"
+                    style={{ borderColor: theme.ui.accentColor, borderTopColor: 'transparent' }}
+                />
             </div>
         );
     }
 
     if (error && !room) {
         return (
-            <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
-                <Card className="p-8 text-center">
-                    <p className="text-red-500 mb-4">{error}</p>
-                    <button onClick={() => router.push('/games/ludo')} className="text-[#3b82f6]">
+            <div className="min-h-screen flex items-center justify-center" style={{ background: theme.board.background }}>
+                <Card
+                    className="p-8 text-center"
+                    style={{ backgroundColor: theme.ui.cardBackground, border: `2px solid ${theme.ui.cardBorder}` }}
+                >
+                    <p className="mb-4" style={{ color: theme.playerColors.red.bg, fontFamily: theme.effects.fontFamily }}>{error}</p>
+                    <button
+                        onClick={() => router.push('/games/ludo')}
+                        className="transition-colors"
+                        style={{ color: theme.ui.accentColor, fontFamily: theme.effects.fontFamily }}
+                    >
                         Back to Ludo
                     </button>
                 </Card>
@@ -474,8 +452,6 @@ export default function GameRoomPage() {
     const isPlaying = room?.status === 'playing';
     const isFinished = room?.status === 'finished';
 
-    // Derived state: Use final game state immediately when animation reaches the last step
-    // This prevents a 1-frame overlap where both tokens are at the same cell
     const effectivePlayers = (animatingToken && animatingToken.currentStep >= animatingToken.path.length - 1 && gameState)
         ? gameState.players
         : displayedPlayers;
@@ -483,21 +459,54 @@ export default function GameRoomPage() {
     const boardGameState = effectivePlayers && gameState ? { ...gameState, players: effectivePlayers } : gameState;
 
     return (
-        <div className="min-h-screen bg-[#0f0f0f]">
+        <div className="min-h-screen relative" style={{ background: theme.board.background }}>
+            {/* Theme texture overlay */}
+            {theme.effects.useWoodTexture && (
+                <div
+                    className="fixed inset-0 opacity-5 pointer-events-none"
+                    style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E")`,
+                    }}
+                />
+            )}
             <Header />
 
-            <main className="pt-24 pb-12 px-4">
+            <main className="pt-24 pb-12 px-4 relative z-10">
                 {/* Error Toast */}
                 {error && (
-                    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-500/10 border border-red-500 text-red-500 rounded-lg">
+                    <div
+                        className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg"
+                        style={{
+                            backgroundColor: `${theme.playerColors.red.bg}E6`,
+                            border: `2px solid ${theme.playerColors.red.bg}`,
+                            color: theme.ui.textPrimary,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                            fontFamily: theme.effects.fontFamily,
+                        }}
+                    >
                         {error}
                     </div>
                 )}
 
                 {/* Connection Status */}
-                <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-[#888]">
-                    <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+                <div
+                    className="fixed bottom-4 right-4 flex items-center gap-2 text-xs"
+                    style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
+                >
+                    <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: isConnected ? theme.playerColors.green.bg : theme.playerColors.red.bg }}
+                    />
                     {isConnected ? 'Connected' : 'Connecting...'}
+                </div>
+
+                {/* Theme Selector - Fixed position (Host only) */}
+                <div className="fixed top-20 right-4 z-40">
+                    <ThemeSelector
+                        compact
+                        isHost={isHost}
+                        onThemeChange={handleThemeChange}
+                    />
                 </div>
 
                 {/* Waiting Room */}
@@ -513,40 +522,67 @@ export default function GameRoomPage() {
                     />
                 )}
 
-                {/* Game Board (Visible during play and when finished) */}
+                {/* Game Board */}
                 {(isPlaying || isFinished) && gameState && guest && (
                     <div className="w-full max-w-7xl mx-auto relative">
                         {/* Game Over Overlay */}
                         {isFinished && leaderboard.length > 0 && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
                                 <div className="max-w-md w-full mx-4 animate-in fade-in zoom-in duration-300">
-                                    <Card className="p-8 bg-[#1a1a1a] border-2 border-[#333] shadow-2xl">
+                                    <Card
+                                        className="p-8 shadow-2xl"
+                                        style={{
+                                            backgroundColor: theme.ui.cardBackground,
+                                            border: `4px solid ${theme.ui.cardBorder}`,
+                                            boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.1)'
+                                        }}
+                                    >
                                         <div className="text-center mb-6">
-                                            <div className="text-6xl mb-4 animate-bounce">🏆</div>
-                                            <h2 className="text-3xl font-bold text-white mb-2">Game Over!</h2>
-                                            <p className="text-[#888]">Here are the final standings:</p>
+                                            <div className="text-6xl mb-4 animate-bounce" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>🏆</div>
+                                            <h2
+                                                className="text-3xl font-bold mb-2"
+                                                style={{ color: theme.ui.textPrimary, textShadow: '2px 2px 4px rgba(0,0,0,0.5)', fontFamily: theme.effects.fontFamily }}
+                                            >
+                                                Game Over!
+                                            </h2>
+                                            <p style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}>Here are the final standings:</p>
                                         </div>
 
                                         <div className="space-y-3 mb-8">
                                             {leaderboard.map((p) => {
                                                 const isMe = players[p.position]?.sessionId === guest.sessionId;
-                                                const colors = PLAYER_COLORS[p.position];
+                                                const playerColor = getPlayerColor(p.position);
 
                                                 return (
                                                     <div
                                                         key={p.position}
-                                                        className={`flex items-center justify-between p-4 rounded-xl border ${isMe ? 'bg-[#333] border-[#555]' : 'bg-[#111] border-[#222]'}`}
+                                                        className="flex items-center justify-between p-4 rounded-lg"
+                                                        style={{
+                                                            backgroundColor: isMe ? `${theme.ui.accentColor}30` : 'rgba(0,0,0,0.2)',
+                                                            border: isMe ? `2px solid ${theme.ui.accentColor}` : `2px solid ${theme.ui.cardBorder}50`,
+                                                        }}
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-black border-2 border-white/20`}
-                                                                style={{ backgroundColor: colors.hex }}>
+                                                            <div
+                                                                className="w-8 h-8 rounded-full flex items-center justify-center font-bold"
+                                                                style={{
+                                                                    backgroundColor: playerColor.bg,
+                                                                    color: theme.ui.textPrimary,
+                                                                    border: `2px solid ${theme.ui.accentColor}80`,
+                                                                    textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                                                                    fontFamily: theme.effects.fontFamily,
+                                                                }}
+                                                            >
                                                                 {p.rank}
                                                             </div>
                                                             <div className="flex flex-col">
-                                                                <span className={`font-semibold text-lg ${isMe ? 'text-white' : 'text-[#bbb]'}`}>
+                                                                <span
+                                                                    className="font-semibold text-lg"
+                                                                    style={{ color: isMe ? theme.ui.textPrimary : theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
+                                                                >
                                                                     {p.username}
                                                                 </span>
-                                                                {isMe && <span className="text-xs text-[#3b82f6]">You</span>}
+                                                                {isMe && <span className="text-xs" style={{ color: theme.ui.accentColor }}>You</span>}
                                                             </div>
                                                         </div>
 
@@ -561,7 +597,15 @@ export default function GameRoomPage() {
                                         <div className="text-center">
                                             <button
                                                 onClick={() => router.push('/games/ludo')}
-                                                className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                                                className="w-full px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105"
+                                                style={{
+                                                    background: `linear-gradient(145deg, ${theme.ui.buttonGradientStart} 0%, ${theme.ui.buttonGradientEnd} 100%)`,
+                                                    color: theme.ui.textPrimary,
+                                                    border: `2px solid ${theme.ui.buttonBorder}`,
+                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                                                    textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
+                                                    fontFamily: theme.effects.fontFamily,
+                                                }}
                                             >
                                                 Back to Lobby
                                             </button>
@@ -574,7 +618,7 @@ export default function GameRoomPage() {
                         <div className={`flex flex-col lg:flex-row gap-6 items-start justify-center transition-all ${isFinished ? 'brightness-50 pointer-events-none' : ''}`}>
                             {/* Left Panel - Controls */}
                             <div className="w-full lg:w-48 flex flex-col gap-4 order-2 lg:order-1">
-                                {/* This is handled inside Board now */}
+                                {/* Placeholder for future controls */}
                             </div>
 
                             {/* Center - Board */}
@@ -597,15 +641,42 @@ export default function GameRoomPage() {
 
                             {/* Right Panel - Game Info */}
                             <div className="w-full lg:w-56 order-3">
-                                <Card className="p-5">
-                                    <h3 className="text-lg font-semibold text-white mb-4">Game Info</h3>
+                                <Card
+                                    className="p-5"
+                                    style={{
+                                        backgroundColor: theme.ui.cardBackground,
+                                        border: `3px solid ${theme.ui.cardBorder}`,
+                                        boxShadow: '0 4px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.1)'
+                                    }}
+                                >
+                                    <h3
+                                        className="text-lg font-semibold mb-4"
+                                        style={{
+                                            color: theme.ui.textPrimary,
+                                            textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+                                            fontFamily: theme.effects.fontFamily,
+                                        }}
+                                    >
+                                        {theme.effects.useGoldAccents ? '✦ Game Info ✦' : '● Game Info ●'}
+                                    </h3>
 
                                     {/* Current Player */}
                                     <div className="mb-6">
-                                        <p className="text-xs text-[#888] mb-2">Current Turn</p>
+                                        <p
+                                            className="text-xs mb-2"
+                                            style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
+                                        >
+                                            Current Turn
+                                        </p>
                                         <div
-                                            className="px-3 py-2 rounded-lg text-white font-medium"
-                                            style={{ backgroundColor: PLAYER_COLORS[gameState.currentPlayer]?.hex }}
+                                            className="px-3 py-2 rounded-lg font-medium"
+                                            style={{
+                                                backgroundColor: getPlayerColor(gameState.currentPlayer).bg,
+                                                color: theme.ui.textPrimary,
+                                                border: `2px solid ${theme.ui.accentColor}60`,
+                                                textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
+                                                fontFamily: theme.effects.fontFamily,
+                                            }}
                                         >
                                             {players[gameState.currentPlayer]?.username}
                                             {gameState.currentPlayer === myPlayerIndex && ' (You)'}
@@ -614,7 +685,12 @@ export default function GameRoomPage() {
 
                                     {/* Dice */}
                                     <div className="mb-6">
-                                        <p className="text-xs text-[#888] mb-2">Dice</p>
+                                        <p
+                                            className="text-xs mb-2"
+                                            style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
+                                        >
+                                            Dice
+                                        </p>
                                         <Dice
                                             value={gameState.diceValue || gameState.lastRoll}
                                             rolling={rolling}
@@ -626,8 +702,11 @@ export default function GameRoomPage() {
 
                                     {/* Last Roll */}
                                     {gameState.lastRoll && (
-                                        <p className="text-sm text-[#888]">
-                                            Last roll: <span className="text-white font-bold">{gameState.lastRoll}</span>
+                                        <p
+                                            className="text-sm"
+                                            style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
+                                        >
+                                            Last roll: <span className="font-bold" style={{ color: theme.ui.accentColor }}>{gameState.lastRoll}</span>
                                             {gameState.lastRoll === 6 && ' 🎉'}
                                         </p>
                                     )}
