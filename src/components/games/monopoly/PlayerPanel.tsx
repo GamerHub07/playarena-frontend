@@ -1,7 +1,8 @@
 'use client';
 
 import { Player } from '@/types/game';
-import { MonopolyPlayerState, PLAYER_TOKENS } from '@/types/monopoly';
+import { MonopolyPlayerState } from '@/types/monopoly';
+import MonopolyToken from './MonopolyToken';
 
 interface PlayerPanelProps {
     player: Player;
@@ -18,8 +19,8 @@ export default function PlayerPanel({
     isCurrentTurn,
     isMe,
 }: PlayerPanelProps) {
-    const token = PLAYER_TOKENS[playerIndex];
-    
+
+
     if (!playerState) return null;
 
     return (
@@ -32,7 +33,7 @@ export default function PlayerPanel({
         >
             {/* Header */}
             <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">{token?.emoji || '👤'}</span>
+                <MonopolyToken playerIndex={playerIndex} size={28} />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                         <span className="text-white font-medium truncate">{player.username}</span>
