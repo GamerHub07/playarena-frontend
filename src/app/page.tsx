@@ -29,8 +29,8 @@ const GAMES: Game[] = [
         title: 'Snakes & Ladders',
         players: '2-4 Players',
         image: '/games/s&l.png',
-        href: '/games/snake',
-        available: false,
+        href: '/games/snake-ladder',
+        available: true,
         theme: 'bg-green-500 text-white',
     },
     {
