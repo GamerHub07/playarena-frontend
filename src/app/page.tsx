@@ -51,7 +51,15 @@ const GAMES: Game[] = [
         available: false,
         theme: 'bg-gray-800 text-white',
     },
-
+    {
+        id: 'monopoly',
+        title: 'Monopoly',
+        players: '2-4 Players',
+        image: '/games/carrom.png',
+        href: '/games/monopoly',
+        available: true,
+        theme: 'bg-amber-500 text-white',
+    },
 ];
 
 export default function HomePage() {
