@@ -43,6 +43,7 @@ export default function GameRoomPage() {
         path: { row: number; col: number }[];
         currentStep: number;
     } | null>(null);
+    const [leaderboard, setLeaderboard] = useState<Array<{ position: number; username: string; rank: number }>>([]);
     // Refs for socket listeners to access latest state without re-binding
     const displayedPlayersRef = useRef(displayedPlayers);
     const animatingTokenRef = useRef(animatingToken);
@@ -260,33 +261,47 @@ export default function GameRoomPage() {
             // Check if it's my turn and I need to select a token
             if (state.turnPhase === 'move' && state.currentPlayer === myIdx) {
                 // Get movable tokens from state using backend logic if available
+                let tokensToSelect: number[] = [];
                 if (state.movableTokens && state.movableTokens.length > 0) {
-                    setSelectableTokens(state.movableTokens);
+                    tokensToSelect = state.movableTokens;
                 } else {
                     // Fallback to local calculation (mostly for initial state or robustness)
-                    // But now valid: Check if move is possible
                     const playerState = state.players[myIdx];
                     if (playerState && state.diceValue) {
-                        const movable: number[] = [];
                         playerState.tokens.forEach((token, idx) => {
-                            // Basic fallback logic:
                             if (token.zone === 'home' && state.diceValue === 6) {
-                                movable.push(idx);
+                                tokensToSelect.push(idx);
                             } else if (token.zone === 'path' || token.zone === 'safe') {
-                                // Improved check: if in safe zone, can we move?
                                 if (token.zone === 'safe') {
                                     const remainingSteps = 5 - token.index;
                                     if (state.diceValue! <= remainingSteps) {
-                                        movable.push(idx);
+                                        tokensToSelect.push(idx);
                                     }
                                 } else {
-                                    movable.push(idx);
+                                    tokensToSelect.push(idx);
                                 }
                             }
                         });
-                        setSelectableTokens(movable);
                     }
                 }
+
+                setSelectableTokens(tokensToSelect);
+
+                // Auto-move if only one option is available
+                if (tokensToSelect.length === 1) {
+                    const tokenIndex = tokensToSelect[0];
+                    console.log(`Auto-moving single option: Token ${tokenIndex}`);
+
+                    // Small delay to let user see dice roll
+                    setTimeout(() => {
+                        // Double check we are still in correct state
+                        if (state.turnPhase === 'move' && state.currentPlayer === myIdx) {
+                            emit('game:action', { roomCode, action: 'move', data: { tokenIndex } });
+                            setSelectableTokens([]); // Clear selection visually
+                        }
+                    }, 500);
+                }
+
             } else {
                 setSelectableTokens([]);
             }
@@ -300,7 +315,18 @@ export default function GameRoomPage() {
 
         // Listen for winner
         const unsubWinner = on('game:winner', (data: unknown) => {
-            const { winner } = data as { winner: { position: number; username: string } };
+            const { winner, leaderboard: lb } = data as {
+                winner: { position: number; username: string },
+                leaderboard?: Array<{ position: number; username: string; rank: number }>
+            };
+
+            if (lb) {
+                setLeaderboard(lb);
+            } else if (winner) {
+                // Fallback if no leaderboard provided
+                setLeaderboard([{ ...winner, rank: 1 }]);
+            }
+
             // Update room status
             setRoom(prev => prev ? { ...prev, status: 'finished' } : null);
         });
@@ -491,34 +517,55 @@ export default function GameRoomPage() {
                 {(isPlaying || isFinished) && gameState && guest && (
                     <div className="w-full max-w-7xl mx-auto relative">
                         {/* Game Over Overlay */}
-                        {isFinished && gameState.winner !== null && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px]">
-                                <div className="max-w-md w-full mx-4 text-center animate-in fade-in zoom-in duration-300">
+                        {isFinished && leaderboard.length > 0 && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                                <div className="max-w-md w-full mx-4 animate-in fade-in zoom-in duration-300">
                                     <Card className="p-8 bg-[#1a1a1a] border-2 border-[#333] shadow-2xl">
-                                        <div className="text-6xl mb-4 animate-bounce">🏆</div>
-                                        <h2 className="text-3xl font-bold text-white mb-2">
-                                            {gameState.winner === myPlayerIndex ? 'You Won! 🎉' : 'Game Over!'}
-                                        </h2>
-                                        <p className="text-[#bbb] mb-8 text-lg">
-                                            {gameState.winner === myPlayerIndex ? (
-                                                <span>Congratulations on your victory!</span>
-                                            ) : (
-                                                <>
-                                                    <span
-                                                        className="font-semibold"
-                                                        style={{ color: PLAYER_COLORS[gameState.winner]?.hex }}
+                                        <div className="text-center mb-6">
+                                            <div className="text-6xl mb-4 animate-bounce">🏆</div>
+                                            <h2 className="text-3xl font-bold text-white mb-2">Game Over!</h2>
+                                            <p className="text-[#888]">Here are the final standings:</p>
+                                        </div>
+
+                                        <div className="space-y-3 mb-8">
+                                            {leaderboard.map((p) => {
+                                                const isMe = players[p.position]?.sessionId === guest.sessionId;
+                                                const colors = PLAYER_COLORS[p.position];
+
+                                                return (
+                                                    <div
+                                                        key={p.position}
+                                                        className={`flex items-center justify-between p-4 rounded-xl border ${isMe ? 'bg-[#333] border-[#555]' : 'bg-[#111] border-[#222]'}`}
                                                     >
-                                                        {players[gameState.winner]?.username}
-                                                    </span> wins!
-                                                </>
-                                            )}
-                                        </p>
-                                        <button
-                                            onClick={() => router.push('/games/ludo')}
-                                            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
-                                        >
-                                            Play Again
-                                        </button>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-black border-2 border-white/20`}
+                                                                style={{ backgroundColor: colors.hex }}>
+                                                                {p.rank}
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className={`font-semibold text-lg ${isMe ? 'text-white' : 'text-[#bbb]'}`}>
+                                                                    {p.username}
+                                                                </span>
+                                                                {isMe && <span className="text-xs text-[#3b82f6]">You</span>}
+                                                            </div>
+                                                        </div>
+
+                                                        {p.rank === 1 && <span className="text-2xl">🥇</span>}
+                                                        {p.rank === 2 && <span className="text-2xl">🥈</span>}
+                                                        {p.rank === 3 && <span className="text-2xl">🥉</span>}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <div className="text-center">
+                                            <button
+                                                onClick={() => router.push('/games/ludo')}
+                                                className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+                                            >
+                                                Back to Lobby
+                                            </button>
+                                        </div>
                                     </Card>
                                 </div>
                             </div>
