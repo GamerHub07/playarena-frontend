@@ -24,6 +24,14 @@ const GAMES: Game[] = [
         available: true,
         theme: 'bg-blue-500 text-white',
     },
+    
+    {id: 'poker',
+        title: 'Poker',
+        players: '2-4 Players',
+        image: '/games/poker.png',
+        href: '/games/poker',
+        available: true,
+        theme: 'bg-blue-500 text-white'},
     {
         id: 'snakes',
         title: 'Snakes & Ladders',
@@ -51,6 +59,7 @@ const GAMES: Game[] = [
         available: false,
         theme: 'bg-amber-500 text-white',
     },
+
 ];
 
 export default function HomePage() {
