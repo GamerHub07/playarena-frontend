@@ -10,7 +10,7 @@ import Card from '@/components/ui/Card';
 import { useGuest } from '@/hooks/useGuest';
 import { roomApi } from '@/lib/api';
 
-export default function LudoPage() {
+export default function SnakeLadderPage() {
     const router = useRouter();
     const { guest, loading, login } = useGuest();
 
@@ -59,13 +59,13 @@ export default function LudoPage() {
         setError('');
 
         try {
-            const res = await roomApi.create(sid, 'ludo');
+            const res = await roomApi.create(sid, 'snake-ladder');
             if (res.success && res.data) {
-                router.push(`/games/ludo/${res.data.code}`);
+                router.push(`/games/snake-ladder/${res.data.code}`);
             } else {
                 setError(res.message || 'Failed to create room');
             }
-        } catch (err) {
+        } catch {
             setError('Failed to create room');
         }
 
@@ -90,11 +90,11 @@ export default function LudoPage() {
         try {
             const res = await roomApi.join(roomCode.toUpperCase(), guest.sessionId);
             if (res.success && res.data) {
-                router.push(`/games/ludo/${res.data.code}`);
+                router.push(`/games/snake-ladder/${res.data.code}`);
             } else {
                 setError(res.message || 'Room not found');
             }
-        } catch (err) {
+        } catch {
             setError('Failed to join room');
         }
 
@@ -113,7 +113,7 @@ export default function LudoPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full" />
+                <div className="animate-spin w-8 h-8 border-2 border-[var(--success)] border-t-transparent rounded-full" />
             </div>
         );
     }
@@ -126,17 +126,19 @@ export default function LudoPage() {
                 <div className="max-w-4xl mx-auto">
                     {/* Title */}
                     <div className="text-center mb-12">
-                        <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">Ludo</h1>
+                        <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">
+                            🐍 Snake & Ladder 🪜
+                        </h1>
                         <p className="text-[var(--text-muted)] max-w-md mx-auto">
-                            Classic board game for 2-4 players. Roll the dice, move your tokens, and be the first to get all pieces home!
+                            Classic board game for 2-4 players. Roll the dice, climb ladders, avoid snakes, and race to 100!
                         </p>
                     </div>
 
                     {/* Action Cards */}
                     <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
                         <Card className="p-8 text-center">
-                            <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-8 h-8 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-16 h-16 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <svg className="w-8 h-8 text-[var(--success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                 </svg>
                             </div>
@@ -152,8 +154,8 @@ export default function LudoPage() {
                         </Card>
 
                         <Card className="p-8 text-center">
-                            <div className="w-16 h-16 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-8 h-8 text-[var(--success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <svg className="w-8 h-8 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
@@ -174,10 +176,10 @@ export default function LudoPage() {
                         <h3 className="text-xl font-semibold text-[var(--text)] mb-6 text-center">How to Play</h3>
                         <div className="grid sm:grid-cols-2 gap-4">
                             {[
-                                { icon: '🎲', text: 'Roll a 6 to bring a token out of home' },
-                                { icon: '➡️', text: 'Move tokens clockwise around the board' },
-                                { icon: '💥', text: 'Land on opponents to send them home' },
-                                { icon: '🏆', text: 'First to get all 4 tokens home wins!' },
+                                { icon: '🎲', text: 'Roll the dice to move forward' },
+                                { icon: '🪜', text: 'Land on a ladder to climb up' },
+                                { icon: '🐍', text: 'Land on a snake to slide down' },
+                                { icon: '🏆', text: 'First to reach 100 wins!' },
                             ].map((rule, i) => (
                                 <div key={i} className="flex items-center gap-3 p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg">
                                     <span className="text-2xl">{rule.icon}</span>
