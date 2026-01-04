@@ -34,6 +34,15 @@ const GAMES: Game[] = [
         theme: 'bg-green-500 text-white',
     },
     {
+        id: 'business',
+        title: 'Business',
+        players: '2-4 Players',
+        image: '/games/business.png',
+        href: '/games/monopoly',
+        available: true,
+        theme: 'bg-amber-500 text-white',
+    },
+    {
         id: 'chess',
         title: 'Chess',
         players: '2 Players',
@@ -41,15 +50,6 @@ const GAMES: Game[] = [
         href: '/games/chess',
         available: false,
         theme: 'bg-gray-800 text-white',
-    },
-    {
-        id: 'carrom',
-        title: 'Carrom',
-        players: '2-4 Players',
-        image: '/games/carrom.png',
-        href: '/games/carrom',
-        available: false,
-        theme: 'bg-amber-500 text-white',
     },
 ];
 
