@@ -188,67 +188,6 @@ export default function PokerPage() {
                             ))}
                         </div>
                     </div>
-
-                    {/* SEO Content Section */}
-                    <section className="mt-20 max-w-3xl mx-auto">
-                        <h2 className="text-2xl font-bold text-[var(--text)] mb-6 text-center">
-                            Why Play Ludo Online at VersusArenas?
-                        </h2>
-
-                        <div className="grid sm:grid-cols-2 gap-6 mb-10">
-                            {[
-                                { icon: '🆓', title: 'Completely Free', desc: 'No hidden charges, no premium subscriptions. Play unlimited games for free.' },
-                                { icon: '📱', title: 'Any Device', desc: 'Works on mobile, tablet, and desktop. No app download required.' },
-                                { icon: '👥', title: 'Real-time Multiplayer', desc: 'Play with 2-4 friends in real-time with instant synchronization.' },
-                                { icon: '🔒', title: 'Private Rooms', desc: 'Create private rooms with unique codes. Only friends with the code can join.' },
-                                { icon: '🎨', title: 'Beautiful Themes', desc: 'Choose from multiple stunning board themes - Vintage, Modern, Ocean & more.' },
-                                { icon: '⚡', title: 'No Sign-up', desc: 'Start playing instantly. Just enter a name and create or join a room.' },
-                            ].map((feature, i) => (
-                                <div key={i} className="p-5 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-soft">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <span className="text-2xl">{feature.icon}</span>
-                                        <h3 className="font-semibold text-[var(--text)]">{feature.title}</h3>
-                                    </div>
-                                    <p className="text-sm text-[var(--text-muted)]">{feature.desc}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* FAQ Section for SEO */}
-                        <div className="mt-12">
-                            <h2 className="text-xl font-bold text-[var(--text)] mb-6 text-center">
-                                Frequently Asked Questions
-                            </h2>
-                            <div className="space-y-4">
-                                {[
-                                    {
-                                        q: 'How do I play Ludo online with friends?',
-                                        a: 'Simply click "Create Room" to get a unique room code. Share this code with your friends, and they can join by clicking "Join Room" and entering the code. Once everyone\'s in, start the game!'
-                                    },
-                                    {
-                                        q: 'Is this Ludo game free to play?',
-                                        a: 'Yes! VersusArenas Ludo is completely free to play. No registration, no downloads, no hidden fees. Just instant multiplayer fun.'
-                                    },
-                                    {
-                                        q: 'Can I play Ludo on my phone?',
-                                        a: 'Absolutely! Our Ludo game works on any device with a web browser - smartphones, tablets, laptops, and desktops. No app installation needed.'
-                                    },
-                                    {
-                                        q: 'How many players can play Ludo?',
-                                        a: 'You can play Ludo with 2, 3, or 4 players. The classic experience is with 4 players, but 2-player games are just as fun!'
-                                    },
-                                ].map((faq, i) => (
-                                    <details key={i} className="p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg group">
-                                        <summary className="font-medium text-[var(--text)] cursor-pointer list-none flex justify-between items-center">
-                                            {faq.q}
-                                            <span className="text-[var(--text-muted)] group-open:rotate-180 transition-transform">▼</span>
-                                        </summary>
-                                        <p className="mt-3 text-sm text-[var(--text-muted)] leading-relaxed">{faq.a}</p>
-                                    </details>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
                 </div>
             </main>
 
