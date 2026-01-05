@@ -122,3 +122,29 @@ h4 {
 .animate-breathe {
     animation: breathe 1.5s ease-in-out infinite;
 }
+
+/* Floating animation for theme ambient decorations */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) translateY(0);
+    }
+
+    50% {
+        transform: translate(-50%, -50%) translateY(-10px);
+    }
+}
+
+/* Subtle horizontal drift for variety */
+@keyframes drift {
+
+    0%,
+    100% {
+        transform: translate(-50%, -50%) translateX(0);
+    }
+
+    50% {
+        transform: translate(-50%, -50%) translateX(5px);
+    }
+}

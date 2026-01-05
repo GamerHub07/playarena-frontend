@@ -1,0 +1,14 @@
+# VersusArenas Robots.txt
+# https://versusarenas.in
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://versusarenas.in/sitemap.xml
+
+# Disallow private/dynamic game rooms from indexing
+Disallow: /games/ludo/[
+Disallow: /games/business/[
+Disallow: /games/snake-ladder/[
+Disallow: /api/
