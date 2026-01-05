@@ -53,7 +53,7 @@ export default function LobbyView({ gameState, isHost, onStart }: Props) {
                     <div className="grid gap-2">
                         {gameState.players.map((player) => (
                             <div 
-                                key={player.sessionId || player.id} 
+                                key={player.id} 
                                 className="flex justify-between items-center p-4 bg-slate-800/40 rounded-xl border border-slate-700/50 backdrop-blur-sm"
                             >
                                 <div className="flex items-center gap-3">
