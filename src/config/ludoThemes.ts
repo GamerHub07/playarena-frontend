@@ -3,7 +3,7 @@
 
 export interface ThemeDecoration {
   // Corner decorations (emoji or text symbols)
-  cornerSymbols: string[];
+  cornerSymbols?: string[];
   // Decorative elements around the board
   borderElements?: string[];
   // Center area decoration
@@ -12,6 +12,31 @@ export interface ThemeDecoration {
   safeIndicator: string;
   // Start cell indicator
   startIndicator: string;
+
+  // NEW — large cinematic elements
+  sceneElements?: {
+    symbol: string;            // emoji or SVG id
+    position: {
+      top?: string;
+      bottom?: string;
+      left?: string;
+      right?: string;
+    };
+    size?: string;              // px (120–300 recommended)
+    offset?: { x?: number; y?: number };
+    opacity?: number;
+    flip?: boolean;
+    rotation?: number;
+    float?: boolean;            // Enable floating animation
+  }[];
+
+  // OPTIONAL — subtle ground / atmosphere
+  foregroundElements?: {
+    symbol: string;
+    position: { bottom?: string; left?: string; right?: string };
+    opacity?: number;
+  }[];
+
   // Ambient decorations (scattered around the board)
   ambientElements?: {
     symbol: string;
@@ -134,28 +159,26 @@ export const THEMES: Record<string, LudoTheme> = {
     },
 
     decorations: {
-      cornerSymbols: ['❧', '❧', '❧', '❧'],
-      borderElements: ['⚜', '✦', '⚜'],
       centerEmoji: '🏆',
       safeIndicator: '✦',
       startIndicator: '➤',
-      ambientElements: [
+
+      sceneElements: [
         {
-          symbol: '⚜',
-          positions: [
-            { top: '15%', left: '5%', rotation: -15, opacity: 0.15 },
-            { top: '85%', left: '95%', rotation: 15, opacity: 0.15 },
-          ]
+          symbol: '📜',
+          position: { top: '10%', left: '6%' },
+          size: '6rem',
+          opacity: 0.25,
         },
         {
-          symbol: '✧',
-          positions: [
-            { top: '10%', left: '90%', opacity: 0.1 },
-            { top: '90%', left: '10%', opacity: 0.1 },
-          ]
+          symbol: '⚜',
+          position: { bottom: '10%', right: '6%' },
+          size: '6rem',
+          opacity: 0.3,
         }
       ],
-    },
+    }
+
   },
 
   modern: {
@@ -276,56 +299,26 @@ export const THEMES: Record<string, LudoTheme> = {
     },
 
     decorations: {
-      cornerSymbols: ['🐚', '🌊', '🐚', '🌊'],
-      borderElements: ['🐠', '🐟', '🐠'],
       centerEmoji: '🐙',
       safeIndicator: '⚓',
       startIndicator: '🚢',
-      ambientElements: [
+
+      sceneElements: [
         {
           symbol: '🐋',
-          positions: [
-            { top: '8%', left: '8%', rotation: 15, opacity: 0.5 },
-            { top: '92%', left: '92%', rotation: -15, opacity: 0.5 },
-          ]
-        },
-        {
-          symbol: '🐠',
-          positions: [
-            { top: '15%', left: '90%', rotation: -10, opacity: 0.6 },
-            { top: '85%', left: '10%', rotation: 10, opacity: 0.6 },
-          ]
-        },
-        {
-          symbol: '🐟',
-          positions: [
-            { top: '50%', left: '3%', rotation: 0, opacity: 0.5 },
-            { top: '50%', left: '97%', rotation: 180, opacity: 0.5 },
-          ]
-        },
-        {
-          symbol: '🦀',
-          positions: [
-            { top: '92%', left: '15%', opacity: 0.5 },
-            { top: '8%', left: '85%', opacity: 0.5 },
-          ]
-        },
-        {
-          symbol: '🐚',
-          positions: [
-            { top: '35%', left: '5%', opacity: 0.4 },
-            { top: '65%', left: '95%', opacity: 0.4 },
-          ]
+          position: { top: '12%', left: '5%' },
+          size: '8rem',
+          opacity: 0.4,
+          float: true,
         },
         {
           symbol: '🌊',
-          positions: [
-            { top: '3%', left: '50%', opacity: 0.4 },
-            { top: '97%', left: '50%', opacity: 0.4 },
-          ]
+          position: { bottom: '8%', right: '5%' },
+          size: '7rem',
+          opacity: 0.35,
         }
       ],
-    },
+    }
   },
 
   nature: {
@@ -378,51 +371,35 @@ export const THEMES: Record<string, LudoTheme> = {
     },
 
     decorations: {
-      cornerSymbols: ['🌿', '🍃', '🌿', '🍃'],
-      borderElements: ['🌸', '🌺', '🌸'],
       centerEmoji: '🦋',
       safeIndicator: '🍀',
       startIndicator: '🌱',
-      ambientElements: [
-        {
-          symbol: '🌳',
-          positions: [
-            { top: '5%', left: '5%', opacity: 0.6 },
-            { top: '5%', left: '95%', opacity: 0.6 },
-            { top: '95%', left: '5%', opacity: 0.6 },
-            { top: '95%', left: '95%', opacity: 0.6 },
-          ]
-        },
+
+      sceneElements: [
         {
           symbol: '🐍',
-          positions: [
-            { top: '15%', left: '15%', rotation: 45, opacity: 0.5 },
-            { top: '85%', left: '85%', rotation: -45, opacity: 0.5 },
-          ]
+          position: { top: '10%', right: '8%' },
+          size: '7rem',
+          rotation: -20,
+          opacity: 0.45,
+          float: true,
         },
         {
-          symbol: '🦎',
-          positions: [
-            { top: '85%', left: '15%', rotation: -30, opacity: 0.4 },
-            { top: '15%', left: '85%', rotation: 30, opacity: 0.4 },
-          ]
+          symbol: '🌳',
+          position: { bottom: '5%', left: '5%' },
+          size: '8rem',
+          opacity: 0.35,
         },
         {
-          symbol: '🍄',
-          positions: [
-            { top: '40%', left: '3%', opacity: 0.5 },
-            { top: '60%', left: '97%', opacity: 0.5 },
-          ]
-        },
-        {
-          symbol: '🌻',
-          positions: [
-            { top: '3%', left: '50%', opacity: 0.5 },
-            { top: '97%', left: '50%', opacity: 0.5 },
-          ]
+          symbol: '🍃',
+          position: { top: '50%', left: '2%' },
+          size: '6rem',
+          opacity: 0.25,
+          float: true,
         }
       ],
-    },
+    }
+
   },
 
   royal: {
@@ -475,45 +452,26 @@ export const THEMES: Record<string, LudoTheme> = {
     },
 
     decorations: {
-      cornerSymbols: ['👑', '💎', '👑', '💎'],
-      borderElements: ['⚜', '♔', '⚜'],
       centerEmoji: '👑',
       safeIndicator: '💎',
       startIndicator: '🏰',
-      ambientElements: [
-        {
-          symbol: '👑',
-          positions: [
-            { top: '3%', left: '50%', opacity: 0.4 },
-          ]
-        },
+
+      sceneElements: [
         {
           symbol: '🏰',
-          positions: [
-            { top: '5%', left: '5%', opacity: 0.3 },
-            { top: '5%', left: '95%', opacity: 0.3 },
-            { top: '95%', left: '5%', opacity: 0.3 },
-            { top: '95%', left: '95%', opacity: 0.3 },
-          ]
+          position: { top: '8%', left: '5%' },
+          size: '8rem',
+          opacity: 0.4,
         },
         {
-          symbol: '💫',
-          positions: [
-            { top: '20%', left: '10%', opacity: 0.25 },
-            { top: '80%', left: '90%', opacity: 0.25 },
-            { top: '20%', left: '90%', opacity: 0.25 },
-            { top: '80%', left: '10%', opacity: 0.25 },
-          ]
+          symbol: '👑',
+          position: { top: '5%', right: '5%' },
+          size: '6rem',
+          opacity: 0.5,
+          float: true,
         },
-        {
-          symbol: '💎',
-          positions: [
-            { top: '50%', left: '2%', opacity: 0.35 },
-            { top: '50%', left: '98%', opacity: 0.35 },
-          ]
-        }
       ],
-    },
+    }
   },
 };
 
