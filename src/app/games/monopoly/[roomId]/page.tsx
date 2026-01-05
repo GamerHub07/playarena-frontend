@@ -235,7 +235,7 @@ export default function MonopolyGameRoom() {
     }, [emit, router]);
 
     const handleRollDice = useCallback(() => {
-        if (!gameState || gameState.phase !== 'ROLL') return;
+        if (!gameState || (gameState.phase !== 'ROLL' && gameState.phase !== 'JAIL')) return;
         setRolling(true);
         emit('game:action', { roomCode, action: 'ROLL_DICE' });
     }, [emit, roomCode, gameState]);
@@ -265,6 +265,10 @@ export default function MonopolyGameRoom() {
 
     const handleBuildHotel = useCallback((propertyId: string) => {
         emit('game:action', { roomCode, action: 'BUILD_HOTEL', data: { propertyId } });
+    }, [emit, roomCode]);
+
+    const handlePayJailFine = useCallback(() => {
+        emit('game:action', { roomCode, action: 'PAY_JAIL_FINE' });
     }, [emit, roomCode]);
 
     // Get current turn player
@@ -418,6 +422,7 @@ export default function MonopolyGameRoom() {
                                             {gameState.phase === 'DECISION' && '🤔 Make Decision'}
                                             {gameState.phase === 'END_TURN' && '⏭️ End Turn'}
                                             {gameState.phase === 'DEBT' && '💸 Pay Debt'}
+                                            {gameState.phase === 'JAIL' && '🔒 In Jail'}
                                         </div>
                                     </div>
 
@@ -426,10 +431,26 @@ export default function MonopolyGameRoom() {
                                         <Dice
                                             values={gameState.dice}
                                             rolling={rolling}
-                                            canRoll={isMyTurn() && gameState.phase === 'ROLL'}
+                                            canRoll={isMyTurn() && (gameState.phase === 'ROLL' || gameState.phase === 'JAIL')}
                                             onRoll={handleRollDice}
                                         />
                                     </div>
+
+                                    {/* Jail Options */}
+                                    {isMyTurn() && gameState.phase === 'JAIL' && (
+                                        <div className="mb-6 space-y-3">
+                                            <p className="text-sm text-[#888] mb-2">You're in jail! Choose an option:</p>
+                                            <Button
+                                                onClick={handlePayJailFine}
+                                                className="w-full"
+                                                disabled={(gameState.playerState[guest.sessionId]?.cash || 0) < 50}
+                                            >
+                                                💰 Pay ₹50 Fine
+                                            </Button>
+                                            <p className="text-xs text-center text-[#666]">- or -</p>
+                                            <p className="text-xs text-center text-[#888]">Roll doubles above to get out free!</p>
+                                        </div>
+                                    )}
 
                                     {/* End Turn Button */}
                                     {isMyTurn() && gameState.phase === 'END_TURN' && (
