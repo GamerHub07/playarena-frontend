@@ -1,13 +1,14 @@
-import { ReactNode } from 'react';
+import { ReactNode, CSSProperties } from 'react';
 
 interface CardProps {
     children: ReactNode;
     className?: string;
+    style?: CSSProperties;
     hover?: boolean;
     onClick?: () => void;
 }
 
-export default function Card({ children, className = '', hover = false, onClick }: CardProps) {
+export default function Card({ children, className = '', style, hover = false, onClick }: CardProps) {
     return (
         <div
             onClick={onClick}
@@ -17,6 +18,7 @@ export default function Card({ children, className = '', hover = false, onClick 
         ${onClick ? 'cursor-pointer' : ''}
         ${className}
       `}
+            style={style}
         >
             {children}
         </div>

@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import Header from '@/components/layout/Header';
 import WaitingRoom from '@/components/games/ludo/WaitingRoom';
+import { LudoThemeProvider } from '@/contexts/LudoThemeContext';
 import SnakeLadderBoard from '@/components/games/snake-ladder/SnakeLadderBoard';
 import Dice from '@/components/games/ludo/Dice';
 import Card from '@/components/ui/Card';
@@ -256,204 +257,206 @@ export default function SnakeLadderRoomPage() {
     const isFinished = room?.status === 'finished';
 
     return (
-        <div className="min-h-screen bg-[var(--background)]">
-            <Header />
+        <LudoThemeProvider>
+            <div className="min-h-screen bg-[var(--background)]">
+                <Header />
 
-            <main className="pt-24 pb-12 px-4">
-                {/* Error Toast */}
-                {error && (
-                    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-500/10 border border-red-500 text-red-500 rounded-lg">
-                        {error}
+                <main className="pt-24 pb-12 px-4">
+                    {/* Error Toast */}
+                    {error && (
+                        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-500/10 border border-red-500 text-red-500 rounded-lg">
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Connection Status */}
+                    <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-[var(--text-muted)]">
+                        <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+                        {isConnected ? 'Connected' : 'Connecting...'}
                     </div>
-                )}
 
-                {/* Connection Status */}
-                <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                    <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                    {isConnected ? 'Connected' : 'Connecting...'}
-                </div>
+                    {/* Tutorial Button */}
+                    <div className="fixed top-24 right-4 z-40">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setShowTutorial(true)}
+                        >
+                            Rules ℹ️
+                        </Button>
+                    </div>
 
-                {/* Tutorial Button */}
-                <div className="fixed top-24 right-4 z-40">
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => setShowTutorial(true)}
-                    >
-                        Rules ℹ️
-                    </Button>
-                </div>
+                    {/* Waiting Room */}
+                    {isWaiting && room && (
+                        <WaitingRoom
+                            roomCode={roomCode}
+                            players={players}
+                            isHost={isHost}
+                            minPlayers={room.minPlayers}
+                            maxPlayers={room.maxPlayers}
+                            onStart={handleStartGame}
+                            onLeave={handleLeaveRoom}
+                        />
+                    )}
 
-                {/* Waiting Room */}
-                {isWaiting && room && (
-                    <WaitingRoom
-                        roomCode={roomCode}
-                        players={players}
-                        isHost={isHost}
-                        minPlayers={room.minPlayers}
-                        maxPlayers={room.maxPlayers}
-                        onStart={handleStartGame}
-                        onLeave={handleLeaveRoom}
-                    />
-                )}
+                    {/* Game Board */}
+                    {(isPlaying || isFinished) && gameState && guest && (
+                        <div className="w-full max-w-5xl mx-auto relative">
+                            {/* Game Over Overlay */}
+                            {isFinished && gameState.winner !== null && (
+                                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                                    <div className="max-w-md w-full mx-4 text-center">
+                                        <Card className="p-8">
+                                            <div className="text-6xl mb-4 animate-bounce">🏆</div>
+                                            <h2 className="text-3xl font-bold text-[var(--text)] mb-2">
+                                                {gameState.winner === myPlayerIndex ? 'You Won! 🎉' : 'Game Over!'}
+                                            </h2>
+                                            <p className="text-[var(--text-muted)] mb-8 text-lg">
+                                                {gameState.winner === myPlayerIndex ? (
+                                                    <span>Congratulations on your victory!</span>
+                                                ) : (
+                                                    <>
+                                                        <span
+                                                            className="font-semibold"
+                                                            style={{ color: PLAYER_COLORS[gameState.winner]?.hex }}
+                                                        >
+                                                            {players[gameState.winner]?.username}
+                                                        </span> wins!
+                                                    </>
+                                                )}
+                                            </p>
+                                            <Button onClick={() => router.push('/games/snake-ladder')}>
+                                                Play Again
+                                            </Button>
+                                        </Card>
+                                    </div>
+                                </div>
+                            )}
 
-                {/* Game Board */}
-                {(isPlaying || isFinished) && gameState && guest && (
-                    <div className="w-full max-w-5xl mx-auto relative">
-                        {/* Game Over Overlay */}
-                        {isFinished && gameState.winner !== null && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                                <div className="max-w-md w-full mx-4 text-center">
-                                    <Card className="p-8">
-                                        <div className="text-6xl mb-4 animate-bounce">🏆</div>
-                                        <h2 className="text-3xl font-bold text-[var(--text)] mb-2">
-                                            {gameState.winner === myPlayerIndex ? 'You Won! 🎉' : 'Game Over!'}
-                                        </h2>
-                                        <p className="text-[var(--text-muted)] mb-8 text-lg">
-                                            {gameState.winner === myPlayerIndex ? (
-                                                <span>Congratulations on your victory!</span>
-                                            ) : (
-                                                <>
-                                                    <span
-                                                        className="font-semibold"
-                                                        style={{ color: PLAYER_COLORS[gameState.winner]?.hex }}
-                                                    >
-                                                        {players[gameState.winner]?.username}
-                                                    </span> wins!
-                                                </>
-                                            )}
-                                        </p>
-                                        <Button onClick={() => router.push('/games/snake-ladder')}>
-                                            Play Again
-                                        </Button>
+                            <div className={`flex flex-col lg:flex-row gap-6 items-start justify-center ${isFinished ? 'brightness-50 pointer-events-none' : ''}`}>
+                                {/* Left Panel - Game Info */}
+                                <div className="w-full lg:w-64 order-2 lg:order-1 flex-shrink-0">
+                                    <Card className="p-4">
+                                        <h3 className="text-lg font-semibold text-[var(--text)] mb-4">Game Info</h3>
+
+                                        {/* Current Turn */}
+                                        <div className="mb-4">
+                                            <p className="text-xs text-[var(--text-muted)] mb-2">Current Turn</p>
+                                            <div
+                                                className="px-3 py-2 rounded-lg text-white font-medium text-center"
+                                                style={{ backgroundColor: PLAYER_COLORS[gameState.currentPlayer]?.hex }}
+                                            >
+                                                {players[gameState.currentPlayer]?.username}
+                                                {gameState.currentPlayer === myPlayerIndex && ' (You)'}
+                                            </div>
+                                        </div>
+
+                                        {/* Dice */}
+                                        <div className="mb-4">
+                                            <p className="text-xs text-[var(--text-muted)] mb-2">Dice</p>
+                                            <div className="flex justify-center">
+                                                <Dice
+                                                    value={gameState.diceValue || gameState.lastRoll}
+                                                    rolling={rolling}
+                                                    canRoll={!isFinished && gameState.currentPlayer === myPlayerIndex && gameState.turnPhase === 'roll'}
+                                                    onRoll={handleRollDice}
+                                                    playerColor={(PLAYER_COLORS[myPlayerIndex]?.name || 'red') as PlayerColor}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Status Messages */}
+                                        {gameState.lastRoll && (
+                                            <p className="text-sm text-[var(--text-muted)] text-center mb-2">
+                                                Last roll: <span className="font-bold text-[var(--text)]">{gameState.lastRoll}</span>
+                                                {gameState.lastRoll === 6 && ' 🎉'}
+                                            </p>
+                                        )}
+
+                                        {gameState.canRollAgain && gameState.currentPlayer === myPlayerIndex && (
+                                            <p className="text-sm text-green-500 text-center">Roll again!</p>
+                                        )}
+
+                                        {/* Players */}
+                                        <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                                            <p className="text-xs text-[var(--text-muted)] mb-3">Players</p>
+                                            <div className="space-y-2">
+                                                {Object.entries(gameState.players).map(([idx, pState]) => {
+                                                    const pIdx = parseInt(idx);
+                                                    const player = players[pIdx];
+                                                    const displayPos = displayedPositions[pIdx] ?? pState.position;
+                                                    const isActive = gameState.currentPlayer === pIdx;
+                                                    return (
+                                                        <div
+                                                            key={idx}
+                                                            className={`flex items-center justify-between text-sm p-2 rounded-lg ${isActive ? 'bg-[var(--surface-alt)]' : ''}`}
+                                                        >
+                                                            <span className="flex items-center gap-2">
+                                                                <span
+                                                                    className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
+                                                                    style={{ backgroundColor: PLAYER_COLORS[pIdx]?.hex }}
+                                                                />
+                                                                <span className="text-[var(--text)]">{player?.username}</span>
+                                                            </span>
+                                                            <span className="font-mono font-bold text-[var(--text)]">
+                                                                {displayPos === 0 ? 'Start' : displayPos}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
                                     </Card>
                                 </div>
-                            </div>
-                        )}
 
-                        <div className={`flex flex-col lg:flex-row gap-6 items-start justify-center ${isFinished ? 'brightness-50 pointer-events-none' : ''}`}>
-                            {/* Left Panel - Game Info */}
-                            <div className="w-full lg:w-64 order-2 lg:order-1 flex-shrink-0">
-                                <Card className="p-4">
-                                    <h3 className="text-lg font-semibold text-[var(--text)] mb-4">Game Info</h3>
-
-                                    {/* Current Turn */}
-                                    <div className="mb-4">
-                                        <p className="text-xs text-[var(--text-muted)] mb-2">Current Turn</p>
-                                        <div
-                                            className="px-3 py-2 rounded-lg text-white font-medium text-center"
-                                            style={{ backgroundColor: PLAYER_COLORS[gameState.currentPlayer]?.hex }}
-                                        >
-                                            {players[gameState.currentPlayer]?.username}
-                                            {gameState.currentPlayer === myPlayerIndex && ' (You)'}
-                                        </div>
-                                    </div>
-
-                                    {/* Dice */}
-                                    <div className="mb-4">
-                                        <p className="text-xs text-[var(--text-muted)] mb-2">Dice</p>
-                                        <div className="flex justify-center">
-                                            <Dice
-                                                value={gameState.diceValue || gameState.lastRoll}
-                                                rolling={rolling}
-                                                canRoll={!isFinished && gameState.currentPlayer === myPlayerIndex && gameState.turnPhase === 'roll'}
-                                                onRoll={handleRollDice}
-                                                playerColor={(PLAYER_COLORS[myPlayerIndex]?.name || 'red') as PlayerColor}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Status Messages */}
-                                    {gameState.lastRoll && (
-                                        <p className="text-sm text-[var(--text-muted)] text-center mb-2">
-                                            Last roll: <span className="font-bold text-[var(--text)]">{gameState.lastRoll}</span>
-                                            {gameState.lastRoll === 6 && ' 🎉'}
-                                        </p>
-                                    )}
-
-                                    {gameState.canRollAgain && gameState.currentPlayer === myPlayerIndex && (
-                                        <p className="text-sm text-green-500 text-center">Roll again!</p>
-                                    )}
-
-                                    {/* Players */}
-                                    <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                                        <p className="text-xs text-[var(--text-muted)] mb-3">Players</p>
-                                        <div className="space-y-2">
-                                            {Object.entries(gameState.players).map(([idx, pState]) => {
-                                                const pIdx = parseInt(idx);
-                                                const player = players[pIdx];
-                                                const displayPos = displayedPositions[pIdx] ?? pState.position;
-                                                const isActive = gameState.currentPlayer === pIdx;
-                                                return (
-                                                    <div
-                                                        key={idx}
-                                                        className={`flex items-center justify-between text-sm p-2 rounded-lg ${isActive ? 'bg-[var(--surface-alt)]' : ''}`}
-                                                    >
-                                                        <span className="flex items-center gap-2">
-                                                            <span
-                                                                className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                                                                style={{ backgroundColor: PLAYER_COLORS[pIdx]?.hex }}
-                                                            />
-                                                            <span className="text-[var(--text)]">{player?.username}</span>
-                                                        </span>
-                                                        <span className="font-mono font-bold text-[var(--text)]">
-                                                            {displayPos === 0 ? 'Start' : displayPos}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </Card>
-                            </div>
-
-                            {/* Center - Board */}
-                            <div className="flex-shrink-0 order-1 lg:order-2">
-                                <SnakeLadderBoard
-                                    gameState={gameState}
-                                    players={players}
-                                    displayedPositions={displayedPositions}
-                                    currentSessionId={guest.sessionId}
-                                    isAnimating={!!animatingToken}
-                                />
+                                {/* Center - Board */}
+                                <div className="flex-shrink-0 order-1 lg:order-2">
+                                    <SnakeLadderBoard
+                                        gameState={gameState}
+                                        players={players}
+                                        displayedPositions={displayedPositions}
+                                        currentSessionId={guest.sessionId}
+                                        isAnimating={!!animatingToken}
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </main>
+                    )}
+                </main>
 
-            {/* Tutorial Modal */}
-            <Modal
-                isOpen={showTutorial}
-                onClose={() => setShowTutorial(false)}
-                title="How to Play"
-            >
-                <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-[var(--surface-alt)] rounded-xl text-center">
-                            <span className="text-3xl mb-2 block">🐍</span>
-                            <h4 className="font-bold text-[var(--text)] mb-1">Snakes</h4>
-                            <p className="text-sm text-[var(--text-muted)]">Slide down when you land on a head.</p>
+                {/* Tutorial Modal */}
+                <Modal
+                    isOpen={showTutorial}
+                    onClose={() => setShowTutorial(false)}
+                    title="How to Play"
+                >
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-4 bg-[var(--surface-alt)] rounded-xl text-center">
+                                <span className="text-3xl mb-2 block">🐍</span>
+                                <h4 className="font-bold text-[var(--text)] mb-1">Snakes</h4>
+                                <p className="text-sm text-[var(--text-muted)]">Slide down when you land on a head.</p>
+                            </div>
+                            <div className="p-4 bg-[var(--surface-alt)] rounded-xl text-center">
+                                <span className="text-3xl mb-2 block">🪜</span>
+                                <h4 className="font-bold text-[var(--text)] mb-1">Ladders</h4>
+                                <p className="text-sm text-[var(--text-muted)]">Climb up when you land on the bottom.</p>
+                            </div>
                         </div>
-                        <div className="p-4 bg-[var(--surface-alt)] rounded-xl text-center">
-                            <span className="text-3xl mb-2 block">🪜</span>
-                            <h4 className="font-bold text-[var(--text)] mb-1">Ladders</h4>
-                            <p className="text-sm text-[var(--text-muted)]">Climb up when you land on the bottom.</p>
+
+                        <div className="space-y-2 text-sm text-[var(--text-muted)]">
+                            <p>🎲 Roll the dice to move forward.</p>
+                            <p>🎉 Rolling a <strong>6</strong> gives you an extra turn!</p>
+                            <p>⛔ Three <strong>6s</strong> in a row = skip turn.</p>
+                            <p>↩️ Must land exactly on <strong>100</strong> to win.</p>
                         </div>
-                    </div>
 
-                    <div className="space-y-2 text-sm text-[var(--text-muted)]">
-                        <p>🎲 Roll the dice to move forward.</p>
-                        <p>🎉 Rolling a <strong>6</strong> gives you an extra turn!</p>
-                        <p>⛔ Three <strong>6s</strong> in a row = skip turn.</p>
-                        <p>↩️ Must land exactly on <strong>100</strong> to win.</p>
+                        <p className="text-xs text-center text-[var(--text-muted)] pt-4 border-t border-[var(--border)]">
+                            First player to reach square 100 wins!
+                        </p>
                     </div>
-
-                    <p className="text-xs text-center text-[var(--text-muted)] pt-4 border-t border-[var(--border)]">
-                        First player to reach square 100 wins!
-                    </p>
-                </div>
-            </Modal>
-        </div>
+                </Modal>
+            </div>
+        </LudoThemeProvider>
     );
 }

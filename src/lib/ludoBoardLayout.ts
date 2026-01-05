@@ -6,12 +6,12 @@
 // Board is 15x15 grid
 export const BOARD_SIZE = 15;
 
-// Player colors
+// Player colors - Vintage/Classic palette
 export const COLORS = {
-    RED: { bg: '#E53935', light: '#FFCDD2', name: 'red' },
-    GREEN: { bg: '#43A047', light: '#C8E6C9', name: 'green' },
-    YELLOW: { bg: '#FDD835', light: '#FFF9C4', name: 'yellow' },
-    BLUE: { bg: '#1E88E5', light: '#BBDEFB', name: 'blue' },
+    RED: { bg: '#8B2635', light: '#D4A5A5', name: 'red' },      // Burgundy red
+    GREEN: { bg: '#2D5A3D', light: '#A8C5B5', name: 'green' },  // Forest green
+    YELLOW: { bg: '#C9A227', light: '#E8D9A0', name: 'yellow' },// Antique gold
+    BLUE: { bg: '#2C4A6E', light: '#A3B8CC', name: 'blue' },    // Navy blue
 } as const;
 
 export type ColorKey = keyof typeof COLORS;
