@@ -346,7 +346,7 @@ function GameRoomContent() {
     // Celebration effect
     useEffect(() => {
         if (gameState?.winner !== null && gameState?.winner !== undefined) {
-            const duration = 15 * 1000;
+            const duration = 5 * 1000; // Reduced from 15s for better performance
             const animationEnd = Date.now() + duration;
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
 
@@ -469,6 +469,76 @@ function GameRoomContent() {
                     }}
                 />
             )}
+
+            {/* Full-screen ambient decorations from theme */}
+            {theme.decorations.ambientElements?.map((element, i) => (
+                element.positions.map((pos, j) => (
+                    <div
+                        key={`ambient-${i}-${j}`}
+                        className="fixed text-4xl md:text-5xl lg:text-6xl pointer-events-none select-none z-10"
+                        style={{
+                            top: pos.top,
+                            left: pos.left,
+                            opacity: pos.opacity ?? 0.4,
+                            transform: `translate(-50%, -50%) ${pos.rotation ? `rotate(${pos.rotation}deg)` : ''}`,
+                            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
+                            animation: `float ${3 + (i % 3)}s ease-in-out infinite`,
+                            animationDelay: `${j * 0.5}s`,
+                        }}
+                    >
+                        {element.symbol}
+                    </div>
+                ))
+            ))}
+
+            {theme.decorations.sceneElements?.map((el, i) => (
+                <div
+                    key={`scene-${i}`}
+                    className="fixed pointer-events-none select-none z-10"
+                    style={{
+                        ...el.position,
+                        fontSize: el.size ?? '5rem',
+                        opacity: el.opacity ?? 0.5,
+                        transform: `rotate(${el.rotation ?? 0}deg)`,
+                        filter: 'drop-shadow(0 8px 20px rgba(0,0,0,0.5))',
+                        animation: el.float ? 'float 4s ease-in-out infinite' : undefined
+                    }}
+                >
+                    {el.symbol}
+                </div>
+            ))}
+
+
+            {theme.decorations.foregroundElements?.map((el, i) => (
+                <div
+                    key={`fg-${i}`}
+                    className="fixed pointer-events-none z-20"
+                    style={{
+                        bottom: el.position.bottom,
+                        left: el.position.left,
+                        right: el.position.right,
+                        opacity: el.opacity ?? 0.4,
+                        fontSize: '48px',
+                        width: '100%',
+                        textAlign: 'center',
+                    }}
+                >
+                    {el.symbol}
+                </div>
+            ))}
+
+
+
+            {/* Corner decorations - larger and fixed to screen corners */}
+            {theme.decorations.cornerSymbols && (
+                <>
+                    <div className="fixed top-24 left-4 text-3xl md:text-4xl pointer-events-none select-none z-10" style={{ color: theme.ui.accentColor, opacity: 0.6, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>{theme.decorations.cornerSymbols[0]}</div>
+                    <div className="fixed top-24 right-4 text-3xl md:text-4xl pointer-events-none select-none z-10" style={{ color: theme.ui.accentColor, opacity: 0.6, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>{theme.decorations.cornerSymbols[1]}</div>
+                    <div className="fixed bottom-4 left-4 text-3xl md:text-4xl pointer-events-none select-none z-10" style={{ color: theme.ui.accentColor, opacity: 0.6, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>{theme.decorations.cornerSymbols[2]}</div>
+                    <div className="fixed bottom-4 right-4 text-3xl md:text-4xl pointer-events-none select-none z-10" style={{ color: theme.ui.accentColor, opacity: 0.6, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>{theme.decorations.cornerSymbols[3]}</div>
+                </>
+            )}
+
             <Header />
 
             <main className="pt-24 pb-12 px-4 relative z-10">
