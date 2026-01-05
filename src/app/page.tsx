@@ -42,6 +42,15 @@ const GAMES: Game[] = [
         available: true,
         theme: 'bg-amber-500 text-white',
     },
+  {
+        id: 'poker',
+        title: 'Texas Hold\'em',
+        players: '2-6 Players',
+        image: '/games/poker.png',
+        href: '/games/poker',
+        available: true,
+        theme: 'bg-emerald-700 text-white',
+    },
     {
         id: 'chess',
         title: 'Chess',

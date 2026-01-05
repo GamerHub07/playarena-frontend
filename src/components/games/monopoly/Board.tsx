@@ -1,9 +1,21 @@
 'use client';
 
 import React from 'react';
-import { MonopolyGameState, PLAYER_TOKENS, BoardSquare } from '@/types/monopoly';
+import { MonopolyGameState, PLAYER_TOKENS, BoardSquare, PROPERTY_COLORS } from '@/types/monopoly';
 import { Player } from '@/types/game';
 import MonopolyToken from './MonopolyToken';
+import { 
+  GiMoneyStack, 
+  GiHandcuffs, 
+  GiCarWheel, 
+  GiPoliceBadge,
+  GiPerspectiveDiceSixFacesRandom,
+  GiTreasureMap,
+  GiSteamLocomotive,
+  GiLightBulb,
+  GiReceiveMoney
+} from 'react-icons/gi';
+import { FaHouseChimney, FaHotel } from 'react-icons/fa6';
 
 interface BoardProps {
   gameState: MonopolyGameState;
@@ -11,18 +23,86 @@ interface BoardProps {
   currentSessionId: string;
 }
 
-// Square type icons
-const SQUARE_ICONS: Record<string, string> = {
-  GO: '💰',
-  JAIL: '🔒',
-  FREE_PARKING: '🅿️',
-  GO_TO_JAIL: '👮',
-  CHANCE: '❓',
-  COMMUNITY_CHEST: '📦',
-  RAILROAD: '🚂',
-  UTILITY: '💡',
-  TAX: '💸',
+// 3D Icon wrapper component with gradient and shadow effects
+interface Icon3DProps {
+  icon: React.ReactNode;
+  bgGradient: string;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+function Icon3D({ icon, bgGradient, size = 'md' }: Icon3DProps) {
+  const sizeClasses = {
+    sm: 'w-6 h-6 text-sm',
+    md: 'w-8 h-8 text-lg',
+    lg: 'w-10 h-10 text-2xl',
+  };
+
+  return (
+    <div
+      className={`
+        ${sizeClasses[size]}
+        rounded-lg
+        flex items-center justify-center
+        text-white
+        shadow-lg
+        transform hover:scale-110 transition-transform
+      `}
+      style={{
+        background: bgGradient,
+        boxShadow: '0 4px 6px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.3)',
+      }}
+    >
+      {icon}
+    </div>
+  );
+}
+
+// Square type icons with 3D styling
+const SQUARE_ICON_CONFIGS: Record<string, { icon: React.ReactElement; gradient: string }> = {
+  GO: { 
+    icon: <GiMoneyStack />, 
+    gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
+  },
+  JAIL: { 
+    icon: <GiHandcuffs />, 
+    gradient: 'linear-gradient(135deg, #6b7280 0%, #374151 100%)' 
+  },
+  FREE_PARKING: { 
+    icon: <GiCarWheel />, 
+    gradient: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' 
+  },
+  GO_TO_JAIL: { 
+    icon: <GiPoliceBadge />, 
+    gradient: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)' 
+  },
+  CHANCE: { 
+    icon: <GiPerspectiveDiceSixFacesRandom />, 
+    gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' 
+  },
+  COMMUNITY_CHEST: { 
+    icon: <GiTreasureMap />, 
+    gradient: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)' 
+  },
+  RAILROAD: { 
+    icon: <GiSteamLocomotive />, 
+    gradient: 'linear-gradient(135deg, #1f2937 0%, #111827 100%)' 
+  },
+  UTILITY: { 
+    icon: <GiLightBulb />, 
+    gradient: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)' 
+  },
+  TAX: { 
+    icon: <GiReceiveMoney />, 
+    gradient: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)' 
+  },
 };
+
+// Render a 3D icon for a square type
+function renderSquareIcon(type: string, size: 'sm' | 'md' | 'lg' = 'md') {
+  const config = SQUARE_ICON_CONFIGS[type];
+  if (!config) return null;
+  return <Icon3D icon={config.icon} bgGradient={config.gradient} size={size} />;
+}
 
 export default function Board({ gameState, players }: BoardProps) {
   const board = gameState?.board;
@@ -55,7 +135,6 @@ export default function Board({ gameState, players }: BoardProps) {
   // Render a corner square (bigger, special styling)
   const renderCornerSquare = (square: BoardSquare, index: number) => {
     const playersHere = getPlayersAt(index);
-    const icon = SQUARE_ICONS[square.type] || '🏠';
 
     // Determine rotation based on corner position
     let rotation = '';
@@ -68,16 +147,23 @@ export default function Board({ gameState, players }: BoardProps) {
         key={square.id}
         className={`
           relative
-          bg-gradient-to-br from-[#e8e4d9] to-[#d4cfc0]
+          bg-gradient-to-br from-[#f5f0e6] via-[#e8e4d9] to-[#d4cfc0]
           border-2 border-[#1a472a]
           flex flex-col items-center justify-center
-          shadow-inner
+          shadow-[inset_0_2px_4px_rgba(255,255,255,0.5),inset_0_-2px_4px_rgba(0,0,0,0.1)]
           ${rotation}
         `}
       >
-        <div className={`text-center ${rotation ? `-${rotation}` : ''}`}>
-          <div className="text-3xl mb-1 drop-shadow-md">{icon}</div>
-          <div className="text-[10px] font-bold text-[#1a472a] uppercase tracking-wide px-1">
+        <div className={`text-center flex flex-col items-center ${rotation ? `-${rotation}` : ''}`}>
+          <div className="mb-2">{renderSquareIcon(square.type, 'lg')}</div>
+          <div 
+            className="text-[11px] font-black uppercase tracking-wider px-1"
+            style={{
+              color: '#1a472a',
+              textShadow: '1px 1px 0 rgba(255,255,255,0.8), -1px -1px 0 rgba(0,0,0,0.1), 2px 2px 2px rgba(0,0,0,0.15)',
+              letterSpacing: '0.05em',
+            }}
+          >
             {square.name}
           </div>
         </div>
@@ -86,7 +172,7 @@ export default function Board({ gameState, players }: BoardProps) {
         {playersHere.length > 0 && (
           <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 ${rotation ? `-${rotation}` : ''}`}>
             {playersHere.map(p => (
-              <MonopolyToken key={p.idx} playerIndex={p.idx} size={20} />
+              <MonopolyToken key={p.idx} playerIndex={p.idx} size={32} />
             ))}
           </div>
         )}
@@ -99,7 +185,6 @@ export default function Board({ gameState, players }: BoardProps) {
     const playersHere = getPlayersAt(index);
     const ownerIdx = getOwnerIndex(square.owner);
     const isProperty = square.type === 'PROPERTY';
-    const icon = SQUARE_ICONS[square.type];
 
     // Content rotation based on side
     const contentRotation = {
@@ -109,12 +194,12 @@ export default function Board({ gameState, players }: BoardProps) {
       right: '-rotate-90',
     }[orientation];
 
-    // Color bar position
+    // Color bar position - with increased size
     const colorBarPosition = {
-      top: 'bottom-0 left-0 right-0 h-[18px]',
-      bottom: 'top-0 left-0 right-0 h-[18px]',
-      left: 'top-0 bottom-0 right-0 w-[18px]',
-      right: 'top-0 bottom-0 left-0 w-[18px]',
+      top: 'bottom-0 left-0 right-0 h-[22px]',
+      bottom: 'top-0 left-0 right-0 h-[22px]',
+      left: 'top-0 bottom-0 right-0 w-[22px]',
+      right: 'top-0 bottom-0 left-0 w-[22px]',
     }[orientation];
 
     return (
@@ -122,22 +207,23 @@ export default function Board({ gameState, players }: BoardProps) {
         key={square.id}
         className="
           relative
-          bg-gradient-to-br from-[#e8e4d9] to-[#d4cfc0]
-          border border-[#1a472a]/60
+          bg-gradient-to-br from-[#f5f0e6] via-[#e8e4d9] to-[#d4cfc0]
+          border border-[#1a472a]/50
           flex flex-col items-center justify-center
           overflow-hidden
           group
           hover:z-10
-          transition-transform hover:scale-105
+          transition-transform
+          shadow-[inset_0_1px_2px_rgba(255,255,255,0.4),inset_0_-1px_2px_rgba(0,0,0,0.05)]
         "
       >
         {/* Property color bar */}
         {isProperty && square.color && (
           <div
-            className={`absolute ${colorBarPosition} shadow-inner`}
+            className={`absolute ${colorBarPosition} z-10`}
             style={{
-              backgroundColor: square.color,
-              boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.3)'
+              background: `linear-gradient(135deg, ${PROPERTY_COLORS[square.color] || square.color} 0%, ${PROPERTY_COLORS[square.color] || square.color}DD 50%, ${PROPERTY_COLORS[square.color] || square.color}BB 100%)`,
+              boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2)'
             }}
           >
             {/* Houses/Hotels display */}
@@ -145,11 +231,11 @@ export default function Board({ gameState, players }: BoardProps) {
               <div className="absolute inset-0 flex items-center justify-center gap-0.5">
                 {square.houses === 5 ? (
                   // Hotel
-                  <span className="text-[10px] drop-shadow-md" title="Hotel">🏨</span>
+                  <FaHotel className="text-[10px] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" title="Hotel" />
                 ) : (
                   // Houses (1-4)
                   Array.from({ length: square.houses ?? 0 }).map((_, i) => (
-                    <span key={i} className="text-[7px] drop-shadow-md" title={`House ${i + 1}`}>🏠</span>
+                    <FaHouseChimney key={i} className="text-[7px] text-green-100 drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" title={`House ${i + 1}`} />
                   ))
                 )}
               </div>
@@ -160,19 +246,30 @@ export default function Board({ gameState, players }: BoardProps) {
         {/* Main content */}
         <div className={`flex flex-col items-center justify-center p-1 ${contentRotation}`}>
           {/* Icon for non-properties */}
-          {icon && (
-            <div className="text-lg mb-0.5 drop-shadow-sm">{icon}</div>
-          )}
+          {renderSquareIcon(square.type, 'sm')}
 
           {/* Name */}
-          <div className="text-[8px] font-bold text-[#1a472a] text-center leading-tight uppercase tracking-wide">
+          <div 
+            className="text-[8px] font-black text-center leading-tight uppercase mt-0.5"
+            style={{
+              color: '#1a472a',
+              textShadow: '0.5px 0.5px 0 rgba(255,255,255,0.8), 1px 1px 1px rgba(0,0,0,0.1)',
+              letterSpacing: '0.03em',
+            }}
+          >
             {square.name}
           </div>
 
           {/* Price */}
           {(square.price || square.amount) && (
-            <div className="text-[9px] font-semibold text-[#2d5a3d] mt-0.5">
-              ${square.price || square.amount}
+            <div 
+              className="text-[9px] font-bold mt-0.5"
+              style={{
+                color: '#166534',
+                textShadow: '0.5px 0.5px 0 rgba(255,255,255,0.9), 1px 1px 1px rgba(0,0,0,0.1)',
+              }}
+            >
+              ₹{square.price || square.amount}
             </div>
           )}
         </div>
@@ -194,7 +291,7 @@ export default function Board({ gameState, players }: BoardProps) {
         {playersHere.length > 0 && (
           <div className={`absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5 ${contentRotation}`}>
             {playersHere.map(p => (
-              <MonopolyToken key={p.idx} playerIndex={p.idx} size={18} />
+              <MonopolyToken key={p.idx} playerIndex={p.idx} size={28} />
             ))}
           </div>
         )}
@@ -272,52 +369,119 @@ export default function Board({ gameState, players }: BoardProps) {
                 <div
                   className="
                     col-span-9 row-span-9
-                    bg-gradient-to-br from-[#c8e6c9] via-[#a5d6a7] to-[#81c784]
+                    bg-gradient-to-br from-[#d4edda] via-[#b8e0c0] to-[#9ed4a8]
                     flex flex-col items-center justify-center
                     relative
                     overflow-hidden
                   "
+                  style={{
+                    boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.15), inset 0 -4px 20px rgba(255,255,255,0.3)'
+                  }}
                 >
                   {/* Decorative pattern */}
                   <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-4 left-4 w-24 h-24 border-4 border-[#1a472a] rounded-full" />
-                    <div className="absolute bottom-4 right-4 w-24 h-24 border-4 border-[#1a472a] rounded-full" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-4 border-[#1a472a] rotate-45" />
+                    <div className="absolute top-6 left-6 w-28 h-28 border-4 border-[#1a472a] rounded-full" />
+                    <div className="absolute bottom-6 right-6 w-28 h-28 border-4 border-[#1a472a] rounded-full" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 border-4 border-[#1a472a] rotate-45" />
                   </div>
 
                   {/* Main content */}
                   <div className="text-center relative z-10">
-                    <div className="text-7xl mb-4 drop-shadow-lg animate-pulse">🏦</div>
+                    {/* Bank icon with 3D effect */}
+                    <div 
+                      className="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                      style={{
+                        background: 'linear-gradient(135deg, #1a472a 0%, #0d2818 100%)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      <GiMoneyStack className="text-5xl text-[#c4a35a]" />
+                    </div>
+                    
+                    {/* 3D Title */}
                     <h1
-                      className="text-4xl font-black tracking-[0.3em] text-[#1a472a] drop-shadow-md"
-                      style={{ fontFamily: "'Times New Roman', serif" }}
+                      className="text-5xl font-black tracking-[0.2em] mb-2"
+                      style={{ 
+                        fontFamily: "'Times New Roman', serif",
+                        color: '#1a472a',
+                        textShadow: `
+                          2px 2px 0 #c4a35a,
+                          4px 4px 0 rgba(0,0,0,0.2),
+                          6px 6px 10px rgba(0,0,0,0.3)
+                        `,
+                      }}
                     >
                       MONOPOLY
                     </h1>
-                    <div className="w-48 h-1 bg-gradient-to-r from-transparent via-[#1a472a] to-transparent mx-auto my-3" />
-                    <p className="text-sm text-[#2d5a3d] font-semibold tracking-widest uppercase">
+                    
+                    {/* Decorative divider */}
+                    <div className="flex items-center justify-center gap-2 my-3">
+                      <div className="w-16 h-0.5 bg-gradient-to-r from-transparent to-[#c4a35a]" />
+                      <div className="w-3 h-3 rotate-45 bg-[#c4a35a]" />
+                      <div className="w-16 h-0.5 bg-gradient-to-l from-transparent to-[#c4a35a]" />
+                    </div>
+                    
+                    <p 
+                      className="text-sm font-bold tracking-[0.3em] uppercase"
+                      style={{
+                        color: '#2d5a3d',
+                        textShadow: '1px 1px 0 rgba(255,255,255,0.8), 2px 2px 3px rgba(0,0,0,0.15)',
+                      }}
+                    >
                       PlayArena Edition
                     </p>
 
-                    {/* Dice display */}
+                    {/* Dice display with 3D effect */}
                     {gameState.dice && (
-                      <div className="mt-6 flex justify-center gap-3">
-                        <div className="w-12 h-12 bg-white rounded-lg shadow-lg flex items-center justify-center text-2xl font-bold text-[#1a472a] border-2 border-[#1a472a]">
+                      <div className="mt-6 flex justify-center gap-4">
+                        <div 
+                          className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-black"
+                          style={{
+                            background: 'linear-gradient(135deg, #ffffff 0%, #e5e5e5 100%)',
+                            color: '#1a472a',
+                            boxShadow: '0 6px 15px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,1), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                            border: '3px solid #1a472a',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
+                          }}
+                        >
                           {gameState.dice[0]}
                         </div>
-                        <div className="w-12 h-12 bg-white rounded-lg shadow-lg flex items-center justify-center text-2xl font-bold text-[#1a472a] border-2 border-[#1a472a]">
+                        <div 
+                          className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-black"
+                          style={{
+                            background: 'linear-gradient(135deg, #ffffff 0%, #e5e5e5 100%)',
+                            color: '#1a472a',
+                            boxShadow: '0 6px 15px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,1), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                            border: '3px solid #1a472a',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
+                          }}
+                        >
                           {gameState.dice[1]}
                         </div>
                       </div>
                     )}
 
-                    {/* Cards display area */}
-                    <div className="mt-4 flex justify-center gap-4">
-                      <div className="w-16 h-20 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg shadow-md flex items-center justify-center border-2 border-white">
-                        <span className="text-white text-2xl">❓</span>
+                    {/* Cards display area with 3D effect */}
+                    <div className="mt-5 flex justify-center gap-5">
+                      <div 
+                        className="w-16 h-22 rounded-xl flex items-center justify-center"
+                        style={{
+                          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                          boxShadow: '0 6px 15px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
+                          border: '2px solid rgba(255,255,255,0.5)',
+                        }}
+                      >
+                        <GiPerspectiveDiceSixFacesRandom className="text-3xl text-white drop-shadow-lg" />
                       </div>
-                      <div className="w-16 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg shadow-md flex items-center justify-center border-2 border-white">
-                        <span className="text-white text-2xl">📦</span>
+                      <div 
+                        className="w-16 h-22 rounded-xl flex items-center justify-center"
+                        style={{
+                          background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                          boxShadow: '0 6px 15px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.2)',
+                          border: '2px solid rgba(255,255,255,0.5)',
+                        }}
+                      >
+                        <GiTreasureMap className="text-3xl text-white drop-shadow-lg" />
                       </div>
                     </div>
                   </div>

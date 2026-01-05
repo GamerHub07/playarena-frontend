@@ -1,6 +1,6 @@
 // Monopoly-specific Types
 
-export type TurnPhase = 'ROLL' | 'RESOLVE' | 'DECISION' | 'END_TURN' | 'DEBT';
+export type TurnPhase = 'ROLL' | 'RESOLVE' | 'DECISION' | 'END_TURN' | 'DEBT' | 'JAIL';
 
 export interface MonopolyPlayerState {
     sessionId: string;
@@ -53,7 +53,7 @@ export const PLAYER_TOKENS: Record<number, { name: string; color: string; emoji:
     5: { name: 'Iron', color: '#0891b2', emoji: '🔧' },
 };
 
-// Property color groups
+// Property color groups - hex values for display
 export const PROPERTY_COLORS: Record<string, string> = {
     brown: '#8B4513',
     lightBlue: '#87CEEB',
