@@ -51,6 +51,15 @@ const GAMES: Game[] = [
         available: false,
         theme: 'bg-gray-800 text-white',
     },
+    {
+        id: 'poker',
+        title: 'Poker',
+        players: '2-6 Players',
+        image: '/games/poker.png',
+        href: '/games/poker',
+        available: true,
+        theme: 'bg-red-500 text-white',
+    }
 ];
 
 export default function HomePage() {
