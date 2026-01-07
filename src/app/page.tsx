@@ -57,7 +57,7 @@ const GAMES: Game[] = [
         players: '2-6 Players',
         image: '/games/poker.png',
         href: '/games/poker',
-        available: true,
+        available: false,
         theme: 'bg-red-500 text-white',
     }
 ];
