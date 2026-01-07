@@ -26,12 +26,20 @@ export default function WaitingRoom({
 }: WaitingRoomProps) {
     const { theme } = useLudoTheme();
     const [copied, setCopied] = useState(false);
+    const [linkCopied, setLinkCopied] = useState(false);
     const canStart = players.length >= minPlayers;
 
     const copyCode = () => {
         navigator.clipboard.writeText(roomCode);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const copyLink = () => {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url);
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
     };
 
     // Get player colors from theme
@@ -104,6 +112,50 @@ export default function WaitingRoom({
                         }}
                     >
                         {copied ? '✓ Copied!' : 'Click to copy'}
+                    </p>
+                </div>
+
+                {/* Share Link Button */}
+                <div className="mb-8">
+                    <button
+                        onClick={copyLink}
+                        className="w-full py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 group"
+                        style={{
+                            border: `2px dashed ${linkCopied ? theme.playerColors.green.bg : theme.ui.cardBorder}`,
+                            backgroundColor: linkCopied ? `${theme.playerColors.green.bg}20` : 'transparent'
+                        }}
+                    >
+                        {linkCopied ? (
+                            <>
+                                <svg className="w-5 h-5" style={{ color: theme.playerColors.green.bg }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span style={{ color: theme.playerColors.green.bg, fontFamily: theme.effects.fontFamily }} className="font-medium">
+                                    Link copied! Send it to your friends
+                                </span>
+                            </>
+                        ) : (
+                            <>
+                                <svg
+                                    className="w-5 h-5 transition-colors"
+                                    style={{ color: theme.ui.textSecondary }}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                                <span style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }} className="group-hover:text-white transition-colors">
+                                    Share invite link
+                                </span>
+                            </>
+                        )}
+                    </button>
+                    <p
+                        className="text-xs text-center mt-2"
+                        style={{ color: theme.ui.textMuted, fontFamily: theme.effects.fontFamily }}
+                    >
+                        Friends can join directly by opening the link
                     </p>
                 </div>
 
