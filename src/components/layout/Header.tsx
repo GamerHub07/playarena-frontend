@@ -3,90 +3,65 @@
 import Link from 'next/link';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { useGuest } from '@/hooks/useGuest';
-import { useTheme } from '@/hooks/useTheme';
-import { useState, useEffect } from 'react';
+import { Logo } from '@/components/ui/Logo';
 
 export default function Header() {
     const { guest, logout } = useGuest();
-    const { theme, toggleTheme } = useTheme();
-    const [scrolled, setScrolled] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 10);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
     return (
-        <header
-            className={`
-        fixed top-0 left-0 right-0 z-50 px-4 py-3 transition-all duration-300
-        ${scrolled ? 'pt-2' : 'pt-4'}
-      `}
-        >
-            <nav
-                className={`
-          max-w-7xl mx-auto rounded-2xl px-6 py-3 flex items-center justify-between transition-all duration-300
-          ${scrolled
-                        ? 'bg-[var(--surface)] shadow-md border border-[var(--border)]'
-                        : 'bg-transparent'
-                    }
-        `}
-            >
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-2 group">
-                    <div className="w-10 h-10 bg-[var(--dark)] rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                        <span className="text-white font-bold text-xl">P</span>
-                    </div>
-                    <span className={`text-xl font-bold transition-colors ${scrolled ? 'text-[var(--dark)]' : 'text-[var(--dark)]'}`}>
-                        PlayArena
-                    </span>
-                </Link>
-
-                {/* Right Side */}
-                <div className="flex items-center gap-3">
-                    {/* Theme Toggle */}
-                    <ThemeToggle />
-
-                    {/* User Section */}
-                    {guest ? (
-                        <div className="flex items-center gap-2">
-                            <div className={`
-                px-4 py-2 rounded-xl font-medium border
-                ${scrolled
-                                    ? 'bg-[var(--surface-alt)] border-[var(--border)] text-[var(--text)]'
-                                    : 'bg-[var(--surface)] border-[var(--border)] text-[var(--dark)] shadow-sm'
-                                }
-              `}>
-                                {guest.username}
-                            </div>
-                            <button
-                                onClick={logout}
-                                className={`
-                  p-2.5 rounded-xl border hover:bg-red-50 hover:border-red-100 hover:text-red-500 transition-colors
-                  ${scrolled
-                                        ? 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)]'
-                                        : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text-muted)] shadow-sm'
-                                    }
-                `}
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                            </button>
-                        </div>
-                    ) : (
-                        <Link
-                            href="/games/ludo"
-                            className="px-6 py-2.5 bg-[var(--primary)] text-white font-bold rounded-xl hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/20"
-                        >
-                            Play Now
+        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex h-16 items-center justify-between">
+                    {/* Logo Section */}
+                    <div className="flex items-center gap-2">
+                        <Link href="/" className="transition-opacity hover:opacity-90">
+                            <Logo />
                         </Link>
-                    )}
+                    </div>
+
+                    {/* Right Section */}
+                    <div className="flex items-center gap-4">
+                        <ThemeToggle />
+
+                        <div className="h-6 w-px bg-border" aria-hidden="true" />
+
+                        {guest ? (
+                            <div className="flex items-center gap-3">
+                                <div className="hidden md:flex flex-col items-end">
+                                    <span className="text-sm font-medium text-foreground">
+                                        {guest.username}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                                        Guest
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={logout}
+                                    className="group relative flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface hover:bg-red-50 hover:border-red-200 hover:text-red-500 dark:hover:bg-red-950/20 dark:hover:border-red-900 transition-all"
+                                    title="Logout"
+                                >
+                                    <svg
+                                        className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth={2}
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                </button>
+                            </div>
+                        ) : (
+                            <Link
+                                href="/games/ludo"
+                                className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-white shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            >
+                                Play Now
+                            </Link>
+                        )}
+                    </div>
                 </div>
-            </nav>
-        </header >
+            </div>
+        </header>
     );
 }

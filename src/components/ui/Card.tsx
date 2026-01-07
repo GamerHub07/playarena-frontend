@@ -14,7 +14,7 @@ export default function Card({ children, className = '', style, hover = false, o
             onClick={onClick}
             className={`
         bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-sm
-        ${hover ? 'cursor-pointer transition-all duration-200 hover:border-[var(--primary)] hover:shadow-lg hover:shadow-[var(--primary)]/10' : ''}
+        ${hover ? 'cursor-pointer transition-all duration-200 hover:border-[var(--primary)] hover:shadow-lg hover:shadow-[var(--primary)]/10 dark:hover:shadow-[var(--primary)]/5' : ''}
         ${onClick ? 'cursor-pointer' : ''}
         ${className}
       `}
