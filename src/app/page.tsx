@@ -59,13 +59,8 @@ const GAMES: Game[] = [
         players: '2-6 Players',
         image: '/games/poker.png',
         href: '/games/poker',
-<<<<<<< HEAD
-        available: false,
-        theme: 'bg-red-500 text-white',
-=======
         available: true,
         description: 'Bluff, bet, and win big in the world\'s most popular card game.',
->>>>>>> 717566e (redesign the ladning page with video)
     }
 ];
 
