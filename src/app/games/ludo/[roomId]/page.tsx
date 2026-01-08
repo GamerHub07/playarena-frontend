@@ -9,6 +9,9 @@ import Board from '@/components/games/ludo/Board';
 import Dice from '@/components/games/ludo/Dice';
 import ThemeSelector from '@/components/games/ludo/ThemeSelector';
 import Card from '@/components/ui/Card';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
 import { useGuest } from '@/hooks/useGuest';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
@@ -37,7 +40,7 @@ function GameRoomContent() {
     const router = useRouter();
     const roomCode = (params.roomId as string).toUpperCase();
 
-    const { guest, loading: guestLoading } = useGuest();
+    const { guest, loading: guestLoading, login } = useGuest();
     const { isConnected, emit, on } = useSocket();
 
     const [room, setRoom] = useState<Room | null>(null);
@@ -47,6 +50,12 @@ function GameRoomContent() {
     const [error, setError] = useState('');
     const [rolling, setRolling] = useState(false);
     const [selectableTokens, setSelectableTokens] = useState<number[]>([]);
+
+    // Join modal state for users joining via link without a session
+    const [showJoinModal, setShowJoinModal] = useState(false);
+    const [joinUsername, setJoinUsername] = useState('');
+    const [joinError, setJoinError] = useState('');
+    const [joining, setJoining] = useState(false);
 
     // Animation state
     const [displayedPlayers, setDisplayedPlayers] = useState<Record<number, PlayerState> | null>(null);
@@ -129,14 +138,9 @@ function GameRoomContent() {
     const isHost = currentPlayer?.isHost || false;
     const myPlayerIndex = players.findIndex(p => p.sessionId === guest?.sessionId);
 
-    // Fetch room data
+    // Fetch room data and handle join flow
     useEffect(() => {
         if (guestLoading) return;
-
-        if (!guest) {
-            router.push('/games/ludo');
-            return;
-        }
 
         const fetchRoom = async () => {
             try {
@@ -144,6 +148,11 @@ function GameRoomContent() {
                 if (res.success && res.data) {
                     setRoom(res.data);
                     setPlayers(res.data.players);
+
+                    // If user has no session, show join modal (they came via shared link)
+                    if (!guest) {
+                        setShowJoinModal(true);
+                    }
                 } else {
                     setError('Room not found');
                 }
@@ -154,7 +163,7 @@ function GameRoomContent() {
         };
 
         fetchRoom();
-    }, [roomCode, guest, guestLoading, router]);
+    }, [roomCode, guest, guestLoading]);
 
     // Keep players ref in sync
     const playersRef = useRef(players);
@@ -414,6 +423,41 @@ function GameRoomContent() {
         emit('room:theme', { themeId });
     }, [emit]);
 
+    // Handle join via shared link (creates session and joins room)
+    const handleJoinViaLink = async () => {
+        if (!joinUsername.trim() || joinUsername.length < 2) {
+            setJoinError('Username must be at least 2 characters');
+            return;
+        }
+
+        setJoining(true);
+        setJoinError('');
+
+        try {
+            // Create guest session
+            const guestResult = await login(joinUsername.trim());
+            if (!guestResult) {
+                setJoinError('Failed to create session');
+                setJoining(false);
+                return;
+            }
+
+            // Join the room
+            const joinRes = await roomApi.join(roomCode, guestResult.sessionId);
+            if (joinRes.success && joinRes.data) {
+                setRoom(joinRes.data);
+                setPlayers(joinRes.data.players);
+                setShowJoinModal(false);
+            } else {
+                setJoinError(joinRes.message || 'Failed to join room');
+            }
+        } catch (err) {
+            setJoinError('Failed to join room');
+        }
+
+        setJoining(false);
+    };
+
     // Get theme colors
     const getPlayerColor = (playerIndex: number) => {
         const colorMap: Record<number, keyof typeof theme.playerColors> = {
@@ -598,6 +642,33 @@ function GameRoomContent() {
                         onStart={handleStartGame}
                         onLeave={handleLeaveRoom}
                     />
+                )}
+
+                {/* Reconnecting State - shown when game is in progress but state not yet received */}
+                {(isPlaying || isFinished) && !gameState && (
+                    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                        <Card
+                            className="p-8 text-center"
+                            style={{ backgroundColor: theme.ui.cardBackground, border: `2px solid ${theme.ui.cardBorder}` }}
+                        >
+                            <div
+                                className="animate-spin w-12 h-12 border-4 border-t-transparent rounded-full mx-auto mb-4"
+                                style={{ borderColor: theme.ui.accentColor, borderTopColor: 'transparent' }}
+                            />
+                            <p
+                                className="text-lg font-semibold"
+                                style={{ color: theme.ui.textPrimary, fontFamily: theme.effects.fontFamily }}
+                            >
+                                Reconnecting to game...
+                            </p>
+                            <p
+                                className="text-sm mt-2"
+                                style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
+                            >
+                                Please wait while we restore your game session
+                            </p>
+                        </Card>
+                    </div>
                 )}
 
                 {/* Game Board */}
@@ -794,6 +865,34 @@ function GameRoomContent() {
                     </div>
                 )}
             </main>
+
+            {/* Join Modal - for users accessing via shared link */}
+            <Modal
+                isOpen={showJoinModal}
+                onClose={() => {
+                    // If they close without joining, redirect to ludo page
+                    router.push('/games/ludo');
+                }}
+                title="Join Game"
+                size="sm"
+            >
+                <div className="space-y-4">
+                    <p className="text-[var(--text-muted)] text-sm">
+                        Enter your name to join room <span className="font-mono font-bold text-[var(--primary)]">{roomCode}</span>
+                    </p>
+                    <Input
+                        placeholder="Your username"
+                        value={joinUsername}
+                        onChange={(e) => setJoinUsername(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleJoinViaLink()}
+                        error={joinError}
+                        autoFocus
+                    />
+                    <Button onClick={handleJoinViaLink} loading={joining} className="w-full">
+                        Join Game
+                    </Button>
+                </div>
+            </Modal>
         </div>
     );
 }

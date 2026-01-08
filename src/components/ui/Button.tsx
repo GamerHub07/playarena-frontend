@@ -13,10 +13,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--background)] disabled:opacity-50 disabled:cursor-not-allowed';
 
         const variants = {
-            primary: 'bg-[var(--primary)] text-white hover:bg-blue-600 focus:ring-[var(--primary)]',
-            secondary: 'bg-[var(--surface-alt)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--surface)] focus:ring-[var(--primary)]',
+            primary: 'bg-[var(--primary)] text-white hover:brightness-90 focus:ring-[var(--primary)]',
+            secondary: 'bg-[var(--surface-alt)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--surface-alt)]/80 focus:ring-[var(--primary)]',
             outline: 'bg-transparent text-[var(--text)] border border-[var(--border)] hover:bg-[var(--surface-alt)] focus:ring-[var(--primary)]',
-            ghost: 'bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-alt)] focus:ring-[var(--primary)]',
+            ghost: 'bg-transparent text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-alt)]/50 focus:ring-[var(--primary)]',
         };
 
         const sizes = {

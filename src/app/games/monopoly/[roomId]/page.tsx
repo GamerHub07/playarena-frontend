@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
 import { useGuest } from '@/hooks/useGuest';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
@@ -24,7 +26,7 @@ export default function MonopolyGameRoom() {
     const router = useRouter();
     const roomCode = (params.roomId as string).toUpperCase();
 
-    const { guest, loading: guestLoading } = useGuest();
+    const { guest, loading: guestLoading, login } = useGuest();
     const { isConnected, emit, on } = useSocket();
 
     const [room, setRoom] = useState<Room | null>(null);
@@ -38,18 +40,19 @@ export default function MonopolyGameRoom() {
     const logIdRef = useRef(0);
     const prevStateRef = useRef<MonopolyGameState | null>(null);
 
+    // Join modal state for users joining via link without a session
+    const [showJoinModal, setShowJoinModal] = useState(false);
+    const [joinUsername, setJoinUsername] = useState('');
+    const [joinError, setJoinError] = useState('');
+    const [joining, setJoining] = useState(false);
+
     const currentPlayer = players.find(p => p.sessionId === guest?.sessionId);
     const isHost = currentPlayer?.isHost || false;
     const myPlayerIndex = players.findIndex(p => p.sessionId === guest?.sessionId);
 
-    // Fetch room data
+    // Fetch room data and handle join flow
     useEffect(() => {
         if (guestLoading) return;
-
-        if (!guest) {
-            router.push('/games/monopoly');
-            return;
-        }
 
         const fetchRoom = async () => {
             try {
@@ -57,6 +60,11 @@ export default function MonopolyGameRoom() {
                 if (res.success && res.data) {
                     setRoom(res.data);
                     setPlayers(res.data.players);
+
+                    // If user has no session, show join modal (they came via shared link)
+                    if (!guest) {
+                        setShowJoinModal(true);
+                    }
                 } else {
                     setError('Room not found');
                 }
@@ -67,7 +75,7 @@ export default function MonopolyGameRoom() {
         };
 
         fetchRoom();
-    }, [roomCode, guest, guestLoading, router]);
+    }, [roomCode, guest, guestLoading]);
 
     // Socket listeners
     useEffect(() => {
@@ -275,6 +283,41 @@ export default function MonopolyGameRoom() {
         emit('game:action', { roomCode, action: 'BUILD_HOTEL', data: { propertyId } });
     }, [emit, roomCode]);
 
+    // Handle join via shared link (creates session and joins room)
+    const handleJoinViaLink = async () => {
+        if (!joinUsername.trim() || joinUsername.length < 2) {
+            setJoinError('Username must be at least 2 characters');
+            return;
+        }
+
+        setJoining(true);
+        setJoinError('');
+
+        try {
+            // Create guest session
+            const guestResult = await login(joinUsername.trim());
+            if (!guestResult) {
+                setJoinError('Failed to create session');
+                setJoining(false);
+                return;
+            }
+
+            // Join the room
+            const joinRes = await roomApi.join(roomCode, guestResult.sessionId);
+            if (joinRes.success && joinRes.data) {
+                setRoom(joinRes.data);
+                setPlayers(joinRes.data.players);
+                setShowJoinModal(false);
+            } else {
+                setJoinError(joinRes.message || 'Failed to join room');
+            }
+        } catch (err) {
+            setJoinError('Failed to join room');
+        }
+
+        setJoining(false);
+    };
+
     // Get current turn player
     const getCurrentTurnPlayer = () => {
         if (!gameState) return null;
@@ -355,6 +398,21 @@ export default function MonopolyGameRoom() {
                         accentColor="#16a34a"
                         playerEmojis={Object.values(PLAYER_TOKENS).map(t => t.emoji)}
                     />
+                )}
+
+                {/* Reconnecting State - shown when game is in progress but state not yet received */}
+                {(isPlaying || isFinished) && !gameState && (
+                    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                        <Card className="p-8 text-center">
+                            <div className="animate-spin w-12 h-12 border-4 border-[#16a34a] border-t-transparent rounded-full mx-auto mb-4" />
+                            <p className="text-lg font-semibold text-white">
+                                Reconnecting to game...
+                            </p>
+                            <p className="text-sm mt-2 text-[#888]">
+                                Please wait while we restore your game session
+                            </p>
+                        </Card>
+                    </div>
                 )}
 
                 {/* Game Board */}
@@ -485,6 +543,33 @@ export default function MonopolyGameRoom() {
                     </div>
                 )}
             </main>
+
+            {/* Join Modal - for users accessing via shared link */}
+            <Modal
+                isOpen={showJoinModal}
+                onClose={() => {
+                    router.push('/games/monopoly');
+                }}
+                title="Join Game"
+                size="sm"
+            >
+                <div className="space-y-4">
+                    <p className="text-[var(--text-muted)] text-sm">
+                        Enter your name to join room <span className="font-mono font-bold text-[#16a34a]">{roomCode}</span>
+                    </p>
+                    <Input
+                        placeholder="Your username"
+                        value={joinUsername}
+                        onChange={(e) => setJoinUsername(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleJoinViaLink()}
+                        error={joinError}
+                        autoFocus
+                    />
+                    <Button onClick={handleJoinViaLink} loading={joining} className="w-full">
+                        Join Game
+                    </Button>
+                </div>
+            </Modal>
         </div>
     );
 }
