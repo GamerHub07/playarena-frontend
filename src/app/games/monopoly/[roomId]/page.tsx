@@ -229,12 +229,22 @@ export default function MonopolyGameRoom() {
                 return;
             }
 
-            // Join the room
+            // Join the room via HTTP API
             const joinRes = await roomApi.join(roomCode, guestResult.sessionId);
             if (joinRes.success && joinRes.data) {
                 setRoom(joinRes.data);
                 setPlayers(joinRes.data.players);
                 setShowJoinModal(false);
+                
+                // Explicitly emit socket join to ensure real-time connection
+                // This is needed because the useEffect may not trigger due to state timing
+                if (isConnected) {
+                    emit('room:join', {
+                        roomCode,
+                        sessionId: guestResult.sessionId,
+                        username: guestResult.username,
+                    });
+                }
             } else {
                 setJoinError(joinRes.message || 'Failed to join room');
             }

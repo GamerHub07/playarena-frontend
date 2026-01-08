@@ -55,7 +55,7 @@ export default function PlayerPanel({
             `}
         >
             {/* Header */}
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3">
                 <MonopolyToken playerIndex={playerIndex} size={28} />
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -72,12 +72,9 @@ export default function PlayerPanel({
                 {isCurrentTurn && (
                     <div className="w-3 h-3 rounded-full bg-[#16a34a] animate-pulse" />
                 )}
-            </div>
-
-            {/* Cash */}
-            <div className="flex items-center justify-between py-2 px-3 bg-[#2a2a2a] rounded-lg mb-2">
-                <span className="text-xs text-[#888]">Cash</span>
-                <span className="text-lg font-bold text-[#16a34a]">₹{playerState.cash}</span>
+                <div className="flex items-center justify-between py-2 px-3 bg-[#2a2a2a] rounded-lg mb-2">
+                    <span className="text-lg font-bold text-[#16a34a]">₹{playerState.cash}</span>
+                </div>
             </div>
 
             {/* Properties Dropdown */}
@@ -124,11 +121,6 @@ export default function PlayerPanel({
                         ))}
                     </div>
                 )}
-            </div>
-
-            {/* Position */}
-            <div className="mt-2 text-center text-xs text-[#666]">
-                Position: {playerState.position}
             </div>
         </div>
     );
