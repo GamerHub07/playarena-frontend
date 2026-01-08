@@ -147,7 +147,8 @@ export default function ChessPage() {
                             <Button
                                 onClick={() => handleCreateRoom()}
                                 loading={isLoading && pendingAction === 'create'}
-                                className="w-full bg-white text-gray-900 hover:bg-gray-200"
+                                className="w-full"
+                                style={{ backgroundColor: '#ffffff', color: '#111827' }}
                             >
                                 Create Room
                             </Button>
@@ -160,9 +161,10 @@ export default function ChessPage() {
                             <h2 className="text-xl font-semibold text-white mb-2">Join Room</h2>
                             <p className="text-sm text-gray-400 mb-6">Enter a room code to join an existing game</p>
                             <Button
-                                variant="secondary"
+                                variant="outline"
                                 onClick={openJoinModal}
-                                className="w-full border-gray-600 text-white hover:bg-gray-700"
+                                className="w-full"
+                                style={{ backgroundColor: '#1f2937', color: '#ffffff', borderColor: '#4b5563' }}
                             >
                                 Join Room
                             </Button>
