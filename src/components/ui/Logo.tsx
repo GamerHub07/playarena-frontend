@@ -39,7 +39,7 @@ export const Logo = () => {
                         stroke="currentColor"
                         strokeWidth="3"
                         strokeLinecap="round"
-                        className="text-foreground/90"
+                        className="opacity-90"
                     />
 
                     {/* Center Diamond / Spark */}
@@ -56,16 +56,16 @@ export const Logo = () => {
             </div>
 
             {/* Wordmark */}
-            <div className="flex flex-col justify-center">
+            <div className="flex flex-col justify-center text-inherit">
                 <div className="grid h-6 items-center overflow-hidden">
-                    <span className="col-start-1 row-start-1 text-xl font-bold tracking-tight text-foreground transition-transform duration-300 group-hover:-translate-y-6">
+                    <span className="col-start-1 row-start-1 text-xl font-bold tracking-tight transition-transform duration-300 group-hover:-translate-y-6">
                         Versus
                     </span>
                     <span className="col-start-1 row-start-1 text-xl font-bold tracking-tight text-primary transition-transform duration-300 translate-y-6 group-hover:translate-y-0">
                         Play
                     </span>
                 </div>
-                <span className="text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground group-hover:text-primary transition-colors duration-300">
+                <span className="text-[10px] font-semibold tracking-[0.2em] uppercase opacity-60 group-hover:text-primary group-hover:opacity-100 transition-all duration-300">
                     Arena
                 </span>
             </div>

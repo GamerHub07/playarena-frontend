@@ -1,19 +1,46 @@
 'use client';
 
 import Link from 'next/link';
-import { ThemeToggle } from '../ui/ThemeToggle';
+import { usePathname } from 'next/navigation';
 import { useGuest } from '@/hooks/useGuest';
 import { Logo } from '@/components/ui/Logo';
+import { useEffect, useState } from 'react';
 
 export default function Header() {
     const { guest, logout } = useGuest();
+    const pathname = usePathname();
+    const isHome = pathname === '/';
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            // Increase threshold to 50 for a more "hero focused" initial state
+            setScrolled(window.scrollY > 50);
+        };
+        // Check on mount (in case user reloads halfway down)
+        handleScroll();
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // "Spawn" effect logic:
+    // Initial: Fixed, Transparent, Larger Padding, No Border (Blends with Hero)
+    // Scrolled: Fixed, Glassy Background, Smaller Padding, Border (Spawns as a Bar)
+
+    // We only use the transparent blend logic on the Home page.
+    const isTransparent = isHome && !scrolled;
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+        <header
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${isTransparent
+                    ? 'bg-transparent border-transparent py-6 translate-y-0'
+                    : 'bg-background/80 backdrop-blur-xl border-b border-border/40 py-3 shadow-md supports-[backdrop-filter]:bg-background/60'
+                }`}
+        >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex h-16 items-center justify-between">
+                <div className="flex items-center justify-between">
                     {/* Logo Section */}
-                    <div className="flex items-center gap-2">
+                    <div className={`flex items-center gap-2 transition-colors duration-300 ${isTransparent ? 'text-white' : 'text-foreground'}`}>
                         <Link href="/" className="transition-opacity hover:opacity-90">
                             <Logo />
                         </Link>
@@ -21,23 +48,24 @@ export default function Header() {
 
                     {/* Right Section */}
                     <div className="flex items-center gap-4">
-                        <ThemeToggle />
-
-                        <div className="h-6 w-px bg-border" aria-hidden="true" />
+                        <div className={`h-6 w-px transition-colors duration-300 ${isTransparent ? 'bg-white/20' : 'bg-border'}`} aria-hidden="true" />
 
                         {guest ? (
                             <div className="flex items-center gap-3">
                                 <div className="hidden md:flex flex-col items-end">
-                                    <span className="text-sm font-medium text-foreground">
+                                    <span className={`text-sm font-medium transition-colors duration-300 ${isTransparent ? 'text-white' : 'text-foreground'}`}>
                                         {guest.username}
                                     </span>
-                                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                                    <span className={`text-[10px] uppercase tracking-wider font-bold transition-colors duration-300 ${isTransparent ? 'text-white/60' : 'text-muted-foreground'}`}>
                                         Guest
                                     </span>
                                 </div>
                                 <button
                                     onClick={logout}
-                                    className="group relative flex h-9 w-9 items-center justify-center rounded-full border border-border bg-surface hover:bg-red-50 hover:border-red-200 hover:text-red-500 dark:hover:bg-red-950/20 dark:hover:border-red-900 transition-all"
+                                    className={`group relative flex h-9 w-9 items-center justify-center rounded-full border transition-all duration-300 ${isTransparent
+                                        ? 'border-white/20 bg-white/10 hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400 text-white'
+                                        : 'border-border bg-surface hover:bg-red-50 hover:border-red-200 hover:text-red-500 dark:hover:bg-red-950/20 dark:hover:border-red-900 text-foreground'
+                                        }`}
                                     title="Logout"
                                 >
                                     <svg

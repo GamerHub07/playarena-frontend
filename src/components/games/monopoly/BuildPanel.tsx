@@ -2,6 +2,8 @@
 
 import { BoardSquare, MonopolyGameState } from '@/types/monopoly';
 import Button from '@/components/ui/Button';
+import { GiHouse, GiCrane, GiLightBulb } from 'react-icons/gi';
+import { FaHotel } from 'react-icons/fa';
 
 interface BuildPanelProps {
   gameState: MonopolyGameState;
@@ -29,10 +31,10 @@ const COLOR_NAMES: Record<string, string> = {
   lightBlue: '#87CEEB',
   pink: '#FF69B4',
   orange: '#FFA500',
-  red: '#FF0000',
-  yellow: '#FFFF00',
-  green: '#008000',
-  blue: '#0000FF',
+  red: '#ff6868ff',
+  yellow: '#f3ff9aff',
+  green: '#47c447ff',
+  blue: '#4f4fc8ff',
 };
 
 export default function BuildPanel({
@@ -105,7 +107,7 @@ export default function BuildPanel({
   return (
     <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4">
       <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-        🏗️ Build Houses & Hotels
+        <GiCrane className="text-yellow-500" /> Build Houses & Hotels
       </h3>
 
       {!isMyTurn && (
@@ -143,11 +145,11 @@ export default function BuildPanel({
                       <p className="text-sm text-white">{property.name}</p>
                       <div className="flex items-center gap-1 mt-1">
                         {isHotel ? (
-                          <span className="text-xs">🏨 Hotel</span>
+                          <span className="text-xs flex items-center gap-1"><FaHotel className="text-red-500" /> Hotel</span>
                         ) : houses > 0 ? (
                           <>
                             {Array.from({ length: houses }).map((_, i) => (
-                              <span key={i} className="text-xs">🏠</span>
+                              <GiHouse key={i} className="text-xs text-green-500" />
                             ))}
                             <span className="text-xs text-[#888] ml-1">
                               ({houses}/4 houses)
@@ -173,7 +175,9 @@ export default function BuildPanel({
                                                     `}
                           title={canBuild ? `Build house ($${property.houseCost})` : 'Cannot build'}
                         >
-                          🏠 ${property.houseCost}
+                          <div className="flex items-center gap-1">
+                            <GiHouse /> ${property.houseCost}
+                          </div>
                         </button>
                       )}
                       {houses === 4 && (
@@ -189,7 +193,9 @@ export default function BuildPanel({
                                                     `}
                           title={canUpgrade ? `Build hotel ($${property.houseCost})` : 'Cannot build hotel'}
                         >
-                          🏨 ${property.houseCost}
+                          <div className="flex items-center gap-1">
+                            <FaHotel /> ${property.houseCost}
+                          </div>
                         </button>
                       )}
                       {isHotel && (
@@ -206,8 +212,8 @@ export default function BuildPanel({
         ))}
       </div>
 
-      <p className="text-xs text-[#666] mt-3">
-        💡 Build evenly across properties. Need 4 houses before building a hotel.
+      <p className="text-xs text-[#666] mt-3 flex items-center gap-1">
+        <GiLightBulb className="text-yellow-600/50" /> Build evenly across properties. Need 4 houses before building a hotel.
       </p>
     </div>
   );
