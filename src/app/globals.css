@@ -4,11 +4,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-    /* Warm Off-White Theme */
-    --background: #FDFBF7;
-    /* Antique White / Cream */
-    --surface: #FFFFFF;
-    --surface-alt: #F3F1EB;
+    /* Softer, warm light theme to avoid harsh white */
+    --background: #FDFCF8;
+    /* Very subtle cream */
+    --surface: #F4F2EB;
+    /* Soft beige/grey for cards */
+    --surface-alt: #EAE8E0;
 
     /* Bold Solid Colors */
     --primary: #3B82F6;
@@ -49,6 +50,8 @@
     --color-accent: var(--accent);
     --color-success: var(--success);
     --color-dark: var(--dark);
+    --color-surface: var(--surface);
+    --color-border: var(--border);
 }
 
 * {

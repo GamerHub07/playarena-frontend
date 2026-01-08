@@ -16,6 +16,7 @@ import { Room, Player } from '@/types/game';
 import { SnakeLadderGameState, PLAYER_COLORS, SnakeLadderMoveStep } from '@/types/snakeLadder';
 import { PlayerColor } from '@/types/ludo';
 import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 
 export default function SnakeLadderRoomPage() {
@@ -23,7 +24,7 @@ export default function SnakeLadderRoomPage() {
     const router = useRouter();
     const roomCode = (params.roomId as string).toUpperCase();
 
-    const { guest, loading: guestLoading } = useGuest();
+    const { guest, loading: guestLoading, login } = useGuest();
     const { isConnected, emit, on } = useSocket();
 
     const [room, setRoom] = useState<Room | null>(null);
@@ -33,6 +34,12 @@ export default function SnakeLadderRoomPage() {
     const [error, setError] = useState('');
     const [rolling, setRolling] = useState(false);
     const [showTutorial, setShowTutorial] = useState(false);
+
+    // Join modal state for users joining via link without a session
+    const [showJoinModal, setShowJoinModal] = useState(false);
+    const [joinUsername, setJoinUsername] = useState('');
+    const [joinError, setJoinError] = useState('');
+    const [joining, setJoining] = useState(false);
 
     // Animation state
     const [animatingToken, setAnimatingToken] = useState<{
@@ -46,14 +53,9 @@ export default function SnakeLadderRoomPage() {
     const isHost = currentPlayer?.isHost || false;
     const myPlayerIndex = players.findIndex(p => p.sessionId === guest?.sessionId);
 
-    // Fetch room data
+    // Fetch room data and handle join flow
     useEffect(() => {
         if (guestLoading) return;
-
-        if (!guest) {
-            router.push('/games/snake-ladder');
-            return;
-        }
 
         const fetchRoom = async () => {
             try {
@@ -61,6 +63,11 @@ export default function SnakeLadderRoomPage() {
                 if (res.success && res.data) {
                     setRoom(res.data);
                     setPlayers(res.data.players);
+
+                    // If user has no session, show join modal (they came via shared link)
+                    if (!guest) {
+                        setShowJoinModal(true);
+                    }
                 } else {
                     setError('Room not found');
                 }
@@ -71,7 +78,7 @@ export default function SnakeLadderRoomPage() {
         };
 
         fetchRoom();
-    }, [roomCode, guest, guestLoading, router]);
+    }, [roomCode, guest, guestLoading]);
 
     // Socket listeners
     useEffect(() => {
@@ -231,6 +238,41 @@ export default function SnakeLadderRoomPage() {
         emit('game:action', { roomCode, action: 'roll' });
     }, [emit, roomCode, gameState]);
 
+    // Handle join via shared link (creates session and joins room)
+    const handleJoinViaLink = async () => {
+        if (!joinUsername.trim() || joinUsername.length < 2) {
+            setJoinError('Username must be at least 2 characters');
+            return;
+        }
+
+        setJoining(true);
+        setJoinError('');
+
+        try {
+            // Create guest session
+            const guestResult = await login(joinUsername.trim());
+            if (!guestResult) {
+                setJoinError('Failed to create session');
+                setJoining(false);
+                return;
+            }
+
+            // Join the room
+            const joinRes = await roomApi.join(roomCode, guestResult.sessionId);
+            if (joinRes.success && joinRes.data) {
+                setRoom(joinRes.data);
+                setPlayers(joinRes.data.players);
+                setShowJoinModal(false);
+            } else {
+                setJoinError(joinRes.message || 'Failed to join room');
+            }
+        } catch (err) {
+            setJoinError('Failed to join room');
+        }
+
+        setJoining(false);
+    };
+
     if (loading || guestLoading) {
         return (
             <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
@@ -297,6 +339,21 @@ export default function SnakeLadderRoomPage() {
                             onStart={handleStartGame}
                             onLeave={handleLeaveRoom}
                         />
+                    )}
+
+                    {/* Reconnecting State - shown when game is in progress but state not yet received */}
+                    {(isPlaying || isFinished) && !gameState && (
+                        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+                            <Card className="p-8 text-center">
+                                <div className="animate-spin w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full mx-auto mb-4" />
+                                <p className="text-lg font-semibold text-[var(--text)]">
+                                    Reconnecting to game...
+                                </p>
+                                <p className="text-sm mt-2 text-[var(--text-muted)]">
+                                    Please wait while we restore your game session
+                                </p>
+                            </Card>
+                        </div>
                     )}
 
                     {/* Game Board */}
@@ -454,6 +511,33 @@ export default function SnakeLadderRoomPage() {
                         <p className="text-xs text-center text-[var(--text-muted)] pt-4 border-t border-[var(--border)]">
                             First player to reach square 100 wins!
                         </p>
+                    </div>
+                </Modal>
+
+                {/* Join Modal - for users accessing via shared link */}
+                <Modal
+                    isOpen={showJoinModal}
+                    onClose={() => {
+                        router.push('/games/snake-ladder');
+                    }}
+                    title="Join Game"
+                    size="sm"
+                >
+                    <div className="space-y-4">
+                        <p className="text-[var(--text-muted)] text-sm">
+                            Enter your name to join room <span className="font-mono font-bold text-[var(--primary)]">{roomCode}</span>
+                        </p>
+                        <Input
+                            placeholder="Your username"
+                            value={joinUsername}
+                            onChange={(e) => setJoinUsername(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleJoinViaLink()}
+                            error={joinError}
+                            autoFocus
+                        />
+                        <Button onClick={handleJoinViaLink} loading={joining} className="w-full">
+                            Join Game
+                        </Button>
                     </div>
                 </Modal>
             </div>
