@@ -366,17 +366,25 @@ function GameRoomContent() {
         }
     }, [gameState?.winner]);
 
+    // Track if we've joined the room to prevent duplicate emissions
+    const hasJoinedRef = useRef(false);
+
     // Socket join room
     useEffect(() => {
         if (!guest || !isConnected || loading) return;
 
-        emit('room:join', {
-            roomCode,
-            sessionId: guest.sessionId,
-            username: guest.username,
-        });
+        // Only emit room:join once per session
+        if (!hasJoinedRef.current) {
+            hasJoinedRef.current = true;
+            emit('room:join', {
+                roomCode,
+                sessionId: guest.sessionId,
+                username: guest.username,
+            });
+        }
 
         return () => {
+            hasJoinedRef.current = false;
             emit('room:leave', {});
         };
     }, [isConnected, guest, loading, roomCode, emit]);

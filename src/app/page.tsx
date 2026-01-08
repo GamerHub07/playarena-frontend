@@ -48,7 +48,7 @@ const GAMES: Game[] = [
         players: '2 Players',
         image: '/games/chess.png',
         href: '/games/chess',
-        available: false,
+        available: true,
         theme: 'bg-gray-800 text-white',
     },
     {
