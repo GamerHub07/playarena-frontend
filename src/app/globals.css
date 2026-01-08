@@ -148,3 +148,33 @@ h4 {
         transform: translate(-50%, -50%) translateX(5px);
     }
 }
+
+/* 3D Utilities */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.board-tilt {
+  perspective: 1400px;
+}
+
+.card-3d {
+  transform: translateZ(0);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card-3d:hover {
+  transform: translateZ(20px) scale(1.04);
+}
+
+.neon-glow-green {
+  box-shadow:
+    0 0 12px rgba(22,163,74,0.7),
+    0 0 30px rgba(22,163,74,0.4);
+}
+
+.neon-glow-gold {
+  box-shadow:
+    0 0 10px rgba(196,163,90,0.9),
+    0 0 25px rgba(196,163,90,0.6);
+}
