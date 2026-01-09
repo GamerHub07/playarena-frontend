@@ -38,7 +38,7 @@ const GAMES: Game[] = [
     {
         id: 'business',
         title: 'Business',
-        players: '2-4 Players',
+        players: '2-6 Players',
         image: '/games/business.png',
         href: '/games/monopoly',
         available: true,
@@ -50,7 +50,7 @@ const GAMES: Game[] = [
         players: '2 Players',
         image: '/games/chess.png',
         href: '/games/chess',
-        available: false,
+        available: true,
         description: 'The ultimate game of strategy. Checkmate your opponent in this timeless classic.',
     },
     {

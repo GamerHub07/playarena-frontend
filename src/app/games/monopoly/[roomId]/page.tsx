@@ -43,10 +43,10 @@ export default function MonopolyGameRoom() {
     const [selectedPropertyFromPanel, setSelectedPropertyFromPanel] = useState<BoardSquare | null>(null);
 
     // Join modal state for users joining via link without a session
-    const [showJoinModal, setShowJoinModal] = useState(false);
-    const [joinUsername, setJoinUsername] = useState('');
-    const [joinError, setJoinError] = useState('');
-    const [joining, setJoining] = useState(false);
+    // const [showJoinModal, setShowJoinModal] = useState(false);
+    // const [joinUsername, setJoinUsername] = useState('');
+    // const [joinError, setJoinError] = useState('');
+    // const [joining, setJoining] = useState(false);
 
     // Join modal state for users joining via link without a session
     const [showJoinModal, setShowJoinModal] = useState(false);
@@ -249,7 +249,11 @@ export default function MonopolyGameRoom() {
                 setRoom(joinRes.data);
                 setPlayers(joinRes.data.players);
                 setShowJoinModal(false);
+<<<<<<< HEAD
 
+=======
+                
+>>>>>>> 7dc21dcc83bd015e4c6f124bfda883a667cee77f
                 // Explicitly emit socket join to ensure real-time connection
                 // This is needed because the useEffect may not trigger due to state timing
                 if (isConnected) {
