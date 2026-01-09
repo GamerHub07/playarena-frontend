@@ -7,6 +7,10 @@ import Header from '@/components/layout/Header';
 import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import Board from '@/components/games/chess/Board';
 import GameInfo from '@/components/games/chess/GameInfo';
+import PlayerClock from '@/components/games/chess/PlayerClock';
+import TimerSelector from '@/components/games/chess/TimerSelector';
+import ThemeSelector from '@/components/games/chess/ThemeSelector';
+import PieceStyleSelector from '@/components/games/chess/PieceStyleSelector';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
@@ -51,6 +55,11 @@ export default function ChessGameRoom() {
         from: Position;
         to: Position;
     } | null>(null);
+
+    // Timer state
+    const [selectedTimeControl, setSelectedTimeControl] = useState('blitz-5-3');
+    const [whiteTimeMs, setWhiteTimeMs] = useState(0);
+    const [blackTimeMs, setBlackTimeMs] = useState(0);
 
     // Calculate my player index and color
     const myPlayerIndex = useMemo(() => {
@@ -132,6 +141,11 @@ export default function ChessGameRoom() {
             setGameState(state);
             setValidMoves(moves || {});
             setRoom((prev) => (prev ? { ...prev, status: 'playing' } : null));
+            // Initialize timer times from state
+            if (state.timeControl && state.timeControl.type !== 'unlimited') {
+                setWhiteTimeMs(state.whiteTimeRemainingMs);
+                setBlackTimeMs(state.blackTimeRemainingMs);
+            }
         });
 
         const unsubState = on('game:state', (data: unknown) => {
@@ -181,12 +195,23 @@ export default function ChessGameRoom() {
             setTimeout(() => setError(''), 3000);
         });
 
+        // Timer updates
+        const unsubTimer = on('game:timer', (data: unknown) => {
+            const { whiteTimeMs: wt, blackTimeMs: bt } = data as {
+                whiteTimeMs: number;
+                blackTimeMs: number;
+            };
+            setWhiteTimeMs(wt);
+            setBlackTimeMs(bt);
+        });
+
         return () => {
             unsubRoom();
             unsubStart();
             unsubState();
             unsubWinner();
             unsubError();
+            unsubTimer();
         };
     }, [guest, isConnected, on, myPlayerIndex]);
 
@@ -214,8 +239,8 @@ export default function ChessGameRoom() {
     }, [isConnected, guest, loading, roomCode, emit]);
 
     const handleStartGame = useCallback(() => {
-        emit('game:start', { roomCode });
-    }, [emit, roomCode]);
+        emit('game:start', { roomCode, timeControlKey: selectedTimeControl });
+    }, [emit, roomCode, selectedTimeControl]);
 
     const handleLeaveRoom = useCallback(() => {
         emit('room:leave', {});
@@ -357,20 +382,36 @@ export default function ChessGameRoom() {
 
                 {/* Waiting Room */}
                 {isWaiting && room && guest && (
-                    <WaitingRoom
-                        roomCode={roomCode}
-                        players={players}
-                        currentSessionId={guest.sessionId}
-                        isHost={isHost}
-                        minPlayers={room.minPlayers}
-                        maxPlayers={room.maxPlayers}
-                        onStart={handleStartGame}
-                        onLeave={handleLeaveRoom}
-                        gameTitle="Chess"
-                        accentColor="#ffffff"
-                        playerColors={CHESS_COLORS}
-                        playerEmojis={['♔', '♚']}
-                    />
+                    <div className="flex flex-col lg:flex-row gap-6 max-w-4xl mx-auto items-start">
+                        {/* Main Waiting Room */}
+                        <div className="flex-1">
+                            <WaitingRoom
+                                roomCode={roomCode}
+                                players={players}
+                                currentSessionId={guest.sessionId}
+                                isHost={isHost}
+                                minPlayers={room.minPlayers}
+                                maxPlayers={room.maxPlayers}
+                                onStart={handleStartGame}
+                                onLeave={handleLeaveRoom}
+                                gameTitle="Chess"
+                                accentColor="#ffffff"
+                                playerColors={CHESS_COLORS}
+                                playerEmojis={['♔', '♚']}
+                            />
+                        </div>
+
+                        {/* Time Control Selection - Host Only */}
+                        {isHost && (
+                            <div className="w-full lg:w-80">
+                                <TimerSelector
+                                    selectedKey={selectedTimeControl}
+                                    onSelect={setSelectedTimeControl}
+                                    disabled={false}
+                                />
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* Game Board */}
@@ -408,9 +449,21 @@ export default function ChessGameRoom() {
                         )}
 
                         <div className="flex flex-col lg:flex-row gap-6 items-start">
-                            {/* Board */}
+                            {/* Board with Clocks */}
                             <div className="flex-1 order-2 lg:order-1">
-                                <div className="mb-4 text-center">
+                                {/* Opponent's Clock (top) */}
+                                {gameState.timeControl && gameState.timeControl.type !== 'unlimited' && (
+                                    <div className="mb-3">
+                                        <PlayerClock
+                                            timeMs={myColor === 'white' ? blackTimeMs : whiteTimeMs}
+                                            isActive={gameState.currentPlayer !== myColor}
+                                            color={myColor === 'white' ? 'black' : 'white'}
+                                            playerName={players[myColor === 'white' ? 1 : 0]?.username || 'Opponent'}
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="mb-3 text-center">
                                     {isMyTurn ? (
                                         <p className="text-green-400 font-semibold">Your turn</p>
                                     ) : (
@@ -430,10 +483,22 @@ export default function ChessGameRoom() {
                                     onSquareClick={handleSquareClick}
                                     isMyTurn={isMyTurn}
                                 />
+
+                                {/* My Clock (bottom) */}
+                                {gameState.timeControl && gameState.timeControl.type !== 'unlimited' && (
+                                    <div className="mt-3">
+                                        <PlayerClock
+                                            timeMs={myColor === 'white' ? whiteTimeMs : blackTimeMs}
+                                            isActive={isMyTurn}
+                                            color={myColor || 'white'}
+                                            playerName={players[myPlayerIndex ?? 0]?.username || 'You'}
+                                        />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Game Info */}
-                            <div className="w-full lg:w-72 order-1 lg:order-2">
+                            <div className="w-full lg:w-72 order-1 lg:order-2 space-y-4">
                                 <GameInfo
                                     gameState={gameState}
                                     players={players}
@@ -444,6 +509,22 @@ export default function ChessGameRoom() {
                                     onAcceptDraw={handleAcceptDraw}
                                     onDeclineDraw={handleDeclineDraw}
                                 />
+
+                                {/* Theme Selector */}
+                                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-3">
+                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                        Board Theme
+                                    </div>
+                                    <ThemeSelector compact />
+                                </div>
+
+                                {/* Piece Style Selector */}
+                                <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-3">
+                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                                        Piece Style
+                                    </div>
+                                    <PieceStyleSelector compact />
+                                </div>
                             </div>
                         </div>
                     </div>

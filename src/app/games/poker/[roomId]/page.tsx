@@ -24,6 +24,7 @@ import {
     evaluateHand,
     HandEvaluation,
 } from '@/types/poker';
+import { PokerHandsGuideButton } from '@/components/games/poker/PokerHandsGuide';
 
 // ═══════════════════════════════════════════════════════════════
 // PREMIUM STYLING CONSTANTS
@@ -326,6 +327,7 @@ export default function PokerGameRoom() {
     const [showWinnerModal, setShowWinnerModal] = useState(false);
     const [winners, setWinners] = useState<WinnerInfo[] | null>(null);
     const [isGameOver, setIsGameOver] = useState(false);
+    const [nextHandCountdown, setNextHandCountdown] = useState<number | null>(null);
 
     // Draggable action bar state
     const [actionBarPos, setActionBarPos] = useState({ x: 0, y: 0 });
@@ -420,6 +422,11 @@ export default function PokerGameRoom() {
             setIsGameOver(gameOver);
             setShowWinnerModal(true);
 
+            // Start countdown for next hand if game is not over
+            if (!gameOver) {
+                setNextHandCountdown(3);
+            }
+
             if (gameOver) {
                 confetti({
                     particleCount: 150,
@@ -483,12 +490,29 @@ export default function PokerGameRoom() {
 
     const handleNextHand = useCallback(() => {
         setShowWinnerModal(false);
+        setNextHandCountdown(null);
         emit('game:action', {
             roomCode,
             action: 'poker_action',
             data: { action: 'start_hand' },
         });
     }, [emit, roomCode]);
+
+    // Auto-start next hand countdown
+    useEffect(() => {
+        if (nextHandCountdown === null || isGameOver) return;
+
+        if (nextHandCountdown <= 0) {
+            handleNextHand();
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setNextHandCountdown(prev => (prev !== null ? prev - 1 : null));
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [nextHandCountdown, isGameOver, handleNextHand]);
 
     // Calculate raise bounds
     const minRaise = gameState?.minRaise || 0;
@@ -591,6 +615,7 @@ export default function PokerGameRoom() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
+                            <PokerHandsGuideButton />
                             <div
                                 className="px-4 py-2 rounded-xl text-sm"
                                 style={{
@@ -897,18 +922,50 @@ export default function PokerGameRoom() {
                         </div>
                     ))}
 
-                    <div className="mt-6 flex gap-3 justify-center">
-                        {!isGameOver && isHost && (
-                            <button
-                                onClick={handleNextHand}
-                                className="px-6 py-3 rounded-xl font-bold transition-all hover:scale-105"
-                                style={{
-                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                    boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)',
-                                }}
-                            >
-                                🃏 Deal Next Hand
-                            </button>
+                    <div className="mt-6 flex flex-col items-center gap-3">
+                        {!isGameOver && nextHandCountdown !== null && (
+                            <div className="flex flex-col items-center gap-3">
+                                {/* Countdown circle */}
+                                <div
+                                    className="relative w-16 h-16 flex items-center justify-center"
+                                >
+                                    <svg className="w-16 h-16 transform -rotate-90">
+                                        <circle
+                                            cx="32"
+                                            cy="32"
+                                            r="28"
+                                            fill="none"
+                                            stroke="rgba(16, 185, 129, 0.2)"
+                                            strokeWidth="4"
+                                        />
+                                        <circle
+                                            cx="32"
+                                            cy="32"
+                                            r="28"
+                                            fill="none"
+                                            stroke="#10b981"
+                                            strokeWidth="4"
+                                            strokeLinecap="round"
+                                            strokeDasharray={176}
+                                            strokeDashoffset={176 - (176 * (3 - nextHandCountdown) / 3)}
+                                            className="transition-all duration-1000"
+                                        />
+                                    </svg>
+                                    <span className="absolute text-2xl font-bold text-emerald-400">
+                                        {nextHandCountdown}
+                                    </span>
+                                </div>
+                                <p className="text-gray-400 text-sm">Next hand starting...</p>
+                                <button
+                                    onClick={handleNextHand}
+                                    className="px-4 py-2 rounded-lg text-sm font-medium text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                                    style={{
+                                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                                    }}
+                                >
+                                    ⏭️ Skip
+                                </button>
+                            </div>
                         )}
 
                         {isGameOver && (

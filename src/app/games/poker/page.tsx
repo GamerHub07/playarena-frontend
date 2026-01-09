@@ -9,6 +9,7 @@ import Modal from '@/components/ui/Modal';
 import Card from '@/components/ui/Card';
 import { useGuest } from '@/hooks/useGuest';
 import { roomApi } from '@/lib/api';
+import { PokerHandsGuideButton } from '@/components/games/poker/PokerHandsGuide';
 
 export default function PokerPage() {
     const router = useRouter();
@@ -170,8 +171,26 @@ export default function PokerPage() {
                         </Card>
                     </div>
 
+                    {/* Hand Rankings Card */}
+                    <div className="mt-8 max-w-2xl mx-auto">
+                        <Card className="p-6 text-center bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border-purple-500/30">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center">
+                                        <span className="text-3xl">📖</span>
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="text-lg font-semibold text-white">New to Poker?</h3>
+                                        <p className="text-sm text-purple-300">Learn the hand rankings before you play!</p>
+                                    </div>
+                                </div>
+                                <PokerHandsGuideButton />
+                            </div>
+                        </Card>
+                    </div>
+
                     {/* Rules */}
-                    <div className="mt-16 max-w-2xl mx-auto">
+                    <div className="mt-12 max-w-2xl mx-auto">
                         <h3 className="text-xl font-semibold text-white mb-6 text-center">How to Play</h3>
                         <div className="grid sm:grid-cols-2 gap-4">
                             {[

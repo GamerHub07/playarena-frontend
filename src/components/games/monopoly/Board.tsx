@@ -1,9 +1,25 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { MonopolyGameState, PLAYER_TOKENS, BoardSquare } from '@/types/monopoly';
 import { Player } from '@/types/game';
 import MonopolyToken from './MonopolyToken';
+import PropertyDetailsModal from './PropertyDetailsModal';
+import { 
+  GiCash, 
+  GiPrisoner, 
+  GiCityCar, 
+  GiPoliceOfficerHead, 
+  GiCardRandom, 
+  GiChest, 
+  GiSteamLocomotive, 
+  GiElectric, 
+  GiWaterDrop, 
+  GiPayMoney,
+  GiTakeMyMoney,
+  GiHouse
+} from 'react-icons/gi';
+import { FaHotel } from 'react-icons/fa';
 
 interface BoardProps {
   gameState: MonopolyGameState;
@@ -11,21 +27,34 @@ interface BoardProps {
   currentSessionId: string;
 }
 
-// Square type icons
-const SQUARE_ICONS: Record<string, string> = {
-  GO: '💰',
-  JAIL: '🔒',
-  FREE_PARKING: '🅿️',
-  GO_TO_JAIL: '👮',
-  CHANCE: '❓',
-  COMMUNITY_CHEST: '📦',
-  RAILROAD: '🚂',
-  UTILITY: '💡',
-  TAX: '💸',
+// Square type icons mapping to React components
+const SQUARE_ICONS: Record<string, React.ReactNode> = {
+  GO: <GiCash className="text-[#c4a35a]" />,
+  JAIL: <GiPrisoner className="text-gray-700" />,
+  FREE_PARKING: <GiCityCar className="text-blue-600" />,
+  GO_TO_JAIL: <GiPoliceOfficerHead className="text-blue-800" />,
+  CHANCE: <GiCardRandom className="text-orange-600" />,
+  COMMUNITY_CHEST: <GiChest className="text-blue-500" />,
+  RAILROAD: <GiSteamLocomotive className="text-gray-800" />,
+  UTILITY: <GiElectric className="text-yellow-600" />, // Default to electric
+  TAX: <GiPayMoney className="text-red-700" />,
+};
+
+// Color display mapping to nice hex values
+const COLOR_NAMES: Record<string, string> = {
+  brown: '#8B4513',
+  lightBlue: '#87CEEB',
+  pink: '#FF69B4',
+  orange: '#ff8400',
+  red: '#ff6868',
+  yellow: '#ecd630',
+  green: '#47c447',
+  blue: '#4f4fc8',
 };
 
 export default function Board({ gameState, players }: BoardProps) {
   const board = gameState?.board;
+  const [selectedProperty, setSelectedProperty] = useState<BoardSquare | null>(null);
 
   // Board must have 40 squares
   if (!board || board.length < 40) {
@@ -55,7 +84,16 @@ export default function Board({ gameState, players }: BoardProps) {
   // Render a corner square (bigger, special styling)
   const renderCornerSquare = (square: BoardSquare, index: number) => {
     const playersHere = getPlayersAt(index);
-    const icon = SQUARE_ICONS[square.type] || '🏠';
+    
+    const getSquareIcon = (sq: BoardSquare) => {
+      if (sq.type === 'UTILITY') {
+        if (sq.name?.toLowerCase().includes('water')) return <GiWaterDrop className="text-blue-400" />;
+        return <GiElectric className="text-yellow-500" />;
+      }
+      return SQUARE_ICONS[sq.type] || <GiHouse className="text-[#1a472a]" />;
+    };
+
+    const icon = getSquareIcon(square);
 
     // Determine rotation based on corner position
     let rotation = '';
@@ -69,24 +107,24 @@ export default function Board({ gameState, players }: BoardProps) {
         className={`
           relative
           bg-gradient-to-br from-[#e8e4d9] to-[#d4cfc0]
-          border-2 border-[#1a472a]
+          border-[0.2vmin] border-[#1a472a]
           flex flex-col items-center justify-center
-          shadow-inner
+          shadow-inner rounded-[1vmin]
           ${rotation}
         `}
       >
-        <div className={`text-center ${rotation ? `-${rotation}` : ''}`}>
-          <div className="text-3xl mb-1 drop-shadow-md">{icon}</div>
-          <div className="text-[10px] font-bold text-[#1a472a] uppercase tracking-wide px-1">
+        <div className={`text-center ${rotation ? `-${rotation}` : ''} w-full px-[0.5vmin]`}>
+          <div className="text-[4vmin] mb-[0.2vmin] flex justify-center drop-shadow-md">{icon}</div>
+          <div className="text-[clamp(6px,1.2vmin,14px)] font-extrabold text-[#1a472a] uppercase tracking-tighter leading-[1.1] break-words">
             {square.name}
           </div>
         </div>
 
         {/* Player Tokens */}
         {playersHere.length > 0 && (
-          <div className={`absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 ${rotation ? `-${rotation}` : ''}`}>
+          <div className={`absolute bottom-[1vmin] left-1/2 -translate-x-1/2 flex gap-[0.3vmin] ${rotation ? `-${rotation}` : ''}`}>
             {playersHere.map(p => (
-              <MonopolyToken key={p.idx} playerIndex={p.idx} size={20} />
+              <MonopolyToken key={p.idx} playerIndex={p.idx} size={28} className="w-[3.5vmin] h-[3.5vmin]" />
             ))}
           </div>
         )}
@@ -99,7 +137,16 @@ export default function Board({ gameState, players }: BoardProps) {
     const playersHere = getPlayersAt(index);
     const ownerIdx = getOwnerIndex(square.owner);
     const isProperty = square.type === 'PROPERTY';
-    const icon = SQUARE_ICONS[square.type];
+    
+    const getSquareIcon = (sq: BoardSquare) => {
+      if (sq.type === 'UTILITY') {
+        if (sq.name?.toLowerCase().includes('water')) return <GiWaterDrop className="text-blue-400" />;
+        return <GiElectric className="text-yellow-500" />;
+      }
+      return SQUARE_ICONS[sq.type];
+    };
+
+    const icon = getSquareIcon(square);
 
     // Content rotation based on side
     const contentRotation = {
@@ -109,35 +156,48 @@ export default function Board({ gameState, players }: BoardProps) {
       right: '-rotate-90',
     }[orientation];
 
-    // Color bar position
+    // Color bar position (outer edge of property)
     const colorBarPosition = {
-      top: 'bottom-0 left-0 right-0 h-[18px]',
-      bottom: 'top-0 left-0 right-0 h-[18px]',
-      left: 'top-0 bottom-0 right-0 w-[18px]',
-      right: 'top-0 bottom-0 left-0 w-[18px]',
+      top: 'bottom-0 left-0 right-0 h-[2vmin]',
+      bottom: 'top-0 left-0 right-0 h-[2vmin]',
+      left: 'top-0 bottom-0 right-0 w-[2vmin]',
+      right: 'top-0 bottom-0 left-0 w-[2vmin]',
     }[orientation];
+
+    // Owner band position (inner edge, opposite to color bar)
+    const ownerBandPosition = {
+      top: 'top-0 left-0 right-0 h-[1.2vmin]',
+      bottom: 'bottom-0 left-0 right-0 h-[1.2vmin]',
+      left: 'top-0 bottom-0 left-0 w-[1.2vmin]',
+      right: 'top-0 bottom-0 right-0 w-[1.2vmin]',
+    }[orientation];
+
+    // Check if this square is clickable (property, railroad, or utility)
+    const isClickable = ['PROPERTY', 'RAILROAD', 'UTILITY'].includes(square.type);
 
     return (
       <div
         key={square.id}
-        className="
+        className={`
           relative
           bg-gradient-to-br from-[#e8e4d9] to-[#d4cfc0]
-          border border-[#1a472a]/60
+          border-[0.1vmin] border-[#1a472a]/60
           flex flex-col items-center justify-center
           overflow-hidden
           group
           hover:z-10
-          transition-transform hover:scale-105
-        "
+          transition-transform rounded-[0.75vmin]
+          ${isClickable ? 'cursor-pointer' : ''}
+        `}
+        onClick={() => isClickable && setSelectedProperty(square)}
       >
         {/* Property color bar */}
         {isProperty && square.color && (
           <div
             className={`absolute ${colorBarPosition} shadow-inner`}
             style={{
-              backgroundColor: square.color,
-              boxShadow: 'inset 0 -2px 4px rgba(0,0,0,0.3)'
+              backgroundColor: COLOR_NAMES[square.color] || square.color,
+              boxShadow: 'inset 0 -0.2vmin 0.4vmin rgba(0,0,0,0.3)'
             }}
           >
             {/* Houses/Hotels display */}
@@ -145,11 +205,11 @@ export default function Board({ gameState, players }: BoardProps) {
               <div className="absolute inset-0 flex items-center justify-center gap-0.5">
                 {square.houses === 5 ? (
                   // Hotel
-                  <span className="text-[10px] drop-shadow-md" title="Hotel">🏨</span>
+                  <FaHotel className="text-[14px] text-red-600 drop-shadow-md" title="Hotel" />
                 ) : (
                   // Houses (1-4)
                   Array.from({ length: square.houses ?? 0 }).map((_, i) => (
-                    <span key={i} className="text-[7px] drop-shadow-md" title={`House ${i + 1}`}>🏠</span>
+                    <GiHouse key={i} className="text-[10px] text-green-600 drop-shadow-md" title={`House ${i + 1}`} />
                   ))
                 )}
               </div>
@@ -158,43 +218,41 @@ export default function Board({ gameState, players }: BoardProps) {
         )}
 
         {/* Main content */}
-        <div className={`flex flex-col items-center justify-center p-1 ${contentRotation}`}>
+        <div className={`flex flex-col items-center justify-center p-[0.3vmin] w-full ${contentRotation}`}>
           {/* Icon for non-properties */}
           {icon && (
-            <div className="text-lg mb-0.5 drop-shadow-sm">{icon}</div>
+            <div className="text-[2.5vmin] mb-[0.1vmin] drop-shadow-sm flex justify-center">{icon}</div>
           )}
 
           {/* Name */}
-          <div className="text-[8px] font-bold text-[#1a472a] text-center leading-tight uppercase tracking-wide">
+          <div className="text-[clamp(5px,1.1vmin,12px)] font-bold text-[#1a472a] text-center leading-[1.1] uppercase tracking-tighter overflow-hidden break-words px-1 py-1">
             {square.name}
           </div>
 
           {/* Price */}
           {(square.price || square.amount) && (
-            <div className="text-[9px] font-semibold text-[#2d5a3d] mt-0.5">
-              ${square.price || square.amount}
+            <div className="text-[clamp(6px,1.3vmin,14px)] font-black text-[#2d5a3d] mt-[0.1vmin]">
+              ₹{square.price || square.amount}
             </div>
           )}
         </div>
 
-        {/* Owner flag */}
+        {/* Owner color band */}
         {ownerIdx >= 0 && (
           <div
-            className="absolute top-1 right-1 w-4 h-5 rounded-sm shadow-md flex items-center justify-center"
+            className={`absolute ${ownerBandPosition} shadow-inner`}
             style={{
-              background: `linear-gradient(135deg, ${PLAYER_TOKENS[ownerIdx]?.color} 0%, ${PLAYER_TOKENS[ownerIdx]?.color}CC 100%)`,
-              border: '1px solid rgba(0,0,0,0.3)',
+              background: `linear-gradient(180deg, ${PLAYER_TOKENS[ownerIdx]?.color} 0%, ${PLAYER_TOKENS[ownerIdx]?.color}CC 100%)`,
+              boxShadow: 'inset 0 0.2vmin 0.4vmin rgba(0,0,0,0.3)',
             }}
-          >
-            <span className="text-[6px] text-white font-bold drop-shadow">🚩</span>
-          </div>
+          />
         )}
 
         {/* Player Tokens */}
         {playersHere.length > 0 && (
-          <div className={`absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5 ${contentRotation}`}>
+          <div className={`absolute bottom-[0.8vmin] left-1/2 -translate-x-1/2 flex gap-[0.2vmin] ${contentRotation}`}>
             {playersHere.map(p => (
-              <MonopolyToken key={p.idx} playerIndex={p.idx} size={18} />
+              <MonopolyToken key={p.idx} playerIndex={p.idx} size={24} className="w-[3vmin] h-[3vmin]" />
             ))}
           </div>
         )}
@@ -223,18 +281,22 @@ export default function Board({ gameState, players }: BoardProps) {
   const right = [31, 32, 33, 34, 35, 36, 37, 38, 39];
 
   return (
-    <div className="flex justify-center p-4">
-      <div
-        className="
-          relative
-          bg-gradient-to-br from-[#1a472a] via-[#1e5631] to-[#0d2818]
-          p-1
-          rounded-xl
-          shadow-[0_20px_60px_rgba(0,0,0,0.7),inset_0_2px_4px_rgba(255,255,255,0.1)]
-          border-4 border-[#c4a35a]
-        "
-        style={{ width: '800px', maxWidth: '95vw' }}
-      >
+    <div className="flex justify-center p-4 board-tilt items-center min-h-[90vh]">
+  <div
+    className="
+      relative
+      preserve-3d
+      bg-gradient-to-br from-[#0b3d2e] via-[#0f5132] to-[#021b10]
+      p-[1vmin]
+      rounded-[2vmin]
+      border-[0.5vmin] border-[#c4a35a]
+      neon-glow-gold
+      shadow-[0_40px_120px_rgba(0,0,0,0.85)]
+      aspect-square
+    "
+    style={{ width: 'min(90vw, 85vmin)', maxWidth: 'none' }}
+  >
+
         {/* Decorative corner accents */}
         <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#c4a35a] rounded-tl-lg" />
         <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#c4a35a] rounded-tr-lg" />
@@ -246,12 +308,13 @@ export default function Board({ gameState, players }: BoardProps) {
             grid
             gap-[1px]
             bg-[#1a472a]
-            rounded-lg
+            rounded-[1vmin]
             overflow-hidden
+            w-full h-full
           "
           style={{
-            gridTemplateColumns: '80px repeat(9, 1fr) 80px',
-            gridTemplateRows: '80px repeat(9, 1fr) 80px',
+            gridTemplateColumns: '13% repeat(9, 1fr) 13%',
+            gridTemplateRows: '13% repeat(9, 1fr) 13%',
           }}
         >
           {/* Top Row */}
@@ -267,57 +330,145 @@ export default function Board({ gameState, players }: BoardProps) {
               {/* Left Side */}
               {renderSquare(board[leftIdx], leftIdx, 'left')}
 
-              {/* Center Area */}
+              {/* Center Area - 3D Design */}
               {row === 0 && (
                 <div
                   className="
                     col-span-9 row-span-9
-                    bg-gradient-to-br from-[#c8e6c9] via-[#a5d6a7] to-[#81c784]
                     flex flex-col items-center justify-center
                     relative
                     overflow-hidden
                   "
+                  style={{
+                    background: 'linear-gradient(145deg, #1a5c38 0%, #0d3d24 50%, #082818 100%)',
+                    perspective: '1000px',
+                  }}
                 >
-                  {/* Decorative pattern */}
-                  <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-4 left-4 w-24 h-24 border-4 border-[#1a472a] rounded-full" />
-                    <div className="absolute bottom-4 right-4 w-24 h-24 border-4 border-[#1a472a] rounded-full" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-4 border-[#1a472a] rotate-45" />
+                  {/* 3D Layered background effects */}
+                  <div className="absolute inset-0 overflow-hidden">
+                    {/* Glowing orb effect */}
+                    <div 
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[70%] rounded-full opacity-20"
+                      style={{
+                        background: 'radial-gradient(circle, rgba(196,163,90,0.4) 0%, transparent 70%)',
+                        filter: 'blur(20px)',
+                      }}
+                    />
+                    {/* Animated ring 1 */}
+                    <div 
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] rounded-full border-2 border-[#c4a35a]/20 animate-spin"
+                      style={{ animationDuration: '30s' }}
+                    />
+                    {/* Animated ring 2 */}
+                    <div 
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] rounded-full border border-[#c4a35a]/15 animate-spin"
+                      style={{ animationDuration: '20s', animationDirection: 'reverse' }}
+                    />
+                    {/* Corner accents */}
+                    <div className="absolute top-4 left-4 w-12 h-12 border-t-2 border-l-2 border-[#c4a35a]/30 rounded-tl-lg" />
+                    <div className="absolute top-4 right-4 w-12 h-12 border-t-2 border-r-2 border-[#c4a35a]/30 rounded-tr-lg" />
+                    <div className="absolute bottom-4 left-4 w-12 h-12 border-b-2 border-l-2 border-[#c4a35a]/30 rounded-bl-lg" />
+                    <div className="absolute bottom-4 right-4 w-12 h-12 border-b-2 border-r-2 border-[#c4a35a]/30 rounded-br-lg" />
                   </div>
 
-                  {/* Main content */}
-                  <div className="text-center relative z-10">
-                    <div className="text-7xl mb-4 drop-shadow-lg animate-pulse">🏦</div>
+                  {/* 3D Floating platform for main content */}
+                  <div 
+                    className="relative z-10 text-center px-[3vmin] py-[2vmin] rounded-[2vmin]"
+                    style={{
+                      background: 'linear-gradient(180deg, rgba(26,71,42,0.9) 0%, rgba(13,45,26,0.95) 100%)',
+                      boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(196,163,90,0.1), inset 0 1px 0 rgba(255,255,255,0.1)',
+                      border: '1px solid rgba(196,163,90,0.3)',
+                      transform: 'translateZ(30px)',
+                    }}
+                  >
+                    {/* Bank Icon with 3D effect */}
+                    <div 
+                      className="flex justify-center mb-[1.5vmin] text-[7vmin] text-[#c4a35a]"
+                      style={{
+                        filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
+                      }}
+                    >
+                      <GiTakeMyMoney />
+                    </div>
+                    
+                    {/* Title with 3D text effect */}
                     <h1
-                      className="text-4xl font-black tracking-[0.3em] text-[#1a472a] drop-shadow-md"
-                      style={{ fontFamily: "'Times New Roman', serif" }}
+                      className="text-[4vmin] font-black tracking-[0.4em] text-transparent bg-clip-text"
+                      style={{ 
+                        fontFamily: "'Times New Roman', serif",
+                        backgroundImage: 'linear-gradient(180deg, #f0e6c8 0%, #c4a35a 50%, #9a7b3a 100%)',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                        WebkitBackgroundClip: 'text',
+                      }}
                     >
                       MONOPOLY
                     </h1>
-                    <div className="w-48 h-1 bg-gradient-to-r from-transparent via-[#1a472a] to-transparent mx-auto my-3" />
-                    <p className="text-sm text-[#2d5a3d] font-semibold tracking-widest uppercase">
+                    
+                    {/* Decorative line */}
+                    <div 
+                      className="w-[18vmin] h-[0.4vmin] mx-auto my-[1vmin] rounded-full"
+                      style={{
+                        background: 'linear-gradient(90deg, transparent 0%, #c4a35a 50%, transparent 100%)',
+                        boxShadow: '0 0 10px rgba(196,163,90,0.5)',
+                      }}
+                    />
+                    
+                    <p 
+                      className="text-[1.4vmin] font-semibold tracking-[0.5em] uppercase"
+                      style={{ color: '#8fb996' }}
+                    >
                       PlayArena Edition
                     </p>
 
-                    {/* Dice display */}
+                    {/* 3D Dice display */}
                     {gameState.dice && (
-                      <div className="mt-6 flex justify-center gap-3">
-                        <div className="w-12 h-12 bg-white rounded-lg shadow-lg flex items-center justify-center text-2xl font-bold text-[#1a472a] border-2 border-[#1a472a]">
+                      <div className="mt-[2.5vmin] flex justify-center gap-[1.5vmin]">
+                        <div 
+                          className="w-[5.5vmin] h-[5.5vmin] rounded-[0.8vmin] flex items-center justify-center text-[2.2vmin] font-bold"
+                          style={{
+                            background: 'linear-gradient(145deg, #ffffff 0%, #e0e0e0 100%)',
+                            boxShadow: '0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                            color: '#1a472a',
+                            border: '1px solid rgba(0,0,0,0.1)',
+                          }}
+                        >
                           {gameState.dice[0]}
                         </div>
-                        <div className="w-12 h-12 bg-white rounded-lg shadow-lg flex items-center justify-center text-2xl font-bold text-[#1a472a] border-2 border-[#1a472a]">
+                        <div 
+                          className="w-[5.5vmin] h-[5.5vmin] rounded-[0.8vmin] flex items-center justify-center text-[2.2vmin] font-bold"
+                          style={{
+                            background: 'linear-gradient(145deg, #ffffff 0%, #e0e0e0 100%)',
+                            boxShadow: '0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                            color: '#1a472a',
+                            border: '1px solid rgba(0,0,0,0.1)',
+                          }}
+                        >
                           {gameState.dice[1]}
                         </div>
                       </div>
                     )}
 
-                    {/* Cards display area */}
-                    <div className="mt-4 flex justify-center gap-4">
-                      <div className="w-16 h-20 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg shadow-md flex items-center justify-center border-2 border-white">
-                        <span className="text-white text-2xl">❓</span>
+                    {/* 3D Cards display */}
+                    <div className="mt-[2vmin] flex justify-center gap-[1.5vmin]">
+                      <div 
+                        className="w-[7vmin] h-[9vmin] rounded-[0.8vmin] flex items-center justify-center transition-transform hover:scale-105"
+                        style={{
+                          background: 'linear-gradient(145deg, #ff9a56 0%, #ff6b2b 50%, #e55a1f 100%)',
+                          boxShadow: '0 8px 25px rgba(255,107,43,0.4), inset 0 1px 0 rgba(255,255,255,0.3)',
+                          border: '2px solid rgba(255,255,255,0.3)',
+                        }}
+                      >
+                        <GiCardRandom className="text-white text-[3.5vmin] drop-shadow-lg" />
                       </div>
-                      <div className="w-16 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg shadow-md flex items-center justify-center border-2 border-white">
-                        <span className="text-white text-2xl">📦</span>
+                      <div 
+                        className="w-[7vmin] h-[9vmin] rounded-[0.8vmin] flex items-center justify-center transition-transform hover:scale-105"
+                        style={{
+                          background: 'linear-gradient(145deg, #64b5f6 0%, #2196f3 50%, #1976d2 100%)',
+                          boxShadow: '0 8px 25px rgba(33,150,243,0.4), inset 0 1px 0 rgba(255,255,255,0.3)',
+                          border: '2px solid rgba(255,255,255,0.3)',
+                        }}
+                      >
+                        <GiChest className="text-white text-[3.5vmin] drop-shadow-lg" />
                       </div>
                     </div>
                   </div>
@@ -337,6 +488,16 @@ export default function Board({ gameState, players }: BoardProps) {
           })}
         </div>
       </div>
+
+      {/* Property Details Modal */}
+      {selectedProperty && (
+        <PropertyDetailsModal
+          property={selectedProperty}
+          owner={selectedProperty.owner ? players.find(p => p.sessionId === selectedProperty.owner) : undefined}
+          ownerIndex={selectedProperty.owner ? players.findIndex(p => p.sessionId === selectedProperty.owner) : undefined}
+          onClose={() => setSelectedProperty(null)}
+        />
+      )}
     </div>
   );
 }

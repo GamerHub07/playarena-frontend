@@ -1,4 +1,6 @@
 import { Metadata } from 'next';
+import { ChessThemeProvider } from '@/components/games/chess/ChessTheme';
+import { PieceStyleProvider } from '@/components/games/chess/PieceStyle';
 
 export const metadata: Metadata = {
     title: 'Play Chess Online Free | 2 Player Chess Game | PlayArena | VersusArenas',
@@ -107,13 +109,15 @@ export default function ChessLayout({
     children: React.ReactNode;
 }) {
     return (
-        <>
-            {/* JSON-LD Structured Data */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
-            {children}
-        </>
+        <ChessThemeProvider>
+            <PieceStyleProvider>
+                {/* JSON-LD Structured Data */}
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
+                {children}
+            </PieceStyleProvider>
+        </ChessThemeProvider>
     );
 }

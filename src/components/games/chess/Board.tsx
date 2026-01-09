@@ -6,9 +6,10 @@ import {
     ChessPiece,
     Position,
     ValidMoves,
-    PIECE_FILLED,
     positionsEqual,
 } from '@/types/chess';
+import { useChessTheme } from './ChessTheme';
+import { usePieceStyle } from './PieceStyle';
 
 interface BoardProps {
     board: BoardType;
@@ -35,6 +36,10 @@ export default function Board({
 }: BoardProps) {
     // Flip board for black player
     const isFlipped = myColor === 'black';
+
+    // Get theme and piece style
+    const { theme } = useChessTheme();
+    const { style: pieceStyle } = usePieceStyle();
 
     // Find king position for check highlight
     const kingPosition = useMemo(() => {
@@ -66,21 +71,19 @@ export default function Board({
         // Determine if this piece can be selected (my piece and my turn)
         const canSelect = isMyTurn && piece && piece.color === myColor;
 
-        // Base square colors
-        const lightColor = '#f0d9b5';
-        const darkColor = '#b58863';
-        let bgColor = isLightSquare ? lightColor : darkColor;
+        // Base square colors from theme
+        let bgColor = isLightSquare ? theme.lightSquare : theme.darkSquare;
 
         // Highlight states
         if (isSelected) {
-            bgColor = '#829769'; // Selected piece highlight
+            bgColor = theme.selectedSquare;
         } else if (isLastMoveFrom || isLastMoveTo) {
-            bgColor = isLightSquare ? '#cdd26a' : '#aaa23a'; // Last move highlight
+            bgColor = isLightSquare ? theme.lastMoveLight : theme.lastMoveDark;
         }
 
         // Check highlight
         if (isKingInCheck) {
-            bgColor = '#e74c3c'; // Red for check
+            bgColor = theme.checkHighlight;
         }
 
         return (
@@ -96,7 +99,10 @@ export default function Board({
             >
                 {/* Valid move indicator */}
                 {isValidMove && !piece && (
-                    <div className="absolute w-1/3 h-1/3 rounded-full bg-black/20" />
+                    <div
+                        className="absolute w-1/3 h-1/3 rounded-full"
+                        style={{ backgroundColor: theme.validMoveIndicator }}
+                    />
                 )}
 
                 {/* Valid capture indicator */}
@@ -109,14 +115,11 @@ export default function Board({
                     <span
                         className={`
                             text-4xl sm:text-5xl md:text-6xl select-none
-                            ${piece.color === 'white' ? 'text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]' : 'text-gray-900'}
+                            ${piece.color === 'white' ? pieceStyle.whiteClass : pieceStyle.blackClass}
                             ${canSelect ? 'hover:scale-110 transition-transform' : ''}
                         `}
-                        style={{
-                            WebkitTextStroke: piece.color === 'white' ? '1px #333' : '1px #666',
-                        }}
                     >
-                        {PIECE_FILLED[piece.type]}
+                        {pieceStyle.pieces[piece.color][piece.type]}
                     </span>
                 )}
 
@@ -144,9 +147,10 @@ export default function Board({
     return (
         <div className="w-full max-w-[500px] mx-auto">
             <div
-                className="grid grid-cols-8 rounded-lg overflow-hidden shadow-2xl border-4 border-gray-800"
+                className="grid grid-cols-8 rounded-lg overflow-hidden shadow-2xl"
                 style={{
                     boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                    border: `4px solid ${theme.boardBorder}`,
                 }}
             >
                 {rows.map((row) =>
