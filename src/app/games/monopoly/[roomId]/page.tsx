@@ -11,15 +11,17 @@ import { useGuest } from '@/hooks/useGuest';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
 import { Room, Player } from '@/types/game';
-import { MonopolyGameState, PLAYER_TOKENS } from '@/types/monopoly';
+import { MonopolyGameState, PLAYER_TOKENS, BoardSquare } from '@/types/monopoly';
 import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import Board from '@/components/games/monopoly/Board';
 import PlayerPanel from '@/components/games/monopoly/PlayerPanel';
 import Dice from '@/components/games/monopoly/Dice';
 import PropertyCard from '@/components/games/monopoly/PropertyCard';
-import GameLogPanel, { GameLog } from '@/components/games/monopoly/GameLogPanel';
+import GameLogPanel from '@/components/games/monopoly/GameLogPanel';
 import SellPropertyModal from '@/components/games/monopoly/SellPropertyModal';
 import BuildPanel from '@/components/games/monopoly/BuildPanel';
+import LeaderboardScreen from '@/components/games/monopoly/LeaderboardScreen';
+import PropertyDetailsModal from '@/components/games/monopoly/PropertyDetailsModal';
 
 export default function MonopolyGameRoom() {
     const params = useParams();
@@ -36,9 +38,9 @@ export default function MonopolyGameRoom() {
     const [error, setError] = useState('');
     const [rolling, setRolling] = useState(false);
     const [showPropertyCard, setShowPropertyCard] = useState(false);
-    const [gameLogs, setGameLogs] = useState<GameLog[]>([]);
-    const logIdRef = useRef(0);
-    const prevStateRef = useRef<MonopolyGameState | null>(null);
+    const [winner, setWinner] = useState<{ username: string } | null>(null);
+    const [leaderboard, setLeaderboard] = useState<Array<{ username: string; rank: number }>>([]);
+    const [selectedPropertyFromPanel, setSelectedPropertyFromPanel] = useState<BoardSquare | null>(null);
 
     // Join modal state for users joining via link without a session
     const [showJoinModal, setShowJoinModal] = useState(false);
@@ -96,92 +98,6 @@ export default function MonopolyGameRoom() {
         const unsubState = on('game:state', (data: unknown) => {
             const { state } = data as { state: MonopolyGameState };
 
-            // Generate logs based on state changes
-            if (prevStateRef.current && state) {
-                const prev = prevStateRef.current;
-                const newLogs: GameLog[] = [];
-
-                // Check for dice roll
-                if (state.dice && (!prev.dice || state.dice[0] !== prev.dice[0] || state.dice[1] !== prev.dice[1])) {
-                    const currentTurnPlayer = players[state.currentTurnIndex];
-                    const total = state.dice[0] + state.dice[1];
-                    const doubles = state.dice[0] === state.dice[1] ? ' (Doubles!)' : '';
-                    newLogs.push({
-                        id: ++logIdRef.current,
-                        message: `${currentTurnPlayer?.username || 'Player'} rolled ${state.dice[0]} + ${state.dice[1]} = ${total}${doubles}`,
-                        timestamp: Date.now(),
-                        type: 'roll',
-                    });
-                }
-
-                // Check for card drawn - compare by ID to avoid duplicate logs
-                if (state.lastCard && (!prev.lastCard || state.lastCard.id !== prev.lastCard.id)) {
-                    const currentTurnPlayer = players[state.currentTurnIndex];
-                    newLogs.push({
-                        id: ++logIdRef.current,
-                        message: `${currentTurnPlayer?.username || 'Player'}: ${state.lastCard.text}`,
-                        timestamp: Date.now(),
-                        type: 'card',
-                    });
-                }
-
-                // Check for property purchases
-                for (const square of state.board) {
-                    const prevSquare = prev.board.find(s => s.id === square.id);
-                    if (square.owner && (!prevSquare?.owner || prevSquare.owner !== square.owner)) {
-                        const buyer = players.find(p => p.sessionId === square.owner);
-                        newLogs.push({
-                            id: ++logIdRef.current,
-                            message: `${buyer?.username || 'Player'} bought ${square.name || square.id} for ₹${square.price}`,
-                            timestamp: Date.now(),
-                            type: 'buy',
-                        });
-                    }
-                }
-
-                // Check for jail
-                for (const [sessionId, playerState] of Object.entries(state.playerState)) {
-                    const prevPlayer = prev.playerState[sessionId];
-                    if (playerState.inJail && !prevPlayer?.inJail) {
-                        const jailedPlayer = players.find(p => p.sessionId === sessionId);
-                        newLogs.push({
-                            id: ++logIdRef.current,
-                            message: `${jailedPlayer?.username || 'Player'} went to jail!`,
-                            timestamp: Date.now(),
-                            type: 'jail',
-                        });
-                    }
-                }
-
-                // Check for rent paid (cash decreased for current player on owned property)
-                const currentTurnId = players[state.currentTurnIndex]?.sessionId;
-                if (currentTurnId && prev.playerState[currentTurnId] && state.playerState[currentTurnId]) {
-                    const currentPlayerState = state.playerState[currentTurnId];
-                    const prevPlayerState = prev.playerState[currentTurnId];
-                    const cashDiff = prevPlayerState.cash - currentPlayerState.cash;
-
-                    // If player lost money (not from buying), it's likely rent
-                    if (cashDiff > 0 && state.phase !== 'DECISION') {
-                        const landedSquare = state.board[currentPlayerState.position];
-                        if (landedSquare?.owner && landedSquare.owner !== currentTurnId) {
-                            const owner = players.find(p => p.sessionId === landedSquare.owner);
-                            const payer = players[state.currentTurnIndex];
-                            newLogs.push({
-                                id: ++logIdRef.current,
-                                message: `${payer?.username || 'Player'} paid ₹${cashDiff} rent to ${owner?.username || 'owner'} for ${landedSquare.name || landedSquare.id}`,
-                                timestamp: Date.now(),
-                                type: 'rent',
-                            });
-                        }
-                    }
-                }
-
-                if (newLogs.length > 0) {
-                    setGameLogs(logs => [...logs, ...newLogs].slice(-50)); // Keep last 50 logs
-                }
-            }
-
-            prevStateRef.current = state;
             setGameState(state);
             setRolling(false);
 
@@ -198,7 +114,12 @@ export default function MonopolyGameRoom() {
         });
 
         const unsubWinner = on('game:winner', (data: unknown) => {
-            const { winner } = data as { winner: { username: string } | null };
+            const { winner, leaderboard } = data as { 
+                winner: { username: string } | null,
+                leaderboard: Array<{ username: string; rank: number }>
+            };
+            setWinner(winner);
+            setLeaderboard(leaderboard || []);
             setRoom(prev => prev ? { ...prev, status: 'finished' } : null);
         });
 
@@ -243,7 +164,7 @@ export default function MonopolyGameRoom() {
     }, [emit, router]);
 
     const handleRollDice = useCallback(() => {
-        if (!gameState || gameState.phase !== 'ROLL') return;
+        if (!gameState || (gameState.phase !== 'ROLL' && gameState.phase !== 'JAIL')) return;
         setRolling(true);
         emit('game:action', { roomCode, action: 'ROLL_DICE' });
     }, [emit, roomCode, gameState]);
@@ -275,6 +196,20 @@ export default function MonopolyGameRoom() {
         emit('game:action', { roomCode, action: 'BUILD_HOTEL', data: { propertyId } });
     }, [emit, roomCode]);
 
+    const handlePayJailFine = useCallback(() => {
+        emit('game:action', { roomCode, action: 'PAY_JAIL_FINE' });
+    }, [emit, roomCode]);
+
+    const handleUseJailCard = useCallback(() => {
+        emit('game:action', { roomCode, action: 'USE_JAIL_CARD' });
+    }, [emit, roomCode]);
+
+    const handleBankrupt = useCallback(() => {
+        if (confirm('Are you sure you want to go Bankrupt? This will remove you from the game.')) {
+            emit('game:action', { roomCode, action: 'BANKRUPT' });
+        }
+    }, [emit, roomCode]);
+
     // Handle join via shared link (creates session and joins room)
     const handleJoinViaLink = async () => {
         if (!joinUsername.trim() || joinUsername.length < 2) {
@@ -294,12 +229,22 @@ export default function MonopolyGameRoom() {
                 return;
             }
 
-            // Join the room
+            // Join the room via HTTP API
             const joinRes = await roomApi.join(roomCode, guestResult.sessionId);
             if (joinRes.success && joinRes.data) {
                 setRoom(joinRes.data);
                 setPlayers(joinRes.data.players);
                 setShowJoinModal(false);
+                
+                // Explicitly emit socket join to ensure real-time connection
+                // This is needed because the useEffect may not trigger due to state timing
+                if (isConnected) {
+                    emit('room:join', {
+                        roomCode,
+                        sessionId: guestResult.sessionId,
+                        username: guestResult.username,
+                    });
+                }
             } else {
                 setJoinError(joinRes.message || 'Failed to join room');
             }
@@ -361,6 +306,17 @@ export default function MonopolyGameRoom() {
         <div className="min-h-screen bg-[#0f0f0f]">
             <Header />
 
+
+
+            {/* Leaderboard Overlay */}
+            {winner && (
+                <LeaderboardScreen 
+                    winner={winner} 
+                    leaderboard={leaderboard}
+                    onHub={handleLeaveRoom}
+                />
+            )}
+
             <main className="pt-24 pb-12 px-4">
                 {/* Error Toast */}
                 {error && (
@@ -409,21 +365,11 @@ export default function MonopolyGameRoom() {
 
                 {/* Game Board */}
                 {(isPlaying || isFinished) && gameState && guest && (
-                    <div className="max-w-6xl mx-auto">
+                    <div className="max-w-8xl mx-auto">
                         {/* Game Over Overlay */}
-                        {isFinished && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                                <Card className="p-8 text-center">
-                                    <div className="text-6xl mb-4">🏆</div>
-                                    <h2 className="text-3xl font-bold text-white mb-4">Game Over!</h2>
-                                    <Button onClick={() => router.push('/games/monopoly')}>
-                                        Back to Lobby
-                                    </Button>
-                                </Card>
-                            </div>
-                        )}
 
-                        <div className="grid lg:grid-cols-[250px_1fr_250px] gap-6">
+
+                        <div className="grid lg:grid-cols-[250px_1fr_250px] gap-2">
                             {/* Left Panel - Players */}
                             <div className="space-y-4">
                                 <h3 className="text-lg font-semibold text-white">Players</h3>
@@ -435,6 +381,8 @@ export default function MonopolyGameRoom() {
                                         playerState={gameState.playerState?.[player.sessionId]}
                                         isCurrentTurn={idx === gameState.currentTurnIndex}
                                         isMe={player.sessionId === guest.sessionId}
+                                        board={gameState.board}
+                                        onPropertyClick={(prop) => setSelectedPropertyFromPanel(prop)}
                                     />
                                 ))}
                             </div>
@@ -476,6 +424,7 @@ export default function MonopolyGameRoom() {
                                             {gameState.phase === 'DECISION' && '🤔 Make Decision'}
                                             {gameState.phase === 'END_TURN' && '⏭️ End Turn'}
                                             {gameState.phase === 'DEBT' && '💸 Pay Debt'}
+                                            {gameState.phase === 'JAIL' && '🔒 In Jail'}
                                         </div>
                                     </div>
 
@@ -484,10 +433,33 @@ export default function MonopolyGameRoom() {
                                         <Dice
                                             values={gameState.dice}
                                             rolling={rolling}
-                                            canRoll={isMyTurn() && gameState.phase === 'ROLL'}
+                                            canRoll={isMyTurn() && (gameState.phase === 'ROLL' || gameState.phase === 'JAIL')}
                                             onRoll={handleRollDice}
                                         />
                                     </div>
+
+                                    {/* Jail Actions */}
+                                    {isMyTurn() && gameState.phase === 'JAIL' && (
+                                        <div className="mb-6 space-y-2">
+                                            <Button
+                                                onClick={handlePayJailFine}
+                                                className="w-full bg-yellow-600 hover:bg-yellow-700"
+                                                disabled={rolling}
+                                            >
+                                                Pay Bail ($50)
+                                            </Button>
+
+                                            {gameState.playerState[guest.sessionId]?.hasGetOutOfJailCard && (
+                                                <Button
+                                                    onClick={handleUseJailCard}
+                                                    className="w-full bg-blue-600 hover:bg-blue-700"
+                                                    disabled={rolling}
+                                                >
+                                                    Use "Get Out of Jail" Card
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* End Turn Button */}
                                     {isMyTurn() && gameState.phase === 'END_TURN' && (
@@ -507,7 +479,15 @@ export default function MonopolyGameRoom() {
                                 />
 
                                 {/* Game Log */}
-                                <GameLogPanel logs={gameLogs} />
+                                <GameLogPanel logs={gameState.gameLog || []} />
+
+                                {/* Bankrupt Button (Testing) */}
+                                <Button 
+                                    onClick={handleBankrupt}
+                                    className="w-full bg-red-900/50 hover:bg-red-900 text-red-200 border border-red-800"
+                                >
+                                    ☠️ Surrender (Bankrupt)
+                                </Button>
                             </div>
                         </div>
 
@@ -530,6 +510,16 @@ export default function MonopolyGameRoom() {
                                 debtAmount={Math.abs(gameState.playerState[guest.sessionId]?.cash || 0)}
                                 playerCash={gameState.playerState[guest.sessionId]?.cash || 0}
                                 onSell={handleSellProperty}
+                            />
+                        )}
+
+                        {/* Property Details Modal from Player Panel */}
+                        {selectedPropertyFromPanel && (
+                            <PropertyDetailsModal
+                                property={selectedPropertyFromPanel}
+                                owner={selectedPropertyFromPanel.owner ? players.find(p => p.sessionId === selectedPropertyFromPanel.owner) : undefined}
+                                ownerIndex={selectedPropertyFromPanel.owner ? players.findIndex(p => p.sessionId === selectedPropertyFromPanel.owner) : undefined}
+                                onClose={() => setSelectedPropertyFromPanel(null)}
                             />
                         )}
                     </div>
