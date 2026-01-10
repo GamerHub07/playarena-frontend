@@ -38,7 +38,7 @@ const GAMES: Game[] = [
     {
         id: 'business',
         title: 'Business',
-        players: '2-6 Players',
+        players: '2-4 Players',
         image: '/games/business.png',
         href: '/games/monopoly',
         available: true,

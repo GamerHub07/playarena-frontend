@@ -43,12 +43,6 @@ export default function MonopolyGameRoom() {
     const [selectedPropertyFromPanel, setSelectedPropertyFromPanel] = useState<BoardSquare | null>(null);
 
     // Join modal state for users joining via link without a session
-    // const [showJoinModal, setShowJoinModal] = useState(false);
-    // const [joinUsername, setJoinUsername] = useState('');
-    // const [joinError, setJoinError] = useState('');
-    // const [joining, setJoining] = useState(false);
-
-    // Join modal state for users joining via link without a session
     const [showJoinModal, setShowJoinModal] = useState(false);
     const [joinUsername, setJoinUsername] = useState('');
     const [joinError, setJoinError] = useState('');
@@ -120,7 +114,7 @@ export default function MonopolyGameRoom() {
         });
 
         const unsubWinner = on('game:winner', (data: unknown) => {
-            const { winner, leaderboard } = data as {
+            const { winner, leaderboard } = data as { 
                 winner: { username: string } | null,
                 leaderboard: Array<{ username: string; rank: number }>
             };
@@ -145,25 +139,17 @@ export default function MonopolyGameRoom() {
         };
     }, [guest, isConnected, on, players]);
 
-    // Track if we've joined the room to prevent duplicate emissions
-    const hasJoinedRef = useRef(false);
-
     // Socket join room
     useEffect(() => {
         if (!guest || !isConnected || loading) return;
 
-        // Only emit room:join once per session
-        if (!hasJoinedRef.current) {
-            hasJoinedRef.current = true;
-            emit('room:join', {
-                roomCode,
-                sessionId: guest.sessionId,
-                username: guest.username,
-            });
-        }
+        emit('room:join', {
+            roomCode,
+            sessionId: guest.sessionId,
+            username: guest.username,
+        });
 
         return () => {
-            hasJoinedRef.current = false;
             emit('room:leave', {});
         };
     }, [isConnected, guest, loading, roomCode, emit]);
@@ -249,7 +235,7 @@ export default function MonopolyGameRoom() {
                 setRoom(joinRes.data);
                 setPlayers(joinRes.data.players);
                 setShowJoinModal(false);
-
+                
                 // Explicitly emit socket join to ensure real-time connection
                 // This is needed because the useEffect may not trigger due to state timing
                 if (isConnected) {
@@ -324,8 +310,8 @@ export default function MonopolyGameRoom() {
 
             {/* Leaderboard Overlay */}
             {winner && (
-                <LeaderboardScreen
-                    winner={winner}
+                <LeaderboardScreen 
+                    winner={winner} 
                     leaderboard={leaderboard}
                     onHub={handleLeaveRoom}
                 />
@@ -496,7 +482,7 @@ export default function MonopolyGameRoom() {
                                 <GameLogPanel logs={gameState.gameLog || []} />
 
                                 {/* Bankrupt Button (Testing) */}
-                                <Button
+                                <Button 
                                     onClick={handleBankrupt}
                                     className="w-full bg-red-900/50 hover:bg-red-900 text-red-200 border border-red-800"
                                 >
