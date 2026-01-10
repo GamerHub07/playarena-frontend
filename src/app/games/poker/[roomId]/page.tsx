@@ -27,7 +27,89 @@ import {
 import { PokerHandsGuideButton } from '@/components/games/poker/PokerHandsGuide';
 
 // ═══════════════════════════════════════════════════════════════
-// PREMIUM STYLING CONSTANTS
+// THEME DEFINITIONS
+// ═══════════════════════════════════════════════════════════════
+
+type PokerTheme = 'classic' | 'premium';
+
+interface ThemeConfig {
+    // Table styling
+    tableBackground: string;
+    tableFelt: string;
+    tableBorder: string;
+    tableRail: string;
+    // Card styling
+    cardBack: string;
+    cardBackBorder: string;
+    cardFront: string;
+    // Player styling
+    playerCard: string;
+    playerCardActive: string;
+    playerBorder: string;
+    // UI styling
+    actionBar: string;
+    actionBarBorder: string;
+    infoBar: string;
+    accentColor: string;
+    // Effects
+    useGradients: boolean;
+    useGlow: boolean;
+    useAnimations: boolean;
+}
+
+const THEME_CONFIGS: Record<PokerTheme, ThemeConfig> = {
+    classic: {
+        // Simple green felt table
+        tableBackground: '#1a472a',
+        tableFelt: '#1a5c2e',
+        tableBorder: '#5c4033',
+        tableRail: '#5c4033',
+        // Simple card styling
+        cardBack: '#1565c0',
+        cardBackBorder: '#0d47a1',
+        cardFront: '#ffffff',
+        // Simple player styling
+        playerCard: 'rgba(40, 40, 40, 0.95)',
+        playerCardActive: 'rgba(50, 50, 50, 0.95)',
+        playerBorder: '#666666',
+        // Simple UI styling
+        actionBar: 'rgba(40, 40, 40, 0.95)',
+        actionBarBorder: '#666666',
+        infoBar: 'rgba(40, 40, 40, 0.95)',
+        accentColor: '#2e7d32',
+        // No fancy effects
+        useGradients: false,
+        useGlow: false,
+        useAnimations: false,
+    },
+    premium: {
+        // Rich emerald table with gradients
+        tableBackground: 'linear-gradient(180deg, #5c3d2e 0%, #3d2517 50%, #2d1810 100%)',
+        tableFelt: 'radial-gradient(ellipse at center, #1a6b4a 0%, #0f4a33 40%, #0a3322 80%, #061f15 100%)',
+        tableBorder: 'rgba(255,255,255,0.1)',
+        tableRail: 'linear-gradient(180deg, #5c3d2e 0%, #3d2517 50%, #2d1810 100%)',
+        // Premium card styling with gradients
+        cardBack: 'linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 50%, #1e3a5f 100%)',
+        cardBackBorder: '#3b82f6',
+        cardFront: 'linear-gradient(145deg, #ffffff 0%, #f3f4f6 50%, #e5e7eb 100%)',
+        // Premium player styling
+        playerCard: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+        playerCardActive: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        playerBorder: 'rgba(16, 185, 129, 0.3)',
+        // Premium UI styling
+        actionBar: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
+        actionBarBorder: 'rgba(16, 185, 129, 0.3)',
+        infoBar: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)',
+        accentColor: '#10b981',
+        // Full effects
+        useGradients: true,
+        useGlow: true,
+        useAnimations: true,
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STYLING CONSTANTS
 // ═══════════════════════════════════════════════════════════════
 
 // Player seat positions around the table (up to 8 players)
@@ -58,61 +140,72 @@ const POKER_COLORS = [
 const PLAYER_AVATARS = ['🎩', '👑', '🎭', '💎', '🌟', '🔥', '⭐', '🃏'];
 
 // ═══════════════════════════════════════════════════════════════
-// PREMIUM CARD COMPONENT
+// CARD COMPONENT
 // ═══════════════════════════════════════════════════════════════
 
-function PremiumCard({ card, hidden = false, small = false, glow = false }: {
+function PokerCard({ card, hidden = false, small = false, glow = false, theme = 'premium' }: {
     card?: CardType;
     hidden?: boolean;
     small?: boolean;
     glow?: boolean;
+    theme?: PokerTheme;
 }) {
+    const themeConfig = THEME_CONFIGS[theme];
     const sizeClasses = small
         ? 'w-10 h-14 rounded-lg text-sm'
         : 'w-16 h-22 rounded-xl text-base';
 
     if (hidden || !card) {
+        // Card back
+        const isClassic = theme === 'classic';
         return (
             <div
-                className={`${sizeClasses} relative overflow-hidden shadow-xl transition-transform hover:scale-105`}
+                className={`${sizeClasses} relative overflow-hidden ${isClassic ? '' : 'shadow-xl'} transition-transform ${themeConfig.useAnimations ? 'hover:scale-105' : ''}`}
                 style={{
-                    background: 'linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 50%, #1e3a5f 100%)',
-                    border: '2px solid #3b82f6',
-                    boxShadow: '0 4px 20px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1)',
+                    background: themeConfig.cardBack,
+                    border: `2px solid ${themeConfig.cardBackBorder}`,
+                    boxShadow: isClassic ? '0 2px 4px rgba(0,0,0,0.3)' : '0 4px 20px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1)',
                 }}
             >
-                {/* Card back pattern */}
-                <div className="absolute inset-0 opacity-30" style={{
-                    backgroundImage: `repeating-linear-gradient(
-                        45deg,
-                        transparent,
-                        transparent 5px,
-                        rgba(59, 130, 246, 0.3) 5px,
-                        rgba(59, 130, 246, 0.3) 10px
-                    )`
-                }} />
-                <div className="absolute inset-2 border border-blue-400/30 rounded-md" />
+                {/* Card back pattern - only for premium */}
+                {!isClassic && (
+                    <>
+                        <div className="absolute inset-0 opacity-30" style={{
+                            backgroundImage: `repeating-linear-gradient(
+                                45deg,
+                                transparent,
+                                transparent 5px,
+                                rgba(59, 130, 246, 0.3) 5px,
+                                rgba(59, 130, 246, 0.3) 10px
+                            )`
+                        }} />
+                        <div className="absolute inset-2 border border-blue-400/30 rounded-md" />
+                    </>
+                )}
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-blue-400 text-2xl">♠</span>
+                    <span className={isClassic ? 'text-white text-xl' : 'text-blue-400 text-2xl'}>♠</span>
                 </div>
             </div>
         );
     }
 
     const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
-    const color = isRed ? '#ef4444' : '#1f2937';
+    const color = isRed ? '#dc2626' : '#1f2937';
     const symbol = SUIT_SYMBOLS[card.suit];
+    const isClassic = theme === 'classic';
 
     return (
         <div
-            className={`${sizeClasses} relative overflow-hidden transition-all duration-300 hover:scale-110 hover:-translate-y-1`}
+            className={`${sizeClasses} relative overflow-hidden transition-all ${themeConfig.useAnimations ? 'duration-300 hover:scale-110 hover:-translate-y-1' : ''}`}
             style={{
-                background: 'linear-gradient(145deg, #ffffff 0%, #f3f4f6 50%, #e5e7eb 100%)',
+                background: isClassic ? '#ffffff' : 'linear-gradient(145deg, #ffffff 0%, #f3f4f6 50%, #e5e7eb 100%)',
                 borderRadius: small ? '8px' : '12px',
-                border: '1px solid rgba(0,0,0,0.1)',
-                boxShadow: glow
-                    ? `0 8px 32px rgba(234, 179, 8, 0.5), 0 4px 16px rgba(0,0,0,0.3)`
-                    : '0 4px 16px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.1)',
+                border: '1px solid rgba(0,0,0,0.2)',
+                boxShadow: isClassic
+                    ? '0 2px 6px rgba(0,0,0,0.2)'
+                    : glow
+                        ? `0 8px 32px rgba(234, 179, 8, 0.5), 0 4px 16px rgba(0,0,0,0.3)`
+                        : '0 4px 16px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.1)',
             }}
         >
             {/* Card content */}
@@ -134,14 +227,16 @@ function PremiumCard({ card, hidden = false, small = false, glow = false }: {
                 <span className="font-bold">{card.rank}</span>
                 <span className="text-sm">{symbol}</span>
             </div>
-            {/* Shine effect */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
+            {/* Shine effect - only for premium */}
+            {!isClassic && (
+                <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
+            )}
         </div>
     );
 }
 
 // ═══════════════════════════════════════════════════════════════
-// PREMIUM PLAYER SEAT COMPONENT
+// PLAYER SEAT COMPONENT
 // ═══════════════════════════════════════════════════════════════
 
 function PlayerSeat({
@@ -151,6 +246,7 @@ function PlayerSeat({
     position,
     communityCards,
     playerIndex,
+    theme = 'premium',
 }: {
     player: PokerPlayerState;
     isCurrentTurn: boolean;
@@ -158,7 +254,10 @@ function PlayerSeat({
     position: { top: string; left: string; transform: string };
     communityCards: CardType[];
     playerIndex: number;
+    theme?: PokerTheme;
 }) {
+    const themeConfig = THEME_CONFIGS[theme];
+    const isClassic = theme === 'classic';
     const handEval = (isMe && player.hand && player.hand.length > 0 && !player.folded)
         ? evaluateHand(player.hand, communityCards)
         : null;
@@ -168,19 +267,19 @@ function PlayerSeat({
 
     return (
         <div
-            className={`absolute flex flex-col items-center gap-1.5 transition-all duration-500 ${isCurrentTurn ? 'scale-110 z-20' : 'z-10'}`}
+            className={`absolute flex flex-col items-center gap-1.5 transition-all ${themeConfig.useAnimations ? 'duration-500' : ''} ${isCurrentTurn && !isClassic ? 'scale-110 z-20' : 'z-10'}`}
             style={position}
         >
-            {/* Turn indicator ring */}
-            {isCurrentTurn && (
+            {/* Turn indicator ring - premium only */}
+            {isCurrentTurn && !isClassic && (
                 <div
                     className="absolute -inset-4 rounded-full animate-ping opacity-30"
                     style={{ backgroundColor: playerColor.hex }}
                 />
             )}
 
-            {/* Hand Hint */}
-            {handEval && (
+            {/* Hand Hint - show for premium only */}
+            {handEval && !isClassic && (
                 <div
                     className="px-3 py-1 rounded-full text-xs font-bold shadow-lg"
                     style={{
@@ -199,16 +298,16 @@ function PlayerSeat({
                 {player.hand && player.hand.length > 0 ? (
                     player.hand.map((card, i) => (
                         <div key={i} style={{ transform: `rotate(${i === 0 ? -8 : 8}deg)` }}>
-                            <PremiumCard card={card} small glow={!!(isMe && handEval && handEval.strength >= 4)} />
+                            <PokerCard card={card} small glow={!!(isMe && handEval && handEval.strength >= 4 && !isClassic)} theme={theme} />
                         </div>
                     ))
                 ) : (
                     <>
                         <div style={{ transform: 'rotate(-8deg)' }}>
-                            <PremiumCard hidden small />
+                            <PokerCard hidden small theme={theme} />
                         </div>
                         <div style={{ transform: 'rotate(8deg)' }}>
-                            <PremiumCard hidden small />
+                            <PokerCard hidden small theme={theme} />
                         </div>
                     </>
                 )}
@@ -216,38 +315,42 @@ function PlayerSeat({
 
             {/* Player info card */}
             <div
-                className={`relative px-4 py-2 rounded-2xl flex items-center gap-2 transition-all duration-300
+                className={`relative px-4 py-2 ${isClassic ? 'rounded-lg' : 'rounded-2xl'} flex items-center gap-2 transition-all ${themeConfig.useAnimations ? 'duration-300' : ''}
                     ${player.folded ? 'opacity-40 grayscale' : ''}
                 `}
                 style={{
-                    background: isCurrentTurn
-                        ? `linear-gradient(135deg, ${playerColor.hex} 0%, ${playerColor.hex}cc 100%)`
-                        : 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
-                    border: isMe
-                        ? '2px solid #22c55e'
+                    background: isClassic
+                        ? (isCurrentTurn ? '#2e7d32' : themeConfig.playerCard)
                         : isCurrentTurn
-                            ? `2px solid ${playerColor.hex}`
-                            : '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: isCurrentTurn
-                        ? `0 8px 32px ${playerColor.hex}50, 0 4px 12px rgba(0,0,0,0.5)`
-                        : '0 4px 12px rgba(0,0,0,0.4)',
+                            ? `linear-gradient(135deg, ${playerColor.hex} 0%, ${playerColor.hex}cc 100%)`
+                            : themeConfig.playerCard,
+                    border: isMe
+                        ? `2px solid ${isClassic ? '#4caf50' : '#22c55e'}`
+                        : isCurrentTurn
+                            ? `2px solid ${isClassic ? '#66bb6a' : playerColor.hex}`
+                            : `1px solid ${themeConfig.playerBorder}`,
+                    boxShadow: isClassic
+                        ? '0 2px 4px rgba(0,0,0,0.3)'
+                        : isCurrentTurn
+                            ? `0 8px 32px ${playerColor.hex}50, 0 4px 12px rgba(0,0,0,0.5)`
+                            : '0 4px 12px rgba(0,0,0,0.4)',
                 }}
             >
-                {/* Avatar */}
-                <span className="text-xl">{avatar}</span>
+                {/* Avatar - premium only */}
+                {!isClassic && <span className="text-xl">{avatar}</span>}
 
                 {/* Name & Chips */}
                 <div className="flex flex-col">
                     <div className="flex items-center gap-1">
-                        {player.isDealer && <span className="text-xs bg-yellow-500/80 px-1.5 py-0.5 rounded text-black font-bold">D</span>}
-                        {player.isSmallBlind && <span className="text-xs bg-blue-500/80 px-1 py-0.5 rounded">SB</span>}
-                        {player.isBigBlind && <span className="text-xs bg-purple-500/80 px-1 py-0.5 rounded">BB</span>}
+                        {player.isDealer && <span className={`text-xs ${isClassic ? 'bg-yellow-600' : 'bg-yellow-500/80'} px-1.5 py-0.5 rounded text-black font-bold`}>D</span>}
+                        {player.isSmallBlind && <span className={`text-xs ${isClassic ? 'bg-blue-600' : 'bg-blue-500/80'} px-1 py-0.5 rounded text-white`}>SB</span>}
+                        {player.isBigBlind && <span className={`text-xs ${isClassic ? 'bg-purple-600' : 'bg-purple-500/80'} px-1 py-0.5 rounded text-white`}>BB</span>}
                         <span className={`font-semibold truncate max-w-[70px] ${isCurrentTurn ? 'text-white' : 'text-gray-200'}`}>
                             {player.username}
                         </span>
                     </div>
                     <div className="flex items-center gap-1">
-                        <span className="text-yellow-400 font-bold text-sm">💰 ${player.chips.toLocaleString()}</span>
+                        <span className="text-yellow-400 font-bold text-sm">{isClassic ? '$' : '💰 $'}{player.chips.toLocaleString()}</span>
                     </div>
                 </div>
 
@@ -264,11 +367,11 @@ function PlayerSeat({
                 <div
                     className="flex items-center gap-1 px-3 py-1 rounded-full font-bold text-sm"
                     style={{
-                        background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                        boxShadow: '0 4px 12px rgba(22, 163, 74, 0.4)',
+                        background: isClassic ? '#2e7d32' : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                        boxShadow: isClassic ? 'none' : '0 4px 12px rgba(22, 163, 74, 0.4)',
                     }}
                 >
-                    <span className="text-sm">🪙</span>
+                    {!isClassic && <span className="text-sm">🪙</span>}
                     <span className="text-white">${player.currentBet}</span>
                 </div>
             )}
@@ -276,27 +379,23 @@ function PlayerSeat({
             {/* Status badges */}
             <div className="flex gap-1">
                 {player.folded && (
-                    <div className="bg-gray-700/90 text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium">
-                        ❌ Folded
+                    <div className={`${isClassic ? 'bg-gray-600' : 'bg-gray-700/90'} text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium`}>
+                        {isClassic ? 'Folded' : '❌ Folded'}
                     </div>
                 )}
                 {player.allIn && (
                     <div
                         className="px-3 py-1 rounded-full text-xs font-bold text-white"
                         style={{
-                            background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                            animation: 'pulse 1s infinite',
-                            boxShadow: '0 0 20px rgba(220, 38, 38, 0.6)',
+                            background: isClassic ? '#c62828' : 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                            animation: !isClassic ? 'pulse 1s infinite' : 'none',
+                            boxShadow: isClassic ? 'none' : '0 0 20px rgba(220, 38, 38, 0.6)',
                         }}
                     >
-                        🔥 ALL-IN
+                        {isClassic ? 'ALL-IN' : '🔥 ALL-IN'}
                     </div>
                 )}
-                {player.lastAction && !player.folded && !player.allIn && (
-                    <div className="bg-blue-600/90 text-white px-2 py-0.5 rounded-full text-xs font-medium">
-                        {actionToString(player.lastAction)}
-                    </div>
-                )}
+                {/* Removed lastAction popup per user request */}
             </div>
         </div>
     );
@@ -328,6 +427,25 @@ export default function PokerGameRoom() {
     const [winners, setWinners] = useState<WinnerInfo[] | null>(null);
     const [isGameOver, setIsGameOver] = useState(false);
     const [nextHandCountdown, setNextHandCountdown] = useState<number | null>(null);
+
+    // Theme state with localStorage persistence
+    const [theme, setTheme] = useState<PokerTheme>('premium');
+    const themeConfig = THEME_CONFIGS[theme];
+
+    // Load theme from localStorage on mount
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('poker-theme') as PokerTheme | null;
+        if (savedTheme && (savedTheme === 'classic' || savedTheme === 'premium')) {
+            setTheme(savedTheme);
+        }
+    }, []);
+
+    // Save theme to localStorage when changed
+    const toggleTheme = useCallback(() => {
+        const newTheme = theme === 'premium' ? 'classic' : 'premium';
+        setTheme(newTheme);
+        localStorage.setItem('poker-theme', newTheme);
+    }, [theme]);
 
     // Draggable action bar state
     const [actionBarPos, setActionBarPos] = useState({ x: 0, y: 0 });
@@ -583,30 +701,34 @@ export default function PokerGameRoom() {
     // MAIN GAME VIEW
     // ═══════════════════════════════════════════════════════════════
 
+    const isClassic = theme === 'classic';
+
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 overflow-hidden">
-            {/* Ambient background effects */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
-            </div>
+        <div className={`min-h-screen overflow-hidden ${isClassic ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900'}`}>
+            {/* Ambient background effects - premium only */}
+            {!isClassic && (
+                <div className="fixed inset-0 pointer-events-none">
+                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
+                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
+                </div>
+            )}
 
             <Header />
 
             <main className="pt-20 pb-4 px-4 relative z-10">
                 <div className="max-w-7xl mx-auto">
-                    {/* Premium Game Info Bar */}
+                    {/* Game Info Bar */}
                     <div className="flex justify-between items-center mb-4 px-4">
                         <div className="flex items-center gap-4">
                             <div
-                                className="flex items-center gap-2 px-4 py-2 rounded-xl"
+                                className={`flex items-center gap-2 px-4 py-2 ${isClassic ? 'rounded-lg' : 'rounded-xl'}`}
                                 style={{
-                                    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                                    background: themeConfig.infoBar,
+                                    border: `1px solid ${themeConfig.playerBorder}`,
+                                    boxShadow: isClassic ? 'none' : '0 4px 12px rgba(0,0,0,0.3)',
                                 }}
                             >
-                                <span className="text-emerald-400">🎰</span>
+                                {!isClassic && <span className="text-emerald-400">🎰</span>}
                                 <span className="text-gray-400 text-sm">Room:</span>
                                 <span className="font-mono font-bold text-white tracking-wider">{roomCode}</span>
                             </div>
@@ -615,38 +737,50 @@ export default function PokerGameRoom() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
+                            {/* Theme Toggle Button */}
+                            <button
+                                onClick={toggleTheme}
+                                className={`px-4 py-2 ${isClassic ? 'rounded-lg' : 'rounded-xl'} text-sm font-medium transition-all hover:opacity-80`}
+                                style={{
+                                    background: themeConfig.infoBar,
+                                    border: `1px solid ${themeConfig.playerBorder}`,
+                                }}
+                                title={`Switch to ${theme === 'premium' ? 'Classic' : 'Premium'} theme`}
+                            >
+                                {isClassic ? '✨ Premium' : '🃏 Classic'}
+                            </button>
                             <PokerHandsGuideButton />
                             <div
-                                className="px-4 py-2 rounded-xl text-sm"
+                                className={`px-4 py-2 ${isClassic ? 'rounded-lg' : 'rounded-xl'} text-sm`}
                                 style={{
-                                    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    background: themeConfig.infoBar,
+                                    border: `1px solid ${themeConfig.playerBorder}`,
                                 }}
                             >
                                 <span className="text-gray-400">Phase:</span>
-                                <span className="text-emerald-400 ml-2 font-semibold">{phaseToString(gameState?.phase || 'waiting')}</span>
+                                <span className={`ml-2 font-semibold ${isClassic ? 'text-green-400' : 'text-emerald-400'}`}>{phaseToString(gameState?.phase || 'waiting')}</span>
                             </div>
                             <div
-                                className="px-5 py-2 rounded-xl font-bold text-lg flex items-center gap-2"
+                                className={`px-5 py-2 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold text-lg flex items-center gap-2`}
                                 style={{
-                                    background: 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
-                                    boxShadow: '0 4px 20px rgba(202, 138, 4, 0.4)',
+                                    background: isClassic ? '#b8860b' : 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
+                                    boxShadow: isClassic ? 'none' : '0 4px 20px rgba(202, 138, 4, 0.4)',
                                 }}
                             >
-                                <span>💰</span>
+                                {!isClassic && <span>💰</span>}
                                 <span className="text-white">${gameState?.pot || 0}</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* PREMIUM POKER TABLE */}
+                    {/* POKER TABLE */}
                     <div className="relative w-full aspect-[16/9] max-h-[65vh]">
                         {/* Outer table rim */}
                         <div
                             className="absolute inset-[5%] rounded-[50%]"
                             style={{
-                                background: 'linear-gradient(180deg, #5c3d2e 0%, #3d2517 50%, #2d1810 100%)',
-                                boxShadow: '0 20px 60px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.1)',
+                                background: isClassic ? themeConfig.tableRail : 'linear-gradient(180deg, #5c3d2e 0%, #3d2517 50%, #2d1810 100%)',
+                                boxShadow: isClassic ? '0 10px 30px rgba(0,0,0,0.4)' : '0 20px 60px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.1)',
                             }}
                         />
 
@@ -654,35 +788,41 @@ export default function PokerGameRoom() {
                         <div
                             className="absolute inset-[7%] rounded-[50%] overflow-hidden"
                             style={{
-                                background: 'radial-gradient(ellipse at center, #1a6b4a 0%, #0f4a33 40%, #0a3322 80%, #061f15 100%)',
-                                boxShadow: 'inset 0 0 100px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.3)',
+                                background: isClassic ? themeConfig.tableFelt : 'radial-gradient(ellipse at center, #1a6b4a 0%, #0f4a33 40%, #0a3322 80%, #061f15 100%)',
+                                boxShadow: isClassic ? 'inset 0 0 30px rgba(0,0,0,0.3)' : 'inset 0 0 100px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.3)',
                             }}
                         >
-                            {/* Felt texture overlay */}
-                            <div
-                                className="absolute inset-0 opacity-20"
-                                style={{
-                                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                                }}
-                            />
+                            {/* Felt texture overlay - premium only */}
+                            {!isClassic && (
+                                <div
+                                    className="absolute inset-0 opacity-20"
+                                    style={{
+                                        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                                    }}
+                                />
+                            )}
 
-                            {/* Inner decorative ring */}
-                            <div className="absolute inset-6 border border-emerald-400/20 rounded-[50%]" />
-                            <div className="absolute inset-12 border border-emerald-400/10 rounded-[50%]" />
+                            {/* Inner decorative ring - premium only */}
+                            {!isClassic && (
+                                <>
+                                    <div className="absolute inset-6 border border-emerald-400/20 rounded-[50%]" />
+                                    <div className="absolute inset-12 border border-emerald-400/10 rounded-[50%]" />
+                                </>
+                            )}
                         </div>
 
                         {/* Community cards */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-3">
                             {gameState?.communityCards.map((card, i) => (
-                                <div key={i} className="transform hover:scale-110 transition-transform">
-                                    <PremiumCard card={card} />
+                                <div key={i} className={`transform ${!isClassic ? 'hover:scale-110' : ''} transition-transform`}>
+                                    <PokerCard card={card} theme={theme} />
                                 </div>
                             ))}
                             {/* Empty slots */}
                             {Array.from({ length: 5 - (gameState?.communityCards.length || 0) }).map((_, i) => (
                                 <div
                                     key={`empty-${i}`}
-                                    className="w-16 h-22 rounded-xl border-2 border-dashed border-emerald-500/30 bg-emerald-500/5"
+                                    className={`w-16 h-22 ${isClassic ? 'rounded-lg border border-dashed border-gray-500/40 bg-gray-500/10' : 'rounded-xl border-2 border-dashed border-emerald-500/30 bg-emerald-500/5'}`}
                                 />
                             ))}
                         </div>
@@ -690,14 +830,14 @@ export default function PokerGameRoom() {
                         {/* Pot display */}
                         {gameState && gameState.pot > 0 && (
                             <div
-                                className="absolute top-[28%] left-1/2 -translate-x-1/2 px-6 py-2 rounded-full flex items-center gap-2"
+                                className={`absolute top-[28%] left-1/2 -translate-x-1/2 px-6 py-2 ${isClassic ? 'rounded-lg' : 'rounded-full'} flex items-center gap-2`}
                                 style={{
-                                    background: 'linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 100%)',
-                                    border: '1px solid rgba(202, 138, 4, 0.5)',
-                                    boxShadow: '0 4px 20px rgba(0,0,0,0.5), 0 0 30px rgba(202, 138, 4, 0.2)',
+                                    background: isClassic ? 'rgba(0,0,0,0.6)' : 'linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 100%)',
+                                    border: isClassic ? '1px solid #b8860b' : '1px solid rgba(202, 138, 4, 0.5)',
+                                    boxShadow: isClassic ? 'none' : '0 4px 20px rgba(0,0,0,0.5), 0 0 30px rgba(202, 138, 4, 0.2)',
                                 }}
                             >
-                                <span className="text-2xl">💰</span>
+                                {!isClassic && <span className="text-2xl">💰</span>}
                                 <span className="text-yellow-400 font-bold text-xl">${gameState.pot.toLocaleString()}</span>
                             </div>
                         )}
@@ -712,11 +852,12 @@ export default function PokerGameRoom() {
                                 position={SEAT_POSITIONS[idx % SEAT_POSITIONS.length]}
                                 communityCards={gameState.communityCards}
                                 playerIndex={idx}
+                                theme={theme}
                             />
                         ))}
                     </div>
 
-                    {/* PREMIUM ACTION BAR */}
+                    {/* ACTION BAR */}
                     {isMyTurn && gameState?.phase !== 'showdown' && (
                         <div
                             className="fixed z-50"
@@ -727,12 +868,12 @@ export default function PokerGameRoom() {
                             }}
                         >
                             <div
-                                className="p-5 rounded-2xl cursor-grab active:cursor-grabbing"
+                                className={`p-5 ${isClassic ? 'rounded-lg' : 'rounded-2xl'} cursor-grab active:cursor-grabbing`}
                                 style={{
-                                    background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
-                                    backdropFilter: 'blur(20px)',
-                                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                                    boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(16, 185, 129, 0.1)',
+                                    background: themeConfig.actionBar,
+                                    backdropFilter: isClassic ? 'none' : 'blur(20px)',
+                                    border: `1px solid ${themeConfig.actionBarBorder}`,
+                                    boxShadow: isClassic ? '0 4px 15px rgba(0,0,0,0.3)' : '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(16, 185, 129, 0.1)',
                                     minWidth: '380px',
                                 }}
                                 onMouseDown={(e) => {
@@ -750,12 +891,14 @@ export default function PokerGameRoom() {
                                 onMouseUp={() => setIsDragging(false)}
                                 onMouseLeave={() => setIsDragging(false)}
                             >
-                                {/* Header */}
-                                <div className="flex justify-center mb-3">
-                                    <div className="w-12 h-1 bg-emerald-500/50 rounded-full" />
-                                </div>
-                                <div className="text-center text-emerald-400 mb-4 font-bold text-lg flex items-center justify-center gap-2">
-                                    <span className="animate-pulse">🎯</span> Your Turn
+                                {/* Header - premium only */}
+                                {!isClassic && (
+                                    <div className="flex justify-center mb-3">
+                                        <div className="w-12 h-1 bg-emerald-500/50 rounded-full" />
+                                    </div>
+                                )}
+                                <div className={`text-center ${isClassic ? 'text-green-400' : 'text-emerald-400'} mb-4 font-bold text-lg flex items-center justify-center gap-2`}>
+                                    {!isClassic && <span className="animate-pulse">🎯</span>} Your Turn
                                 </div>
 
                                 {/* Raise slider */}
@@ -784,37 +927,37 @@ export default function PokerGameRoom() {
                                     {availableActions.includes('fold') && (
                                         <button
                                             onClick={() => handleAction('fold')}
-                                            className="px-5 py-2.5 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+                                            className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
                                             style={{
-                                                background: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                                                boxShadow: '0 4px 15px rgba(220, 38, 38, 0.4)',
+                                                background: isClassic ? '#c62828' : 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+                                                boxShadow: isClassic ? 'none' : '0 4px 15px rgba(220, 38, 38, 0.4)',
                                             }}
                                         >
-                                            ❌ Fold
+                                            {isClassic ? 'Fold' : '❌ Fold'}
                                         </button>
                                     )}
                                     {availableActions.includes('check') && (
                                         <button
                                             onClick={() => handleAction('check')}
-                                            className="px-5 py-2.5 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+                                            className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
                                             style={{
-                                                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                                                boxShadow: '0 4px 15px rgba(37, 99, 235, 0.4)',
+                                                background: isClassic ? '#1565c0' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                                                boxShadow: isClassic ? 'none' : '0 4px 15px rgba(37, 99, 235, 0.4)',
                                             }}
                                         >
-                                            ✓ Check
+                                            {isClassic ? 'Check' : '✓ Check'}
                                         </button>
                                     )}
                                     {availableActions.includes('call') && (
                                         <button
                                             onClick={() => handleAction('call')}
-                                            className="px-5 py-2.5 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+                                            className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
                                             style={{
-                                                background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                                                boxShadow: '0 4px 15px rgba(22, 163, 74, 0.4)',
+                                                background: isClassic ? '#2e7d32' : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                                                boxShadow: isClassic ? 'none' : '0 4px 15px rgba(22, 163, 74, 0.4)',
                                             }}
                                         >
-                                            📞 Call ${toCall}
+                                            {isClassic ? `Call $${toCall}` : `📞 Call $${toCall}`}
                                         </button>
                                     )}
                                     {availableActions.includes('raise') && (
@@ -824,35 +967,35 @@ export default function PokerGameRoom() {
                                                     setRaiseAmount(minRaise);
                                                     setShowRaiseSlider(true);
                                                 }}
-                                                className="px-5 py-2.5 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+                                                className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
                                                 style={{
-                                                    background: 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
-                                                    boxShadow: '0 4px 15px rgba(202, 138, 4, 0.4)',
+                                                    background: isClassic ? '#b8860b' : 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
+                                                    boxShadow: isClassic ? 'none' : '0 4px 15px rgba(202, 138, 4, 0.4)',
                                                 }}
                                             >
-                                                📈 Raise
+                                                {isClassic ? 'Raise' : '📈 Raise'}
                                             </button>
                                         ) : (
                                             <>
                                                 <button
                                                     onClick={() => setShowRaiseSlider(false)}
-                                                    className="px-4 py-2.5 rounded-xl font-bold transition-all hover:scale-105 active:scale-95 text-white"
+                                                    className={`px-4 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
                                                     style={{
                                                         background: 'rgba(255, 255, 255, 0.1)',
                                                         border: '1px solid rgba(255, 255, 255, 0.2)',
                                                     }}
                                                 >
-                                                    🔙
+                                                    {isClassic ? '←' : '🔙'}
                                                 </button>
                                                 <button
                                                     onClick={() => handleAction('raise', raiseAmount)}
-                                                    className="px-5 py-2.5 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+                                                    className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
                                                     style={{
-                                                        background: 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
-                                                        boxShadow: '0 4px 15px rgba(202, 138, 4, 0.4)',
+                                                        background: isClassic ? '#b8860b' : 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
+                                                        boxShadow: isClassic ? 'none' : '0 4px 15px rgba(202, 138, 4, 0.4)',
                                                     }}
                                                 >
-                                                    ✅ ${raiseAmount}
+                                                    {isClassic ? `$${raiseAmount}` : `✅ $${raiseAmount}`}
                                                 </button>
                                             </>
                                         )
@@ -860,13 +1003,13 @@ export default function PokerGameRoom() {
                                     {availableActions.includes('all-in') && (
                                         <button
                                             onClick={() => handleAction('all-in')}
-                                            className="px-5 py-2.5 rounded-xl font-bold transition-all hover:scale-105 active:scale-95 animate-pulse"
+                                            className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} ${!isClassic ? 'animate-pulse' : ''} text-white`}
                                             style={{
-                                                background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                                                boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
+                                                background: isClassic ? '#6a1b9a' : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
+                                                boxShadow: isClassic ? 'none' : '0 4px 20px rgba(124, 58, 237, 0.5)',
                                             }}
                                         >
-                                            🔥 ALL-IN!
+                                            {isClassic ? 'ALL-IN' : '🔥 ALL-IN!'}
                                         </button>
                                     )}
                                 </div>

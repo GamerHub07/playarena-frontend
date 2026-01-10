@@ -16,7 +16,7 @@ export interface Player {
 
 export interface Room {
     code: string;
-    gameType: 'ludo' | 'chess' | 'carrom' | 'snake-ladder';
+    gameType: 'ludo' | 'carrom' | 'snake-ladder';
     status: 'waiting' | 'playing' | 'finished';
     players: Player[];
     maxPlayers: number;
