@@ -131,12 +131,12 @@ const Token = memo(function Token({
     onClick,
     size = 'normal',
 }: TokenProps) {
-    const sizeMap = {
-        normal: 28,
-        medium: 20,
-        small: 14,
+    // Responsive sizes using CSS clamp for different screen sizes
+    const sizeClasses = {
+        normal: 'w-[clamp(18px,4vw,28px)] h-[clamp(18px,4vw,28px)]',
+        medium: 'w-[clamp(14px,3vw,20px)] h-[clamp(14px,3vw,20px)]',
+        small: 'w-[clamp(10px,2.5vw,14px)] h-[clamp(10px,2.5vw,14px)]',
     };
-    const pixelSize = sizeMap[size];
 
     return (
         <div
@@ -144,6 +144,7 @@ const Token = memo(function Token({
             className={`
                 flex items-center justify-center
                 transition-transform duration-150
+                ${sizeClasses[size]}
                 ${selectable ? 'cursor-pointer animate-breathe' : 'cursor-default'}
             `}
             style={{
@@ -152,7 +153,7 @@ const Token = memo(function Token({
         >
             <LudoPawn
                 color={color}
-                size={pixelSize}
+                size="100%"
                 glow={selectable}
             />
         </div>
@@ -185,13 +186,13 @@ const HomeBase = memo(function HomeBase({
 
     return (
         <div
-            className="w-full h-full rounded-lg p-2 flex flex-col transition-all relative overflow-hidden"
+            className="w-full h-full rounded-lg p-1 sm:p-2 flex flex-col transition-all relative overflow-hidden"
             style={{
                 backgroundColor: colorInfo.bg,
                 boxShadow: isCurrentTurn
                     ? `0 0 0 2px ${theme.ui.accentColor}, 0 0 25px ${colorInfo.bg}80, inset 0 2px 4px rgba(255,255,255,0.15)`
                     : 'inset 0 2px 4px rgba(255,255,255,0.1), inset 0 -2px 4px rgba(0,0,0,0.2)',
-                border: `3px solid ${theme.board.cellBorder}`,
+                border: `2px solid ${theme.board.cellBorder}`,
             }}
         >
             {/* Texture overlay for wood-themed boards */}
@@ -206,7 +207,7 @@ const HomeBase = memo(function HomeBase({
 
             {/* Player name */}
             <p
-                className="font-bold text-xs text-center truncate mb-1 drop-shadow-md"
+                className="font-bold text-[clamp(8px,2vw,12px)] text-center truncate mb-0.5 sm:mb-1 drop-shadow-md"
                 style={{
                     color: theme.ui.textPrimary,
                     textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
@@ -219,10 +220,10 @@ const HomeBase = memo(function HomeBase({
             {/* Token slots */}
             <div className="flex-1 flex items-center justify-center">
                 <div
-                    className="grid grid-cols-2 gap-2 p-2 rounded-md"
+                    className="grid grid-cols-2 gap-1 sm:gap-2 p-1 sm:p-2 rounded-md"
                     style={{
                         backgroundColor: colorInfo.light,
-                        border: `2px solid ${theme.board.cellBorder}`,
+                        border: `1px solid ${theme.board.cellBorder}`,
                         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.15)',
                     }}
                 >
@@ -239,11 +240,11 @@ const HomeBase = memo(function HomeBase({
                         return (
                             <div
                                 key={slotIdx}
-                                className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center pointer-events-none"
+                                className="w-[clamp(20px,5vw,40px)] h-[clamp(20px,5vw,40px)] rounded-full flex items-center justify-center pointer-events-none"
                                 style={{
                                     backgroundColor: theme.board.cellBackground,
-                                    boxShadow: 'inset 0 3px 6px rgba(0,0,0,0.2), 0 1px 2px rgba(255,255,255,0.3)',
-                                    border: `2px solid ${theme.board.cellBorder}`,
+                                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2), 0 1px 2px rgba(255,255,255,0.3)',
+                                    border: `1px solid ${theme.board.cellBorder}`,
                                 }}
                             >
                                 {tokenData && (
@@ -265,7 +266,7 @@ const HomeBase = memo(function HomeBase({
 
             {/* Finished count */}
             <p
-                className="text-xs text-center"
+                className="text-[clamp(8px,1.8vw,12px)] text-center"
                 style={{
                     color: theme.ui.textPrimary,
                     textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
@@ -306,7 +307,7 @@ const TrackCell = memo(function TrackCell({ row, col, tokens, theme, onTokenClic
             {/* Safe star */}
             {isSafe && !isStart && (
                 <span
-                    className="text-sm font-bold absolute z-0 pointer-events-none"
+                    className="text-[clamp(8px,2vw,14px)] font-bold absolute z-0 pointer-events-none"
                     style={{
                         color: theme.board.safeStarColor,
                         textShadow: '0 1px 2px rgba(0,0,0,0.3)',
@@ -318,7 +319,7 @@ const TrackCell = memo(function TrackCell({ row, col, tokens, theme, onTokenClic
             {/* Arrow for start cells */}
             {isStart && (
                 <span
-                    className="text-sm font-bold absolute z-0 pointer-events-none"
+                    className="text-[clamp(8px,2vw,14px)] font-bold absolute z-0 pointer-events-none"
                     style={{
                         color: theme.ui.textPrimary,
                         textShadow: '0 1px 2px rgba(0,0,0,0.4)',
@@ -533,26 +534,26 @@ export default function Board({
     }, [onTokenClick]);
 
     return (
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-2 sm:gap-4">
             {/* Turn Status */}
-            <div className="w-full flex items-center justify-between gap-4 flex-wrap">
+            <div className="w-full flex items-center justify-between gap-2 sm:gap-4 flex-wrap">
                 <div
-                    className="flex items-center gap-3 px-4 py-2 rounded-lg"
+                    className="flex items-center gap-1.5 sm:gap-3 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg"
                     style={{
                         backgroundColor: currentTurnColor ? getThemeColor(theme, currentTurnColor).bg : theme.ui.cardBackground,
-                        border: `2px solid ${theme.ui.accentColor}50`,
+                        border: `1px solid ${theme.ui.accentColor}50`,
                         boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                     }}
                 >
                     <div
-                        className={`w-5 h-5 rounded-full border-2 ${isMyTurn ? 'animate-pulse' : ''}`}
+                        className={`w-3 h-3 sm:w-5 sm:h-5 rounded-full border sm:border-2 ${isMyTurn ? 'animate-pulse' : ''}`}
                         style={{
                             backgroundColor: currentTurnColor ? getThemeColor(theme, currentTurnColor).bg : '#888',
                             borderColor: theme.ui.accentColor,
                         }}
                     />
                     <span
-                        className="font-bold text-sm"
+                        className="font-bold text-xs sm:text-sm truncate max-w-[120px] sm:max-w-full"
                         style={{
                             color: theme.ui.textPrimary,
                             textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
@@ -562,7 +563,7 @@ export default function Board({
                         {isMyTurn ? 'Your Turn!' : `${players[gameState.currentPlayer]?.username}'s Turn`}
                     </span>
                     <span
-                        className="text-xs"
+                        className="text-[10px] sm:text-xs hidden xs:inline"
                         style={{ color: theme.ui.textSecondary }}
                     >
                         {gameState.turnPhase === 'roll' ? '🎲 Roll' : '👆 Move'}
@@ -570,28 +571,28 @@ export default function Board({
                 </div>
                 <button
                     onClick={toggleFullscreen}
-                    className="px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors"
+                    className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm flex items-center gap-1 sm:gap-2 transition-colors"
                     style={{
                         backgroundColor: theme.ui.cardBackground,
                         color: theme.ui.textPrimary,
-                        border: `2px solid ${theme.ui.cardBorder}`,
+                        border: `1px solid ${theme.ui.cardBorder}`,
                         boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
                     }}
                 >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                     </svg>
-                    {isFullscreen ? 'Exit' : 'Fullscreen'}
+                    <span className="hidden sm:inline">{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
                 </button>
             </div>
 
             {/* Board with theme frame */}
             <div
-                className="rounded-xl overflow-hidden p-4 relative"
+                className="rounded-xl overflow-hidden p-2 sm:p-4 relative"
                 style={{
                     background: theme.board.boardFrame,
                     boxShadow: '0 8px 32px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.1)',
-                    border: `4px solid ${theme.board.boardFrameBorder}`,
+                    border: `clamp(2px, 0.5vw, 4px) solid ${theme.board.boardFrameBorder}`,
                 }}
             >
                 {/* Wood grain texture overlay */}
@@ -639,13 +640,13 @@ export default function Board({
                     className="grid rounded-lg overflow-hidden relative"
                     style={{
                         gridTemplateAreas: `"home-red path-top home-green" "path-left center path-right" "home-blue path-bottom home-yellow"`,
-                        gridTemplateColumns: '1fr 160px 1fr',
-                        gridTemplateRows: '1fr 160px 1fr',
-                        width: 'min(90vw, 600px)',
-                        height: 'min(90vw, 600px)',
-                        gap: '3px',
+                        gridTemplateColumns: '1fr clamp(75px, 20vw, 160px) 1fr',
+                        gridTemplateRows: '1fr clamp(75px, 20vw, 160px) 1fr',
+                        width: 'clamp(280px, 85vw, 600px)',
+                        height: 'clamp(280px, 85vw, 600px)',
+                        gap: 'clamp(1px, 0.5vw, 3px)',
                         backgroundColor: theme.board.innerBoard,
-                        border: `3px solid ${theme.board.cellBorder}`,
+                        border: `clamp(1px, 0.5vw, 3px) solid ${theme.board.cellBorder}`,
                         boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)',
                     }}
                 >
