@@ -67,6 +67,14 @@ function GameRoomContent() {
     } | null>(null);
     const [leaderboard, setLeaderboard] = useState<Array<{ position: number; username: string; rank: number }>>([]);
 
+    // Turn timeout state for disconnected player handling
+    const [turnTimeout, setTurnTimeout] = useState<{
+        playerIndex: number;
+        secondsRemaining: number;
+        isDisconnected: boolean;
+    } | null>(null);
+    const [autoPlayNotice, setAutoPlayNotice] = useState<string | null>(null);
+
     // Refs for socket listeners to access latest state without re-binding
     const displayedPlayersRef = useRef(displayedPlayers);
     const animatingTokenRef = useRef(animatingToken);
@@ -313,6 +321,45 @@ function GameRoomContent() {
             setThemeId(themeId);
         });
 
+        // Listen for turn timeout warning (countdown for disconnected players)
+        const unsubTurnTimeout = on('game:turnTimeoutWarning', (data: unknown) => {
+            const { playerIndex, secondsRemaining, isDisconnected } = data as {
+                playerIndex: number;
+                secondsRemaining: number;
+                isDisconnected: boolean;
+            };
+            setTurnTimeout({ playerIndex, secondsRemaining, isDisconnected });
+        });
+
+        // Listen for turn timeout cleared (player reconnected)
+        const unsubTurnTimeoutCleared = on('game:turnTimeoutCleared', () => {
+            setTurnTimeout(null);
+        });
+
+        // Listen for auto-play notification
+        const unsubAutoPlayed = on('game:turnAutoPlayed', (data: unknown) => {
+            const { playerIndex, reason, autoPlayCount, maxAutoPlays } = data as {
+                playerIndex: number;
+                reason: string;
+                autoPlayCount?: number;
+                maxAutoPlays?: number;
+            };
+            const currentPlayers = playersRef.current;
+            const playerName = currentPlayers[playerIndex]?.username || 'Player';
+
+            if (reason === 'eliminated') {
+                setAutoPlayNotice(`${playerName} was removed from the game (exceeded ${maxAutoPlays} missed turns)`);
+            } else if (autoPlayCount && maxAutoPlays) {
+                setAutoPlayNotice(`${playerName}'s turn was auto-played (${autoPlayCount}/${maxAutoPlays} missed)`);
+            } else {
+                setAutoPlayNotice(`${playerName}'s turn was skipped (${reason})`);
+            }
+            setTurnTimeout(null);
+
+            // Clear the notice after a few seconds
+            setTimeout(() => setAutoPlayNotice(null), 5000);
+        });
+
         return () => {
             unsubRoom();
             unsubStart();
@@ -321,6 +368,9 @@ function GameRoomContent() {
             unsubWinner();
             unsubError();
             unsubTheme();
+            unsubTurnTimeout();
+            unsubTurnTimeoutCleared();
+            unsubAutoPlayed();
         };
     }, [guest, isConnected, on, setThemeId]);
 
@@ -610,6 +660,22 @@ function GameRoomContent() {
                     </div>
                 )}
 
+                {/* Auto-Play Notice Toast */}
+                {autoPlayNotice && (
+                    <div
+                        className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg animate-pulse"
+                        style={{
+                            backgroundColor: `${theme.playerColors.yellow.bg}E6`,
+                            border: `2px solid ${theme.playerColors.yellow.bg}`,
+                            color: theme.ui.textPrimary,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+                            fontFamily: theme.effects.fontFamily,
+                        }}
+                    >
+                        ⏭️ {autoPlayNotice}
+                    </div>
+                )}
+
                 {/* Connection Status */}
                 <div
                     className="fixed bottom-4 right-4 flex items-center gap-2 text-xs"
@@ -764,14 +830,9 @@ function GameRoomContent() {
                             </div>
                         )}
 
-                        <div className={`flex flex-col lg:flex-row gap-6 items-start justify-center transition-all ${isFinished ? 'brightness-50 pointer-events-none' : ''}`}>
-                            {/* Left Panel - Controls */}
-                            <div className="w-full lg:w-48 flex flex-col gap-4 order-2 lg:order-1">
-                                {/* Placeholder for future controls */}
-                            </div>
-
+                        <div className={`flex flex-col lg:flex-row gap-4 lg:gap-6 items-center lg:items-start justify-center transition-all ${isFinished ? 'brightness-50 pointer-events-none' : ''}`}>
                             {/* Center - Board */}
-                            <div className="order-1 lg:order-2 flex-shrink-0">
+                            <div className="order-1 flex-shrink-0">
                                 <Board
                                     gameState={boardGameState!}
                                     players={players}
@@ -788,18 +849,18 @@ function GameRoomContent() {
                                 />
                             </div>
 
-                            {/* Right Panel - Game Info */}
-                            <div className="w-full lg:w-56 order-3">
+                            {/* Right/Bottom Panel - Game Info */}
+                            <div className="w-full sm:w-auto lg:w-56 order-2">
                                 <Card
-                                    className="p-5"
+                                    className="p-3 sm:p-5"
                                     style={{
                                         backgroundColor: theme.ui.cardBackground,
-                                        border: `3px solid ${theme.ui.cardBorder}`,
+                                        border: `2px solid ${theme.ui.cardBorder}`,
                                         boxShadow: '0 4px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.1)'
                                     }}
                                 >
                                     <h3
-                                        className="text-lg font-semibold mb-4"
+                                        className="text-base sm:text-lg font-semibold mb-2 sm:mb-4 hidden lg:block"
                                         style={{
                                             color: theme.ui.textPrimary,
                                             textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
@@ -809,56 +870,105 @@ function GameRoomContent() {
                                         {theme.effects.useGoldAccents ? '✦ Game Info ✦' : '● Game Info ●'}
                                     </h3>
 
-                                    {/* Current Player */}
-                                    <div className="mb-6">
-                                        <p
-                                            className="text-xs mb-2"
-                                            style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
-                                        >
-                                            Current Turn
-                                        </p>
-                                        <div
-                                            className="px-3 py-2 rounded-lg font-medium"
-                                            style={{
-                                                backgroundColor: getPlayerColor(gameState.currentPlayer).bg,
-                                                color: theme.ui.textPrimary,
-                                                border: `2px solid ${theme.ui.accentColor}60`,
-                                                textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
-                                                fontFamily: theme.effects.fontFamily,
-                                            }}
-                                        >
-                                            {players[gameState.currentPlayer]?.username}
-                                            {gameState.currentPlayer === myPlayerIndex && ' (You)'}
+                                    {/* Vertical layout for all screen sizes */}
+                                    <div className="flex flex-col gap-3 sm:gap-4 lg:gap-6 items-center lg:items-stretch">
+                                        {/* Current Player */}
+                                        <div className="w-full">
+                                            <p
+                                                className="text-[10px] sm:text-xs mb-1 hidden lg:block"
+                                                style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
+                                            >
+                                                Current Turn
+                                            </p>
+                                            <div
+                                                className="px-2 sm:px-3 py-1 sm:py-2 rounded-lg font-medium text-xs sm:text-sm"
+                                                style={{
+                                                    backgroundColor: getPlayerColor(gameState.currentPlayer).bg,
+                                                    color: theme.ui.textPrimary,
+                                                    border: `1px solid ${theme.ui.accentColor}60`,
+                                                    textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
+                                                    fontFamily: theme.effects.fontFamily,
+                                                }}
+                                            >
+                                                {players[gameState.currentPlayer]?.username}
+                                                {gameState.currentPlayer === myPlayerIndex && ' (You)'}
+                                                {/* Show disconnected indicator */}
+                                                {turnTimeout && turnTimeout.playerIndex === gameState.currentPlayer && turnTimeout.isDisconnected && (
+                                                    <span className="ml-1 sm:ml-2 text-[10px] sm:text-xs opacity-75">⚠️</span>
+                                                )}
+                                            </div>
+
+                                            {/* Turn Timeout Countdown - only show on desktop or when active */}
+                                            {turnTimeout && turnTimeout.playerIndex === gameState.currentPlayer && turnTimeout.isDisconnected && (
+                                                <div
+                                                    className="mt-1 sm:mt-2 px-2 sm:px-3 py-1 sm:py-2 rounded-lg"
+                                                    style={{
+                                                        backgroundColor: turnTimeout.secondsRemaining <= 10 ? `${theme.playerColors.red.bg}40` : `${theme.playerColors.yellow.bg}40`,
+                                                        border: `1px solid ${turnTimeout.secondsRemaining <= 10 ? theme.playerColors.red.bg : theme.playerColors.yellow.bg}60`,
+                                                    }}
+                                                >
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span
+                                                            className="text-[10px] sm:text-xs hidden sm:inline"
+                                                            style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
+                                                        >
+                                                            Auto-skip:
+                                                        </span>
+                                                        <span
+                                                            className="font-bold text-sm sm:text-lg"
+                                                            style={{
+                                                                color: turnTimeout.secondsRemaining <= 10 ? theme.playerColors.red.bg : theme.playerColors.yellow.bg,
+                                                                fontFamily: theme.effects.fontFamily,
+                                                            }}
+                                                        >
+                                                            {turnTimeout.secondsRemaining}s
+                                                        </span>
+                                                    </div>
+                                                    {/* Progress bar */}
+                                                    <div
+                                                        className="mt-1 h-1 sm:h-1.5 rounded-full overflow-hidden"
+                                                        style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
+                                                    >
+                                                        <div
+                                                            className="h-full transition-all duration-1000 ease-linear rounded-full"
+                                                            style={{
+                                                                width: `${(turnTimeout.secondsRemaining / 30) * 100}%`,
+                                                                backgroundColor: turnTimeout.secondsRemaining <= 10 ? theme.playerColors.red.bg : theme.playerColors.yellow.bg,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
 
-                                    {/* Dice */}
-                                    <div className="mb-6">
-                                        <p
-                                            className="text-xs mb-2"
-                                            style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
-                                        >
-                                            Dice
-                                        </p>
-                                        <Dice
-                                            value={gameState.diceValue || gameState.lastRoll}
-                                            rolling={rolling}
-                                            canRoll={!isFinished && gameState.currentPlayer === myPlayerIndex && gameState.turnPhase === 'roll'}
-                                            onRoll={handleRollDice}
-                                            playerColor={PLAYER_COLORS[myPlayerIndex]?.name || 'red'}
-                                        />
-                                    </div>
+                                        {/* Dice */}
+                                        <div className="flex-shrink-0">
+                                            <p
+                                                className="text-[10px] sm:text-xs mb-1 hidden lg:block"
+                                                style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
+                                            >
+                                                Dice
+                                            </p>
+                                            <Dice
+                                                value={gameState.diceValue || gameState.lastRoll}
+                                                rolling={rolling}
+                                                canRoll={!isFinished && gameState.currentPlayer === myPlayerIndex && gameState.turnPhase === 'roll'}
+                                                onRoll={handleRollDice}
+                                                playerColor={PLAYER_COLORS[myPlayerIndex]?.name || 'red'}
+                                            />
+                                        </div>
 
-                                    {/* Last Roll */}
-                                    {gameState.lastRoll && (
-                                        <p
-                                            className="text-sm"
-                                            style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
-                                        >
-                                            Last roll: <span className="font-bold" style={{ color: theme.ui.accentColor }}>{gameState.lastRoll}</span>
-                                            {gameState.lastRoll === 6 && ' 🎉'}
-                                        </p>
-                                    )}
+                                        {/* Last Roll - only on desktop */}
+                                        {gameState.lastRoll && (
+                                            <p
+                                                className="text-xs sm:text-sm hidden lg:block"
+                                                style={{ color: theme.ui.textSecondary, fontFamily: theme.effects.fontFamily }}
+                                            >
+                                                Last roll: <span className="font-bold" style={{ color: theme.ui.accentColor }}>{gameState.lastRoll}</span>
+                                                {gameState.lastRoll === 6 && ' 🎉'}
+                                            </p>
+                                        )}
+                                    </div>
                                 </Card>
                             </div>
                         </div>

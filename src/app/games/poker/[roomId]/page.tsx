@@ -33,6 +33,8 @@ import { PokerHandsGuideButton } from '@/components/games/poker/PokerHandsGuide'
 type PokerTheme = 'classic' | 'premium';
 
 interface ThemeConfig {
+    // Background
+    pageBackground: string;
     // Table styling
     tableBackground: string;
     tableFelt: string;
@@ -46,11 +48,20 @@ interface ThemeConfig {
     playerCard: string;
     playerCardActive: string;
     playerBorder: string;
+    playerActiveBorder: string;
     // UI styling
     actionBar: string;
     actionBarBorder: string;
     infoBar: string;
     accentColor: string;
+    textPrimary: string;
+    textSecondary: string;
+    // Button colors
+    btnFold: string;
+    btnCheck: string;
+    btnCall: string;
+    btnRaise: string;
+    btnAllIn: string;
     // Effects
     useGradients: boolean;
     useGlow: boolean;
@@ -59,30 +70,43 @@ interface ThemeConfig {
 
 const THEME_CONFIGS: Record<PokerTheme, ThemeConfig> = {
     classic: {
-        // Simple green felt table
-        tableBackground: '#1a472a',
-        tableFelt: '#1a5c2e',
-        tableBorder: '#5c4033',
-        tableRail: '#5c4033',
-        // Simple card styling
-        cardBack: '#1565c0',
-        cardBackBorder: '#0d47a1',
+        // Dark solid background
+        pageBackground: '#1a1a1a',
+        // Classic green felt poker table
+        tableBackground: '#2d1f10', // Dark wood rail
+        tableFelt: '#0d5c2e', // Classic casino green felt
+        tableBorder: '#4a3520', // Wood border
+        tableRail: '#3d2915', // Wood rail
+        // Classic red card backs
+        cardBack: '#8b0000', // Dark red
+        cardBackBorder: '#5c0000',
         cardFront: '#ffffff',
-        // Simple player styling
-        playerCard: 'rgba(40, 40, 40, 0.95)',
-        playerCardActive: 'rgba(50, 50, 50, 0.95)',
-        playerBorder: '#666666',
-        // Simple UI styling
-        actionBar: 'rgba(40, 40, 40, 0.95)',
-        actionBarBorder: '#666666',
-        infoBar: 'rgba(40, 40, 40, 0.95)',
-        accentColor: '#2e7d32',
-        // No fancy effects
+        // Simple dark player cards
+        playerCard: '#2a2a2a',
+        playerCardActive: '#3d5c3d', // Green tint when active
+        playerBorder: '#444444',
+        playerActiveBorder: '#4caf50',
+        // Clean dark UI
+        actionBar: '#1f1f1f',
+        actionBarBorder: '#3a3a3a',
+        infoBar: '#252525',
+        accentColor: '#4caf50',
+        textPrimary: '#ffffff',
+        textSecondary: '#a0a0a0',
+        // Solid button colors
+        btnFold: '#8b0000', // Dark red
+        btnCheck: '#1565c0', // Blue
+        btnCall: '#2e7d32', // Green
+        btnRaise: '#cc8400', // Gold/amber
+        btnAllIn: '#6a1b9a', // Purple
+        // No effects
         useGradients: false,
         useGlow: false,
         useAnimations: false,
     },
     premium: {
+        // Gradient background
+        pageBackground: 'linear-gradient(135deg, #0f172a 0%, #064e3b 50%, #0f172a 100%)',
         // Rich emerald table with gradients
         tableBackground: 'linear-gradient(180deg, #5c3d2e 0%, #3d2517 50%, #2d1810 100%)',
         tableFelt: 'radial-gradient(ellipse at center, #1a6b4a 0%, #0f4a33 40%, #0a3322 80%, #061f15 100%)',
@@ -95,12 +119,21 @@ const THEME_CONFIGS: Record<PokerTheme, ThemeConfig> = {
         // Premium player styling
         playerCard: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
         playerCardActive: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-        playerBorder: 'rgba(16, 185, 129, 0.3)',
+        playerBorder: 'rgba(255, 255, 255, 0.1)',
+        playerActiveBorder: '#10b981',
         // Premium UI styling
         actionBar: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
         actionBarBorder: 'rgba(16, 185, 129, 0.3)',
         infoBar: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)',
         accentColor: '#10b981',
+        textPrimary: '#ffffff',
+        textSecondary: '#94a3b8',
+        // Gradient buttons
+        btnFold: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
+        btnCheck: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+        btnCall: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+        btnRaise: 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
+        btnAllIn: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
         // Full effects
         useGradients: true,
         useGlow: true,
@@ -160,15 +193,23 @@ function PokerCard({ card, hidden = false, small = false, glow = false, theme = 
         const isClassic = theme === 'classic';
         return (
             <div
-                className={`${sizeClasses} relative overflow-hidden ${isClassic ? '' : 'shadow-xl'} transition-transform ${themeConfig.useAnimations ? 'hover:scale-105' : ''}`}
+                className={`${sizeClasses} relative overflow-hidden`}
                 style={{
                     background: themeConfig.cardBack,
                     border: `2px solid ${themeConfig.cardBackBorder}`,
-                    boxShadow: isClassic ? '0 2px 4px rgba(0,0,0,0.3)' : '0 4px 20px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1)',
+                    boxShadow: isClassic ? '0 2px 8px rgba(0,0,0,0.4)' : '0 4px 20px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1)',
                 }}
             >
-                {/* Card back pattern - only for premium */}
-                {!isClassic && (
+                {/* Card back pattern */}
+                {isClassic ? (
+                    // Classic diamond pattern
+                    <div className="absolute inset-1 border border-white/20 rounded">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-white/60 text-lg font-bold">♦</span>
+                        </div>
+                    </div>
+                ) : (
+                    // Premium pattern
                     <>
                         <div className="absolute inset-0 opacity-30" style={{
                             backgroundImage: `repeating-linear-gradient(
@@ -180,11 +221,11 @@ function PokerCard({ card, hidden = false, small = false, glow = false, theme = 
                             )`
                         }} />
                         <div className="absolute inset-2 border border-blue-400/30 rounded-md" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-blue-400 text-2xl">♠</span>
+                        </div>
                     </>
                 )}
-                <div className="absolute inset-0 flex items-center justify-center">
-                    <span className={isClassic ? 'text-white text-xl' : 'text-blue-400 text-2xl'}>♠</span>
-                </div>
             </div>
         );
     }
@@ -315,22 +356,20 @@ function PlayerSeat({
 
             {/* Player info card */}
             <div
-                className={`relative px-4 py-2 ${isClassic ? 'rounded-lg' : 'rounded-2xl'} flex items-center gap-2 transition-all ${themeConfig.useAnimations ? 'duration-300' : ''}
-                    ${player.folded ? 'opacity-40 grayscale' : ''}
-                `}
+                className={`relative px-4 py-2 ${isClassic ? 'rounded' : 'rounded-2xl'} flex items-center gap-2 ${player.folded ? 'opacity-40' : ''}`}
                 style={{
                     background: isClassic
-                        ? (isCurrentTurn ? '#2e7d32' : themeConfig.playerCard)
+                        ? (isCurrentTurn ? themeConfig.playerCardActive : themeConfig.playerCard)
                         : isCurrentTurn
                             ? `linear-gradient(135deg, ${playerColor.hex} 0%, ${playerColor.hex}cc 100%)`
                             : themeConfig.playerCard,
                     border: isMe
-                        ? `2px solid ${isClassic ? '#4caf50' : '#22c55e'}`
+                        ? `2px solid ${themeConfig.playerActiveBorder}`
                         : isCurrentTurn
-                            ? `2px solid ${isClassic ? '#66bb6a' : playerColor.hex}`
+                            ? `2px solid ${isClassic ? themeConfig.accentColor : playerColor.hex}`
                             : `1px solid ${themeConfig.playerBorder}`,
                     boxShadow: isClassic
-                        ? '0 2px 4px rgba(0,0,0,0.3)'
+                        ? '0 2px 8px rgba(0,0,0,0.4)'
                         : isCurrentTurn
                             ? `0 8px 32px ${playerColor.hex}50, 0 4px 12px rgba(0,0,0,0.5)`
                             : '0 4px 12px rgba(0,0,0,0.4)',
@@ -704,7 +743,10 @@ export default function PokerGameRoom() {
     const isClassic = theme === 'classic';
 
     return (
-        <div className={`min-h-screen overflow-hidden ${isClassic ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900'}`}>
+        <div
+            className="min-h-screen overflow-hidden"
+            style={{ background: themeConfig.pageBackground }}
+        >
             {/* Ambient background effects - premium only */}
             {!isClassic && (
                 <div className="fixed inset-0 pointer-events-none">
@@ -927,11 +969,8 @@ export default function PokerGameRoom() {
                                     {availableActions.includes('fold') && (
                                         <button
                                             onClick={() => handleAction('fold')}
-                                            className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
-                                            style={{
-                                                background: isClassic ? '#c62828' : 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                                                boxShadow: isClassic ? 'none' : '0 4px 15px rgba(220, 38, 38, 0.4)',
-                                            }}
+                                            className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
+                                            style={{ background: themeConfig.btnFold }}
                                         >
                                             {isClassic ? 'Fold' : '❌ Fold'}
                                         </button>
@@ -939,11 +978,8 @@ export default function PokerGameRoom() {
                                     {availableActions.includes('check') && (
                                         <button
                                             onClick={() => handleAction('check')}
-                                            className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
-                                            style={{
-                                                background: isClassic ? '#1565c0' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-                                                boxShadow: isClassic ? 'none' : '0 4px 15px rgba(37, 99, 235, 0.4)',
-                                            }}
+                                            className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
+                                            style={{ background: themeConfig.btnCheck }}
                                         >
                                             {isClassic ? 'Check' : '✓ Check'}
                                         </button>
@@ -951,11 +987,8 @@ export default function PokerGameRoom() {
                                     {availableActions.includes('call') && (
                                         <button
                                             onClick={() => handleAction('call')}
-                                            className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
-                                            style={{
-                                                background: isClassic ? '#2e7d32' : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                                                boxShadow: isClassic ? 'none' : '0 4px 15px rgba(22, 163, 74, 0.4)',
-                                            }}
+                                            className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
+                                            style={{ background: themeConfig.btnCall }}
                                         >
                                             {isClassic ? `Call $${toCall}` : `📞 Call $${toCall}`}
                                         </button>
@@ -967,11 +1000,8 @@ export default function PokerGameRoom() {
                                                     setRaiseAmount(minRaise);
                                                     setShowRaiseSlider(true);
                                                 }}
-                                                className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
-                                                style={{
-                                                    background: isClassic ? '#b8860b' : 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
-                                                    boxShadow: isClassic ? 'none' : '0 4px 15px rgba(202, 138, 4, 0.4)',
-                                                }}
+                                                className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
+                                                style={{ background: themeConfig.btnRaise }}
                                             >
                                                 {isClassic ? 'Raise' : '📈 Raise'}
                                             </button>
@@ -979,23 +1009,20 @@ export default function PokerGameRoom() {
                                             <>
                                                 <button
                                                     onClick={() => setShowRaiseSlider(false)}
-                                                    className={`px-4 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
+                                                    className={`px-4 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
                                                     style={{
-                                                        background: 'rgba(255, 255, 255, 0.1)',
+                                                        background: isClassic ? '#444' : 'rgba(255, 255, 255, 0.1)',
                                                         border: '1px solid rgba(255, 255, 255, 0.2)',
                                                     }}
                                                 >
-                                                    {isClassic ? '←' : '🔙'}
+                                                    ←
                                                 </button>
                                                 <button
                                                     onClick={() => handleAction('raise', raiseAmount)}
-                                                    className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} text-white`}
-                                                    style={{
-                                                        background: isClassic ? '#b8860b' : 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
-                                                        boxShadow: isClassic ? 'none' : '0 4px 15px rgba(202, 138, 4, 0.4)',
-                                                    }}
+                                                    className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
+                                                    style={{ background: themeConfig.btnRaise }}
                                                 >
-                                                    {isClassic ? `$${raiseAmount}` : `✅ $${raiseAmount}`}
+                                                    ${raiseAmount}
                                                 </button>
                                             </>
                                         )
@@ -1003,11 +1030,8 @@ export default function PokerGameRoom() {
                                     {availableActions.includes('all-in') && (
                                         <button
                                             onClick={() => handleAction('all-in')}
-                                            className={`px-5 py-2.5 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold transition-all ${themeConfig.useAnimations ? 'hover:scale-105 active:scale-95' : ''} ${!isClassic ? 'animate-pulse' : ''} text-white`}
-                                            style={{
-                                                background: isClassic ? '#6a1b9a' : 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-                                                boxShadow: isClassic ? 'none' : '0 4px 20px rgba(124, 58, 237, 0.5)',
-                                            }}
+                                            className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white ${!isClassic ? 'animate-pulse' : ''}`}
+                                            style={{ background: themeConfig.btnAllIn }}
                                         >
                                             {isClassic ? 'ALL-IN' : '🔥 ALL-IN!'}
                                         </button>
@@ -1020,10 +1044,9 @@ export default function PokerGameRoom() {
                     {/* Error display */}
                     {error && (
                         <div
-                            className="fixed bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl font-medium"
+                            className="fixed bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl font-medium text-white"
                             style={{
-                                background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.9) 0%, rgba(185, 28, 28, 0.9) 100%)',
-                                boxShadow: '0 4px 20px rgba(220, 38, 38, 0.4)',
+                                background: isClassic ? '#b71c1c' : 'linear-gradient(135deg, rgba(220, 38, 38, 0.9) 0%, rgba(185, 28, 28, 0.9) 100%)',
                             }}
                         >
                             {error}
@@ -1032,7 +1055,7 @@ export default function PokerGameRoom() {
                 </div>
             </main>
 
-            {/* Premium Winner modal */}
+            {/* Winner modal */}
             <Modal
                 isOpen={showWinnerModal}
                 onClose={() => setShowWinnerModal(false)}

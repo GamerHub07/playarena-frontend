@@ -249,11 +249,7 @@ export default function MonopolyGameRoom() {
                 setRoom(joinRes.data);
                 setPlayers(joinRes.data.players);
                 setShowJoinModal(false);
-<<<<<<< HEAD
 
-=======
-                
->>>>>>> 7dc21dcc83bd015e4c6f124bfda883a667cee77f
                 // Explicitly emit socket join to ensure real-time connection
                 // This is needed because the useEffect may not trigger due to state timing
                 if (isConnected) {

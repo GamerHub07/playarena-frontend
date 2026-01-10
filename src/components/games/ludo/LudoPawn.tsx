@@ -5,7 +5,7 @@ import { useLudoTheme } from '@/contexts/LudoThemeContext';
 
 interface LudoPawnProps {
   color: ColorKey;
-  size?: number;
+  size?: number | string;
   glow?: boolean;
 }
 
@@ -37,10 +37,13 @@ export default function LudoPawn({
   const accentColor = theme.ui.accentColor;
   const useGoldAccents = theme.effects.useGoldAccents;
 
+  // Handle both number and string sizes
+  const svgSize = typeof size === 'number' ? size : size;
+
   return (
     <svg
-      width={size}
-      height={size}
+      width={svgSize}
+      height={svgSize}
       viewBox="0 0 100 100"
       style={{
         filter: glow

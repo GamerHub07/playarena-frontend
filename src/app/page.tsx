@@ -50,7 +50,7 @@ const GAMES: Game[] = [
         players: '2 Players',
         image: '/games/chess.png',
         href: '/games/chess',
-        available: true,
+        available: false,
         description: 'The ultimate game of strategy. Checkmate your opponent in this timeless classic.',
     },
     {
