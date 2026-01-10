@@ -21,7 +21,9 @@ export interface LudoGameState {
     canRollAgain: boolean;
     turnPhase: 'roll' | 'move' | 'wait';
     winner: number | null;
-    movableTokens?: number[]; // Tokens that can be moved after rolling
+    finishedPlayers?: number[];      // Players who completed the game
+    eliminatedPlayers?: number[];    // Players eliminated due to missed turns
+    movableTokens?: number[];        // Tokens that can be moved after rolling
 }
 
 // Vintage/Classic color palette for player colors
