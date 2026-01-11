@@ -59,7 +59,7 @@ const GAMES: Game[] = [
         players: '2-6 Players',
         image: '/games/poker.png',
         href: '/games/poker',
-        available: true,
+        available: false,
         description: 'Bluff, bet, and win big in the world\'s most popular card game.',
     }
 ];
