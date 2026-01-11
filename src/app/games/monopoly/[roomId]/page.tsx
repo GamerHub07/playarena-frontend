@@ -114,7 +114,7 @@ export default function MonopolyGameRoom() {
         });
 
         const unsubWinner = on('game:winner', (data: unknown) => {
-            const { winner, leaderboard } = data as {
+            const { winner, leaderboard } = data as { 
                 winner: { username: string } | null,
                 leaderboard: Array<{ username: string; rank: number }>
             };
