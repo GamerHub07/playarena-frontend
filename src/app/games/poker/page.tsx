@@ -11,8 +11,9 @@ import Modal from '@/components/ui/Modal';
 import Card from '@/components/ui/Card';
 import { useGuest } from '@/hooks/useGuest';
 import { roomApi } from '@/lib/api';
+import { PokerHandsGuideButton } from '@/components/games/poker/PokerHandsGuide';
 
-export default function LudoPage() {
+export default function PokerPage() {
     const router = useRouter();
     const { guest, loading, login } = useGuest();
 
@@ -61,9 +62,9 @@ export default function LudoPage() {
         setError('');
 
         try {
-            const res = await roomApi.create(sid, 'ludo');
+            const res = await roomApi.create(sid, 'poker');
             if (res.success && res.data) {
-                router.push(`/games/ludo/${res.data.code}`);
+                router.push(`/games/poker/${res.data.code}`);
             } else {
                 setError(res.message || 'Failed to create room');
             }
@@ -92,7 +93,7 @@ export default function LudoPage() {
         try {
             const res = await roomApi.join(roomCode.toUpperCase(), guest.sessionId);
             if (res.success && res.data) {
-                router.push(`/games/ludo/${res.data.code}`);
+                router.push(`/games/poker/${res.data.code}`);
             } else {
                 setError(res.message || 'Room not found');
             }
@@ -121,129 +122,152 @@ export default function LudoPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[var(--background)]">
+        <div className="min-h-screen bg-gradient-to-br from-red-900 via-gray-900 to-black">
             <Header />
 
             <main className="pt-24 pb-12 px-4">
                 <div className="max-w-4xl mx-auto">
                     {/* Title */}
                     <div className="text-center mb-12">
-                        <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">Ludo</h1>
-                        <p className="text-[var(--text-muted)] max-w-md mx-auto">
-                            Classic board game for 2-4 players. Roll the dice, move your tokens, and be the first to get all pieces home!
+                        <div className="flex justify-center gap-4 text-6xl mb-4">
+                            <span>🃏</span>
+                            <span>♠️</span>
+                            <span>♥️</span>
+                        </div>
+                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Texas Hold'em Poker</h1>
+                        <p className="text-gray-400 max-w-md mx-auto">
+                            The ultimate card game of skill and strategy. Bluff, bet, and take the pot!
                         </p>
                     </div>
 
                     {/* Action Cards */}
                     <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-                        <Card className="p-8 text-center">
-                            <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-8 h-8 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
+                        <Card className="p-8 text-center bg-gray-800/50 border-gray-700">
+                            <div className="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <span className="text-3xl">🎰</span>
                             </div>
-                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Create Room</h2>
-                            <p className="text-sm text-[var(--text-muted)] mb-6">Start a new game and invite your friends</p>
+                            <h2 className="text-xl font-semibold text-white mb-2">Create Table</h2>
+                            <p className="text-sm text-gray-400 mb-6">Start a new poker table and invite friends</p>
                             <Button
                                 onClick={() => handleCreateRoom()}
                                 loading={isLoading && pendingAction === 'create'}
-                                className="w-full"
+                                className="w-full bg-red-600 text-white hover:bg-red-700"
                             >
-                                Create Room
+                                Create Table
                             </Button>
                         </Card>
 
-                        <Card className="p-8 text-center">
-                            <div className="w-16 h-16 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-8 h-8 text-[var(--success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
+                        <Card className="p-8 text-center bg-gray-800/50 border-gray-700">
+                            <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <span className="text-3xl">🎴</span>
                             </div>
-                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Join Room</h2>
-                            <p className="text-sm text-[var(--text-muted)] mb-6">Enter a room code to join an existing game</p>
+                            <h2 className="text-xl font-semibold text-white mb-2">Join Table</h2>
+                            <p className="text-sm text-gray-400 mb-6">Enter a room code to join an existing table</p>
                             <Button
                                 variant="secondary"
                                 onClick={openJoinModal}
-                                className="w-full"
+                                className="w-full border-gray-600 text-white hover:bg-gray-700"
                             >
-                                Join Room
+                                Join Table
                             </Button>
+                        </Card>
+                    </div>
+
+                    {/* Hand Rankings Card */}
+                    <div className="mt-8 max-w-2xl mx-auto">
+                        <Card className="p-6 text-center bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border-purple-500/30">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center">
+                                        <span className="text-3xl">📖</span>
+                                    </div>
+                                    <div className="text-left">
+                                        <h3 className="text-lg font-semibold text-white">New to Poker?</h3>
+                                        <p className="text-sm text-purple-300">Learn the hand rankings before you play!</p>
+                                    </div>
+                                </div>
+                                <PokerHandsGuideButton />
+                            </div>
                         </Card>
                     </div>
 
                     {/* Rules */}
-                    <div className="mt-16 max-w-2xl mx-auto">
-                        <h3 className="text-xl font-semibold text-[var(--text)] mb-6 text-center">How to Play</h3>
+                    <div className="mt-12 max-w-2xl mx-auto">
+                        <h3 className="text-xl font-semibold text-white mb-6 text-center">How to Play</h3>
                         <div className="grid sm:grid-cols-2 gap-4">
                             {[
-                                { icon: '🎲', text: 'Roll a 6 to bring a token out of home' },
-                                { icon: '➡️', text: 'Move tokens clockwise around the board' },
-                                { icon: '💥', text: 'Land on opponents to send them home' },
-                                { icon: '🏆', text: 'First to get all 4 tokens home wins!' },
+                                { icon: '🃏', text: '2 hole cards are dealt to each player' },
+                                { icon: '🎯', text: '5 community cards are shared by all' },
+                                { icon: '💰', text: 'Bet, raise, call, check, or fold' },
+                                { icon: '🏆', text: 'Best 5-card hand wins the pot' },
                             ].map((rule, i) => (
-                                <div key={i} className="flex items-center gap-3 p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg">
+                                <div key={i} className="flex items-center gap-3 p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
                                     <span className="text-2xl">{rule.icon}</span>
-                                    <span className="text-sm text-[var(--text-muted)]">{rule.text}</span>
+                                    <span className="text-sm text-gray-300">{rule.text}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* SEO Content Section */}
+                    {/* Features Section */}
                     <section className="mt-20 max-w-3xl mx-auto">
-                        <h2 className="text-2xl font-bold text-[var(--text)] mb-6 text-center">
-                            Why Play Ludo Online at VersusArenas?
+                        <h2 className="text-2xl font-bold text-white mb-6 text-center">
+                            Why Play Poker at VersusArenas?
                         </h2>
 
                         <div className="grid sm:grid-cols-2 gap-6 mb-10">
                             {[
-                                { icon: '🆓', title: 'Completely Free', desc: 'No hidden charges, no premium subscriptions. Play unlimited games for free.' },
-                                { icon: '📱', title: 'Any Device', desc: 'Works on mobile, tablet, and desktop. No app download required.' },
-                                { icon: '👥', title: 'Real-time Multiplayer', desc: 'Play with 2-4 friends in real-time with instant synchronization.' },
-                                { icon: '🔒', title: 'Private Rooms', desc: 'Create private rooms with unique codes. Only friends with the code can join.' },
-                                { icon: '🎨', title: 'Beautiful Themes', desc: 'Choose from multiple stunning board themes - Vintage, Modern, Ocean & more.' },
-                                { icon: '⚡', title: 'No Sign-up', desc: 'Start playing instantly. Just enter a name and create or join a room.' },
+                                { icon: '👥', title: 'Up to 8 Players', desc: 'Invite up to 7 friends for a full poker experience.' },
+                                { icon: '🆓', title: 'Completely Free', desc: 'No real money. Play with virtual chips for fun!' },
+                                { icon: '📱', title: 'Any Device', desc: 'Works on mobile, tablet, and desktop.' },
+                                { icon: '⚡', title: 'Real-time Play', desc: 'Instant action synchronization with all players.' },
+                                { icon: '🔒', title: 'Private Tables', desc: 'Only friends with the code can join your table.' },
+                                { icon: '🎭', title: 'Hidden Cards', desc: 'Your cards are hidden from other players until showdown.' },
                             ].map((feature, i) => (
-                                <div key={i} className="p-5 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-soft">
+                                <div key={i} className="p-5 bg-gray-800/50 border border-gray-700 rounded-xl">
                                     <div className="flex items-center gap-3 mb-2">
                                         <span className="text-2xl">{feature.icon}</span>
-                                        <h3 className="font-semibold text-[var(--text)]">{feature.title}</h3>
+                                        <h3 className="font-semibold text-white">{feature.title}</h3>
                                     </div>
-                                    <p className="text-sm text-[var(--text-muted)]">{feature.desc}</p>
+                                    <p className="text-sm text-gray-400">{feature.desc}</p>
                                 </div>
                             ))}
                         </div>
-                        {/* testing */}
+
                         {/* FAQ Section for SEO */}
                         <div className="mt-12">
-                            <h2 className="text-xl font-bold text-[var(--text)] mb-6 text-center">
+                            <h2 className="text-xl font-bold text-white mb-6 text-center">
                                 Frequently Asked Questions
                             </h2>
                             <div className="space-y-4">
                                 {[
                                     {
-                                        q: 'How do I play Ludo online with friends?',
-                                        a: 'Simply click "Create Room" to get a unique room code. Share this code with your friends, and they can join by clicking "Join Room" and entering the code. Once everyone\'s in, start the game!'
+                                        q: 'How do I play Poker online with friends?',
+                                        a: 'Click "Create Table" to get a unique room code. Share this code with your friends, and they can join by clicking "Join Table" and entering the code. Once everyone\'s in, start the game!'
                                     },
                                     {
-                                        q: 'Is this Ludo game free to play?',
-                                        a: 'Yes! VersusArenas Ludo is completely free to play. No registration, no downloads, no hidden fees. Just instant multiplayer fun.'
+                                        q: 'Is this Poker game free to play?',
+                                        a: 'Yes! VersusArenas Poker is completely free to play. No real money is involved - just play with virtual chips for fun.'
                                     },
                                     {
-                                        q: 'Can I play Ludo on my phone?',
-                                        a: 'Absolutely! Our Ludo game works on any device with a web browser - smartphones, tablets, laptops, and desktops. No app installation needed.'
+                                        q: 'Can I play Poker on my phone?',
+                                        a: 'Absolutely! Our Poker game works on any device with a web browser - smartphones, tablets, laptops, and desktops. No app installation needed.'
                                     },
                                     {
-                                        q: 'How many players can play Ludo?',
-                                        a: 'You can play Ludo with 2, 3, or 4 players. The classic experience is with 4 players, but 2-player games are just as fun!'
+                                        q: 'How many players can play Poker?',
+                                        a: 'You can play Texas Hold\'em with 2 to 8 players. The more players, the more exciting the game!'
+                                    },
+                                    {
+                                        q: 'What happens if I disconnect during a game?',
+                                        a: 'If you disconnect, you have 15 seconds to reconnect. If you don\'t return in time, your turn will be auto-folded. After 3 missed turns, you\'ll be removed from the game.'
                                     },
                                 ].map((faq, i) => (
-                                    <details key={i} className="p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg group">
-                                        <summary className="font-medium text-[var(--text)] cursor-pointer list-none flex justify-between items-center">
+                                    <details key={i} className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg group">
+                                        <summary className="font-medium text-white cursor-pointer list-none flex justify-between items-center">
                                             {faq.q}
-                                            <span className="text-[var(--text-muted)] group-open:rotate-180 transition-transform">▼</span>
+                                            <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
                                         </summary>
-                                        <p className="mt-3 text-sm text-[var(--text-muted)] leading-relaxed">{faq.a}</p>
+                                        <p className="mt-3 text-sm text-gray-400 leading-relaxed">{faq.a}</p>
                                     </details>
                                 ))}
                             </div>
@@ -286,7 +310,7 @@ export default function LudoPage() {
                     setRoomCode('');
                     setError('');
                 }}
-                title="Join Room"
+                title="Join Table"
                 size="sm"
             >
                 <div className="space-y-4">
@@ -301,7 +325,7 @@ export default function LudoPage() {
                         autoFocus
                     />
                     <Button onClick={handleJoinRoom} loading={isLoading} className="w-full">
-                        Join Game
+                        Join Table
                     </Button>
                 </div>
             </Modal>

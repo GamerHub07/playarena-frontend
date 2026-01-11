@@ -201,7 +201,10 @@ export default function WaitingRoom({
                                 onClick={onStart}
                                 disabled={!canStart}
                                 className="w-full"
-                                style={{ backgroundColor: canStart ? accentColor : undefined }}
+                                style={{ 
+                                    backgroundColor: canStart ? accentColor : undefined,
+                                    color: canStart ? '#111827' : undefined 
+                                }}
                             >
                                 {canStart ? 'Start Game' : `Need ${minPlayers - players.length} more player(s)`}
                             </Button>
