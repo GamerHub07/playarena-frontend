@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
@@ -230,6 +232,45 @@ export default function PokerPage() {
                                     <p className="text-sm text-gray-400">{feature.desc}</p>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* FAQ Section for SEO */}
+                        <div className="mt-12">
+                            <h2 className="text-xl font-bold text-white mb-6 text-center">
+                                Frequently Asked Questions
+                            </h2>
+                            <div className="space-y-4">
+                                {[
+                                    {
+                                        q: 'How do I play Poker online with friends?',
+                                        a: 'Click "Create Table" to get a unique room code. Share this code with your friends, and they can join by clicking "Join Table" and entering the code. Once everyone\'s in, start the game!'
+                                    },
+                                    {
+                                        q: 'Is this Poker game free to play?',
+                                        a: 'Yes! VersusArenas Poker is completely free to play. No real money is involved - just play with virtual chips for fun.'
+                                    },
+                                    {
+                                        q: 'Can I play Poker on my phone?',
+                                        a: 'Absolutely! Our Poker game works on any device with a web browser - smartphones, tablets, laptops, and desktops. No app installation needed.'
+                                    },
+                                    {
+                                        q: 'How many players can play Poker?',
+                                        a: 'You can play Texas Hold\'em with 2 to 8 players. The more players, the more exciting the game!'
+                                    },
+                                    {
+                                        q: 'What happens if I disconnect during a game?',
+                                        a: 'If you disconnect, you have 15 seconds to reconnect. If you don\'t return in time, your turn will be auto-folded. After 3 missed turns, you\'ll be removed from the game.'
+                                    },
+                                ].map((faq, i) => (
+                                    <details key={i} className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg group">
+                                        <summary className="font-medium text-white cursor-pointer list-none flex justify-between items-center">
+                                            {faq.q}
+                                            <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                                        </summary>
+                                        <p className="mt-3 text-sm text-gray-400 leading-relaxed">{faq.a}</p>
+                                    </details>
+                                ))}
+                            </div>
                         </div>
                     </section>
                 </div>

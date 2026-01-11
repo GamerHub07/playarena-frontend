@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
 import { useGuest } from '@/hooks/useGuest';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
@@ -25,12 +26,12 @@ import {
     HandEvaluation,
 } from '@/types/poker';
 import { PokerHandsGuideButton } from '@/components/games/poker/PokerHandsGuide';
+import PokerThemeSelector, { PokerTheme } from '@/components/games/poker/PokerThemeSelector';
 
 // ═══════════════════════════════════════════════════════════════
 // THEME DEFINITIONS
 // ═══════════════════════════════════════════════════════════════
 
-type PokerTheme = 'classic' | 'premium';
 
 interface ThemeConfig {
     // Background
@@ -70,35 +71,35 @@ interface ThemeConfig {
 
 const THEME_CONFIGS: Record<PokerTheme, ThemeConfig> = {
     classic: {
-        // Dark solid background
-        pageBackground: '#1a1a1a',
+        // Solid dark background like PokerNow
+        pageBackground: '#1f1f1f',
         // Classic green felt poker table
-        tableBackground: '#2d1f10', // Dark wood rail
-        tableFelt: '#0d5c2e', // Classic casino green felt
-        tableBorder: '#4a3520', // Wood border
-        tableRail: '#3d2915', // Wood rail
+        tableBackground: '#2d2d2d', // Dark rail
+        tableFelt: '#35654d', // PokerNow style green felt
+        tableBorder: '#404040', // Subtle border
+        tableRail: '#333333', // Dark rail
         // Classic red card backs
-        cardBack: '#8b0000', // Dark red
-        cardBackBorder: '#5c0000',
+        cardBack: '#2e7d32', // Green card backs
+        cardBackBorder: '#1b5e20',
         cardFront: '#ffffff',
         // Simple dark player cards
         playerCard: '#2a2a2a',
-        playerCardActive: '#3d5c3d', // Green tint when active
-        playerBorder: '#444444',
+        playerCardActive: '#385f38', // Subtle green tint when active
+        playerBorder: '#404040',
         playerActiveBorder: '#4caf50',
         // Clean dark UI
-        actionBar: '#1f1f1f',
-        actionBarBorder: '#3a3a3a',
-        infoBar: '#252525',
+        actionBar: '#242424',
+        actionBarBorder: '#404040',
+        infoBar: '#2a2a2a',
         accentColor: '#4caf50',
         textPrimary: '#ffffff',
-        textSecondary: '#a0a0a0',
-        // Solid button colors
-        btnFold: '#8b0000', // Dark red
-        btnCheck: '#1565c0', // Blue
-        btnCall: '#2e7d32', // Green
-        btnRaise: '#cc8400', // Gold/amber
-        btnAllIn: '#6a1b9a', // Purple
+        textSecondary: '#9e9e9e',
+        // UNIFORM button colors - all same green like PokerNow
+        btnFold: '#4caf50', // Same green for all
+        btnCheck: '#4caf50', // Same green for all
+        btnCall: '#4caf50', // Same green for all
+        btnRaise: '#4caf50', // Same green for all
+        btnAllIn: '#4caf50', // Same green for all
         // No effects
         useGradients: false,
         useGlow: false,
@@ -449,7 +450,7 @@ export default function PokerGameRoom() {
     const router = useRouter();
     const roomCode = (params.roomId as string).toUpperCase();
 
-    const { guest, loading: guestLoading } = useGuest();
+    const { guest, loading: guestLoading, login } = useGuest();
     const { isConnected, emit, on } = useSocket();
 
     const [room, setRoom] = useState<Room | null>(null);
@@ -466,6 +467,12 @@ export default function PokerGameRoom() {
     const [winners, setWinners] = useState<WinnerInfo[] | null>(null);
     const [isGameOver, setIsGameOver] = useState(false);
     const [nextHandCountdown, setNextHandCountdown] = useState<number | null>(null);
+
+    // Join modal state for users joining via link without a session
+    const [showJoinModal, setShowJoinModal] = useState(false);
+    const [joinUsername, setJoinUsername] = useState('');
+    const [joinError, setJoinError] = useState('');
+    const [joining, setJoining] = useState(false);
 
     // Theme state with localStorage persistence
     const [theme, setTheme] = useState<PokerTheme>('premium');
@@ -510,14 +517,9 @@ export default function PokerGameRoom() {
         return gameState.players[myPlayerIndex];
     }, [gameState, myPlayerIndex]);
 
-    // Fetch room data
+    // Fetch room data and handle join flow
     useEffect(() => {
         if (guestLoading) return;
-
-        if (!guest) {
-            router.push('/games/poker');
-            return;
-        }
 
         const fetchRoom = async () => {
             try {
@@ -525,6 +527,20 @@ export default function PokerGameRoom() {
                 if (res.success && res.data) {
                     setRoom(res.data);
                     setPlayers(res.data.players);
+
+                    // If user has no session, show join modal (they came via shared link)
+                    if (!guest) {
+                        setShowJoinModal(true);
+                    } else {
+                        // Check if user is already in the room's player list
+                        const isAlreadyInRoom = res.data.players.some(
+                            (p: { sessionId: string }) => p.sessionId === guest.sessionId
+                        );
+                        // If user has session but isn't in room, show join modal to confirm joining
+                        if (!isAlreadyInRoom && res.data.status === 'waiting') {
+                            setShowJoinModal(true);
+                        }
+                    }
                 } else {
                     setError('Room not found');
                 }
@@ -535,7 +551,7 @@ export default function PokerGameRoom() {
         };
 
         fetchRoom();
-    }, [roomCode, guest, guestLoading, router]);
+    }, [roomCode, guest, guestLoading]);
 
     // Socket listeners
     useEffect(() => {
@@ -609,11 +625,16 @@ export default function PokerGameRoom() {
         };
     }, [guest, isConnected, on]);
 
-    // Join room on connect
+    // Join room on connect - ONLY FOR PLAYERS ALREADY IN ROOM (reconnecting)
+    // New players must go through the join modal first
     useEffect(() => {
         if (!guest || !isConnected || !room) return;
 
-        if (!hasJoinedRef.current) {
+        // Check if user is already in the room's player list
+        const isAlreadyInRoom = players.some(p => p.sessionId === guest.sessionId);
+
+        // Only auto-join via socket if already in room (reconnecting)
+        if (isAlreadyInRoom && !hasJoinedRef.current) {
             hasJoinedRef.current = true;
             emit('room:join', {
                 roomCode,
@@ -625,7 +646,7 @@ export default function PokerGameRoom() {
         return () => {
             hasJoinedRef.current = false;
         };
-    }, [guest, isConnected, room, roomCode, emit]);
+    }, [guest, isConnected, room, roomCode, emit, players]);
 
     // Reset slider when turn ends
     useEffect(() => {
@@ -671,6 +692,56 @@ export default function PokerGameRoom() {
         return () => clearTimeout(timer);
     }, [nextHandCountdown, isGameOver, handleNextHand]);
 
+    // Handle join via shared link (creates session if needed and joins room)
+    const handleJoinViaLink = async () => {
+        setJoining(true);
+        setJoinError('');
+
+        try {
+            let sessionId = guest?.sessionId;
+
+            // If no session exists, we need a username to create one
+            if (!sessionId) {
+                if (!joinUsername.trim() || joinUsername.length < 2) {
+                    setJoinError('Username must be at least 2 characters');
+                    setJoining(false);
+                    return;
+                }
+
+                // Create guest session
+                const guestResult = await login(joinUsername.trim());
+                if (!guestResult) {
+                    setJoinError('Failed to create session');
+                    setJoining(false);
+                    return;
+                }
+                sessionId = guestResult.sessionId;
+            }
+
+            // Join the room with the session
+            const joinRes = await roomApi.join(roomCode, sessionId);
+            if (joinRes.success && joinRes.data) {
+                setRoom(joinRes.data);
+                setPlayers(joinRes.data.players);
+                setShowJoinModal(false);
+
+                // Also emit socket join so we're connected to the room
+                hasJoinedRef.current = true;
+                emit('room:join', {
+                    roomCode,
+                    sessionId,
+                    username: guest?.username || joinUsername.trim(),
+                });
+            } else {
+                setJoinError(joinRes.message || 'Failed to join room');
+            }
+        } catch (err) {
+            setJoinError('Failed to join room');
+        }
+
+        setJoining(false);
+    };
+
     // Calculate raise bounds
     const minRaise = gameState?.minRaise || 0;
     const maxRaise = myPlayer ? myPlayer.chips - (gameState?.currentBet || 0 - (myPlayer?.currentBet || 0)) : 0;
@@ -712,11 +783,99 @@ export default function PokerGameRoom() {
         );
     }
 
+    // Join modal - for users accessing via shared link (must come before waiting room check)
+    if (showJoinModal && room) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 flex items-center justify-center p-4">
+                <Header />
+                {/* Connection Status */}
+                <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-gray-400">
+                    <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: isConnected ? '#22c55e' : '#ef4444' }}
+                    />
+                    {isConnected ? 'Connected' : 'Connecting...'}
+                </div>
+
+                <div className="bg-slate-800/90 backdrop-blur-xl p-8 rounded-2xl border border-slate-700 max-w-md w-full">
+                    <div className="text-center mb-6">
+                        <div className="text-4xl mb-3">🃏</div>
+                        <h2 className="text-2xl font-bold text-white mb-1">Join Game</h2>
+                        <p className="text-gray-400 text-sm">
+                            Room <span className="font-mono font-bold text-emerald-400">{roomCode}</span>
+                        </p>
+                    </div>
+
+                    <div className="space-y-4">
+                        {guest ? (
+                            // User has existing session - just confirm joining
+                            <>
+                                <p className="text-gray-400 text-sm text-center">
+                                    Join as <span className="font-bold text-white">{guest.username}</span>?
+                                </p>
+                                {joinError && <p className="text-red-400 text-sm text-center">{joinError}</p>}
+                                <Button onClick={handleJoinViaLink} loading={joining} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                                    Join Game
+                                </Button>
+                            </>
+                        ) : (
+                            // New user - need username
+                            <>
+                                <Input
+                                    placeholder="Enter your name"
+                                    value={joinUsername}
+                                    onChange={(e) => setJoinUsername(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleJoinViaLink()}
+                                    error={joinError}
+                                    autoFocus
+                                />
+                                <Button onClick={handleJoinViaLink} loading={joining} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                                    Join Game
+                                </Button>
+                            </>
+                        )}
+
+                        <button
+                            onClick={() => router.push('/games/poker')}
+                            className="w-full text-gray-400 hover:text-white text-sm py-2 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     // Waiting room
     if (room?.status === 'waiting') {
         return (
-            <>
+            <div className="min-h-screen" style={{ background: themeConfig.pageBackground }}>
                 <Header />
+
+                {/* Theme Selector - Fixed position (visible to all, editable by host) */}
+                {isHost && (
+                    <div className="fixed top-20 right-4 z-40">
+                        <PokerThemeSelector
+                            currentTheme={theme}
+                            onThemeChange={(newTheme) => {
+                                setTheme(newTheme);
+                                localStorage.setItem('poker-theme', newTheme);
+                            }}
+                            compact
+                        />
+                    </div>
+                )}
+
+                {/* Connection Status */}
+                <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-gray-400">
+                    <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: isConnected ? '#22c55e' : '#ef4444' }}
+                    />
+                    {isConnected ? 'Connected' : 'Connecting...'}
+                </div>
+
                 <main className="pt-24 pb-12 px-4">
                     <WaitingRoom
                         roomCode={roomCode}
@@ -732,7 +891,23 @@ export default function PokerGameRoom() {
                         accentColor="#10b981"
                     />
                 </main>
-            </>
+            </div>
+        );
+    }
+
+    // Reconnecting state - game is playing but we haven't received state yet
+    if ((room?.status === 'playing' || room?.status === 'finished') && !gameState) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 flex items-center justify-center">
+                <div className="bg-slate-800/80 backdrop-blur-xl p-8 rounded-2xl border border-slate-700 text-center max-w-md">
+                    <div className="relative mb-4">
+                        <div className="w-16 h-16 border-4 border-emerald-500/30 rounded-full mx-auto" />
+                        <div className="absolute inset-0 w-16 h-16 border-4 border-t-emerald-500 rounded-full animate-spin mx-auto" />
+                    </div>
+                    <h2 className="text-xl font-bold text-white mb-2">Reconnecting to game...</h2>
+                    <p className="text-gray-400">Please wait while we restore your session</p>
+                </div>
+            </div>
         );
     }
 
@@ -779,18 +954,15 @@ export default function PokerGameRoom() {
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            {/* Theme Toggle Button */}
-                            <button
-                                onClick={toggleTheme}
-                                className={`px-4 py-2 ${isClassic ? 'rounded-lg' : 'rounded-xl'} text-sm font-medium transition-all hover:opacity-80`}
-                                style={{
-                                    background: themeConfig.infoBar,
-                                    border: `1px solid ${themeConfig.playerBorder}`,
+                            {/* Theme Selector - Dropdown */}
+                            <PokerThemeSelector
+                                currentTheme={theme}
+                                onThemeChange={(newTheme) => {
+                                    setTheme(newTheme);
+                                    localStorage.setItem('poker-theme', newTheme);
                                 }}
-                                title={`Switch to ${theme === 'premium' ? 'Classic' : 'Premium'} theme`}
-                            >
-                                {isClassic ? '✨ Premium' : '🃏 Classic'}
-                            </button>
+                                compact
+                            />
                             <PokerHandsGuideButton />
                             <div
                                 className={`px-4 py-2 ${isClassic ? 'rounded-lg' : 'rounded-xl'} text-sm`}
@@ -899,8 +1071,8 @@ export default function PokerGameRoom() {
                         ))}
                     </div>
 
-                    {/* ACTION BAR */}
-                    {isMyTurn && gameState?.phase !== 'showdown' && (
+                    {/* ACTION BAR - only show if there are actions to take */}
+                    {isMyTurn && gameState?.phase !== 'showdown' && availableActions.length > 0 && (
                         <div
                             className="fixed z-50"
                             style={{
@@ -984,15 +1156,24 @@ export default function PokerGameRoom() {
                                             {isClassic ? 'Check' : '✓ Check'}
                                         </button>
                                     )}
-                                    {availableActions.includes('call') && (
-                                        <button
-                                            onClick={() => handleAction('call')}
-                                            className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
-                                            style={{ background: themeConfig.btnCall }}
-                                        >
-                                            {isClassic ? `Call $${toCall}` : `📞 Call $${toCall}`}
-                                        </button>
-                                    )}
+                                    {availableActions.includes('call') && (() => {
+                                        // Calculate actual callable amount (may be less than toCall if short-stacked)
+                                        const actualCallAmount = myPlayer ? Math.min(toCall, myPlayer.chips) : toCall;
+                                        const isAllInCall = myPlayer && myPlayer.chips <= toCall;
+
+                                        return (
+                                            <button
+                                                onClick={() => handleAction('call')}
+                                                className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
+                                                style={{ background: themeConfig.btnCall }}
+                                            >
+                                                {isClassic
+                                                    ? (isAllInCall ? `Call $${actualCallAmount} (All-in)` : `Call $${toCall}`)
+                                                    : (isAllInCall ? `📞 Call $${actualCallAmount} (All-in)` : `📞 Call $${toCall}`)
+                                                }
+                                            </button>
+                                        );
+                                    })()}
                                     {availableActions.includes('raise') && (
                                         !showRaiseSlider ? (
                                             <button
@@ -1147,6 +1328,50 @@ export default function PokerGameRoom() {
                             </button>
                         )}
                     </div>
+                </div>
+            </Modal>
+
+            {/* Join Modal - for users accessing via shared link */}
+            <Modal
+                isOpen={showJoinModal}
+                onClose={() => {
+                    // If they close without joining, redirect to poker page
+                    router.push('/games/poker');
+                }}
+                title="Join Game"
+                size="sm"
+            >
+                <div className="space-y-4">
+                    {guest ? (
+                        // User has existing session - just confirm joining
+                        <>
+                            <p className="text-gray-400 text-sm">
+                                Join room <span className="font-mono font-bold text-emerald-400">{roomCode}</span> as <span className="font-bold text-white">{guest.username}</span>?
+                            </p>
+                            {joinError && <p className="text-red-400 text-sm">{joinError}</p>}
+                            <Button onClick={handleJoinViaLink} loading={joining} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                                Join Game
+                            </Button>
+                        </>
+                    ) : (
+                        // New user - need username
+                        <>
+                            <p className="text-gray-400 text-sm">
+                                Enter your name to join room <span className="font-mono font-bold text-emerald-400">{roomCode}</span>
+                            </p>
+                            <Input
+                                placeholder="Your username"
+                                value={joinUsername}
+                                onChange={(e) => setJoinUsername(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleJoinViaLink()}
+                                error={joinError}
+                                autoFocus
+                            />
+                            <Button onClick={handleJoinViaLink} loading={joining} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                                Join Game
+                            </Button>
+                        </>
+                    )}
                 </div>
             </Modal>
         </div>
