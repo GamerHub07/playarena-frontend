@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import { useGuest } from '@/hooks/useGuest';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
 import { Room, Player } from '@/types/game';
@@ -163,11 +164,15 @@ export default function MonopolyGameRoom() {
         router.push('/games/monopoly');
     }, [emit, router]);
 
+    // Sound effects
+    const { playDiceRoll } = useSoundEffects();
+
     const handleRollDice = useCallback(() => {
         if (!gameState || (gameState.phase !== 'ROLL' && gameState.phase !== 'JAIL')) return;
         setRolling(true);
+        playDiceRoll(); // Play dice roll sound
         emit('game:action', { roomCode, action: 'ROLL_DICE' });
-    }, [emit, roomCode, gameState]);
+    }, [emit, roomCode, gameState, playDiceRoll]);
 
     const handleBuyProperty = useCallback(() => {
         emit('game:action', { roomCode, action: 'BUY_PROPERTY' });

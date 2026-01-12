@@ -13,6 +13,7 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { useGuest } from '@/hooks/useGuest';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
 import { Room, Player } from '@/types/game';
@@ -449,11 +450,15 @@ function GameRoomContent() {
         router.push('/games/ludo');
     }, [emit, router]);
 
+    // Sound effects
+    const { playDiceRoll } = useSoundEffects();
+
     const handleRollDice = useCallback(() => {
         if (!gameState || gameState.turnPhase !== 'roll') return;
         setRolling(true);
+        playDiceRoll(); // Play dice roll sound
         emit('game:action', { roomCode, action: 'roll' });
-    }, [emit, roomCode, gameState]);
+    }, [emit, roomCode, gameState, playDiceRoll]);
 
     const handleTokenClick = useCallback((tokenIndex: number) => {
         emit('game:action', { roomCode, action: 'move', data: { tokenIndex } });

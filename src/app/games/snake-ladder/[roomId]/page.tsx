@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import Header from '@/components/layout/Header';
@@ -10,6 +10,7 @@ import SnakeLadderBoard from '@/components/games/snake-ladder/SnakeLadderBoard';
 import Dice from '@/components/games/ludo/Dice';
 import Card from '@/components/ui/Card';
 import { useGuest } from '@/hooks/useGuest';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
 import { Room, Player } from '@/types/game';
@@ -49,6 +50,12 @@ export default function SnakeLadderRoomPage() {
     } | null>(null);
     const [displayedPositions, setDisplayedPositions] = useState<Record<number, number>>({});
 
+    // Sound effects (must be declared before animation effects that use them)
+    const { playDiceRoll, playSnakeBite } = useSoundEffects();
+
+    // Track if we already played the snake sound for current animation
+    const snakeSoundPlayedRef = useRef<number | null>(null);
+
     const currentPlayer = players.find(p => p.sessionId === guest?.sessionId);
     const isHost = currentPlayer?.isHost || false;
     const myPlayerIndex = players.findIndex(p => p.sessionId === guest?.sessionId);
@@ -63,6 +70,19 @@ export default function SnakeLadderRoomPage() {
                 if (res.success && res.data) {
                     setRoom(res.data);
                     setPlayers(res.data.players);
+
+                    // If the game is already in progress and has saved state, restore it
+                    // The API response may include gameState for reconnection scenarios
+                    const roomData = res.data as Room & { gameState?: SnakeLadderGameState };
+                    if ((roomData.status === 'playing' || roomData.status === 'finished') && roomData.gameState && roomData.gameState.players) {
+                        setGameState(roomData.gameState);
+                        // Initialize displayed positions from saved game state
+                        const positions: Record<number, number> = {};
+                        Object.entries(roomData.gameState.players).forEach(([idx, pState]) => {
+                            positions[parseInt(idx)] = pState.position;
+                        });
+                        setDisplayedPositions(positions);
+                    }
 
                     // If user has no session, show join modal (they came via shared link)
                     if (!guest) {
@@ -107,16 +127,24 @@ export default function SnakeLadderRoomPage() {
             setGameState(state);
             setRolling(false);
 
-            // Sync displayed positions from game state when no animation is active
-            // This ensures tokens appear even if tokenMove event was missed
-            setDisplayedPositions(prev => {
-                // Only update if we're not in the middle of an animation
-                const newPositions: Record<number, number> = {};
-                Object.entries(state.players).forEach(([idx, pState]) => {
-                    newPositions[parseInt(idx)] = pState.position;
+            // Only sync displayed positions if NO animation is in progress
+            // Animation state check is done via the current animatingToken value
+            // We use a timeout to defer position sync, allowing tokenMove event to arrive first
+            setTimeout(() => {
+                setAnimatingToken(currentAnim => {
+                    // If there's an animation in progress, don't override positions
+                    if (currentAnim) {
+                        return currentAnim; // Return unchanged
+                    }
+                    // No animation - sync positions from state
+                    const newPositions: Record<number, number> = {};
+                    Object.entries(state.players).forEach(([idx, pState]) => {
+                        newPositions[parseInt(idx)] = pState.position;
+                    });
+                    setDisplayedPositions(newPositions);
+                    return null;
                 });
-                return newPositions;
-            });
+            }, 50); // Small delay to let tokenMove event arrive first
         });
 
         const unsubTokenMove = on('game:tokenMove', (data: unknown) => {
@@ -186,6 +214,24 @@ export default function SnakeLadderRoomPage() {
         return () => clearTimeout(timer);
     }, [animatingToken, gameState]);
 
+    // Play snake bite sound when landing on a snake
+    useEffect(() => {
+        if (!animatingToken) {
+            // Reset tracking when animation ends
+            snakeSoundPlayedRef.current = null;
+            return;
+        }
+
+        const { steps, currentStep, playerIndex } = animatingToken;
+        const currentStepData = steps[currentStep];
+
+        // Check if this step is a snake slide and we haven't played the sound for this animation yet
+        if (currentStepData?.moveType === 'snake' && snakeSoundPlayedRef.current !== playerIndex) {
+            playSnakeBite();
+            snakeSoundPlayedRef.current = playerIndex; // Mark as played for this animation
+        }
+    }, [animatingToken, playSnakeBite]);
+
     // Celebration effect
     useEffect(() => {
         if (gameState?.winner !== null && gameState?.winner !== undefined) {
@@ -232,11 +278,14 @@ export default function SnakeLadderRoomPage() {
         router.push('/games/snake-ladder');
     }, [emit, router]);
 
+
+
     const handleRollDice = useCallback(() => {
         if (!gameState || gameState.turnPhase !== 'roll') return;
         setRolling(true);
+        playDiceRoll(); // Play dice roll sound
         emit('game:action', { roomCode, action: 'roll' });
-    }, [emit, roomCode, gameState]);
+    }, [emit, roomCode, gameState, playDiceRoll]);
 
     // Handle join via shared link (creates session and joins room)
     const handleJoinViaLink = async () => {
@@ -275,21 +324,44 @@ export default function SnakeLadderRoomPage() {
 
     if (loading || guestLoading) {
         return (
-            <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full" />
+            <div
+                className="min-h-screen flex items-center justify-center relative overflow-hidden"
+                style={{
+                    background: 'linear-gradient(135deg, #0D2818 0%, #1A3A2A 20%, #0F3320 40%, #16392B 60%, #0B2616 80%, #081C10 100%)',
+                }}
+            >
+                {/* Vignette */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.6)_100%)]" />
+                {/* Loader */}
+                <div className="relative z-10 flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 rounded-full border-4 border-emerald-500/30 border-t-emerald-400 animate-spin shadow-[0_0_20px_rgba(52,211,153,0.3)]" />
+                    <span className="text-emerald-300/80 text-sm font-medium tracking-wide">Loading jungle...</span>
+                </div>
             </div>
         );
     }
 
     if (error && !room) {
         return (
-            <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
-                <Card className="p-8 text-center">
-                    <p className="text-red-500 mb-4">{error}</p>
-                    <button onClick={() => router.push('/games/snake-ladder')} className="text-[var(--primary)]">
+            <div
+                className="min-h-screen flex items-center justify-center relative overflow-hidden"
+                style={{
+                    background: 'linear-gradient(135deg, #0D2818 0%, #1A3A2A 20%, #0F3320 40%, #16392B 60%, #0B2616 80%, #081C10 100%)',
+                }}
+            >
+                {/* Vignette */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.6)_100%)]" />
+                {/* Error Card */}
+                <div className="relative z-10 p-8 text-center rounded-2xl bg-black/40 backdrop-blur-xl border border-emerald-500/20 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+                    <div className="text-5xl mb-4 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]">🐍</div>
+                    <p className="text-red-400 mb-6 font-medium text-lg">{error}</p>
+                    <button
+                        onClick={() => router.push('/games/snake-ladder')}
+                        className="px-8 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold rounded-xl hover:from-emerald-500 hover:to-teal-500 transition-all shadow-[0_4px_20px_rgba(52,211,153,0.4)] hover:shadow-[0_4px_30px_rgba(52,211,153,0.6)] transform hover:scale-105"
+                    >
                         Back to Snake & Ladder
                     </button>
-                </Card>
+                </div>
             </div>
         );
     }
@@ -300,10 +372,170 @@ export default function SnakeLadderRoomPage() {
 
     return (
         <LudoThemeProvider>
-            <div className="min-h-screen bg-[var(--background)]">
+            <div
+                className="min-h-screen relative overflow-hidden"
+                style={{
+                    background: 'linear-gradient(135deg, #0D2818 0%, #1A3A2A 20%, #0F3320 40%, #16392B 60%, #0B2616 80%, #081C10 100%)',
+                }}
+            >
+                {/* === EA SPORTS STYLE JUNGLE BACKGROUND === */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+
+                    {/* Dark overlay for depth */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+
+                    {/* === TROPICAL PALM LEAVES - TOP LEFT CORNER === */}
+                    <div className="absolute -top-10 -left-10 w-80 h-80 opacity-30">
+                        <svg viewBox="0 0 200 200" fill="none" className="w-full h-full">
+                            {/* Palm Frond 1 */}
+                            <path d="M20 180 Q60 140 100 100 Q80 80 60 90 Q40 100 20 120 Q10 140 20 180" fill="#1B4D3E" />
+                            <path d="M25 175 Q60 140 95 105" stroke="#2D6A4F" strokeWidth="2" fill="none" />
+                            {/* Palm Frond 2 */}
+                            <path d="M40 190 Q90 130 140 80 Q120 60 95 75 Q70 90 50 120 Q35 150 40 190" fill="#1B4D3E" />
+                            <path d="M45 185 Q90 130 135 85" stroke="#2D6A4F" strokeWidth="2" fill="none" />
+                            {/* Palm Frond 3 */}
+                            <path d="M10 160 Q40 120 70 80 Q55 65 40 75 Q25 90 15 115 Q8 135 10 160" fill="#184E40" />
+                        </svg>
+                    </div>
+
+                    {/* === TROPICAL PALM LEAVES - TOP RIGHT CORNER === */}
+                    <div className="absolute -top-5 -right-16 w-96 h-96 opacity-25 rotate-180">
+                        <svg viewBox="0 0 200 200" fill="none" className="w-full h-full transform scale-x-[-1]">
+                            <path d="M20 180 Q60 140 100 100 Q80 80 60 90 Q40 100 20 120 Q10 140 20 180" fill="#1B4D3E" />
+                            <path d="M40 190 Q90 130 140 80 Q120 60 95 75 Q70 90 50 120 Q35 150 40 190" fill="#1B4D3E" />
+                            <path d="M10 160 Q40 120 70 80 Q55 65 40 75 Q25 90 15 115 Q8 135 10 160" fill="#184E40" />
+                        </svg>
+                    </div>
+
+                    {/* === MONSTERA LEAF - LEFT SIDE === */}
+                    <div className="absolute top-1/4 -left-20 w-64 h-64 opacity-20 rotate-12">
+                        <svg viewBox="0 0 120 140" fill="none" className="w-full h-full">
+                            <path d="M60 130 Q30 110 20 80 Q15 50 40 30 Q55 20 70 30 Q90 50 85 80 Q80 110 60 130" fill="#1B5E20" />
+                            {/* Monstera holes */}
+                            <ellipse cx="45" cy="60" rx="8" ry="12" fill="#0D2818" />
+                            <ellipse cx="65" cy="75" rx="6" ry="10" fill="#0D2818" />
+                            <ellipse cx="50" cy="90" rx="5" ry="8" fill="#0D2818" />
+                            {/* Leaf veins */}
+                            <path d="M60 130 L60 35" stroke="#2D6A4F" strokeWidth="2" />
+                            <path d="M60 50 L40 40" stroke="#2D6A4F" strokeWidth="1" />
+                            <path d="M60 70 L35 60" stroke="#2D6A4F" strokeWidth="1" />
+                            <path d="M60 90 L40 85" stroke="#2D6A4F" strokeWidth="1" />
+                        </svg>
+                    </div>
+
+                    {/* === MONSTERA LEAF - RIGHT SIDE === */}
+                    <div className="absolute top-1/3 -right-10 w-56 h-56 opacity-15 -rotate-20">
+                        <svg viewBox="0 0 120 140" fill="none" className="w-full h-full transform scale-x-[-1]">
+                            <path d="M60 130 Q30 110 20 80 Q15 50 40 30 Q55 20 70 30 Q90 50 85 80 Q80 110 60 130" fill="#1B5E20" />
+                            <ellipse cx="45" cy="60" rx="8" ry="12" fill="#0D2818" />
+                            <ellipse cx="65" cy="75" rx="6" ry="10" fill="#0D2818" />
+                            <path d="M60 130 L60 35" stroke="#2D6A4F" strokeWidth="2" />
+                        </svg>
+                    </div>
+
+                    {/* === FERN PATTERNS - BOTTOM CORNERS === */}
+                    <div className="absolute -bottom-10 -left-10 w-72 h-72 opacity-25 rotate-45">
+                        <svg viewBox="0 0 100 150" fill="none" className="w-full h-full">
+                            {/* Fern stem */}
+                            <path d="M50 140 Q50 100 50 20" stroke="#2D6A4F" strokeWidth="3" />
+                            {/* Fern leaflets */}
+                            {[20, 35, 50, 65, 80, 95, 110, 125].map((y, i) => (
+                                <g key={i}>
+                                    <path d={`M50 ${y} Q${30 - i * 2} ${y - 5} ${25 - i * 2} ${y - 10}`} stroke="#1B5E20" strokeWidth="2" fill="none" />
+                                    <path d={`M50 ${y} Q${70 + i * 2} ${y - 5} ${75 + i * 2} ${y - 10}`} stroke="#1B5E20" strokeWidth="2" fill="none" />
+                                </g>
+                            ))}
+                        </svg>
+                    </div>
+
+                    <div className="absolute -bottom-16 -right-16 w-80 h-80 opacity-20 -rotate-30">
+                        <svg viewBox="0 0 100 150" fill="none" className="w-full h-full transform scale-x-[-1]">
+                            <path d="M50 140 Q50 100 50 20" stroke="#2D6A4F" strokeWidth="3" />
+                            {[20, 35, 50, 65, 80, 95, 110, 125].map((y, i) => (
+                                <g key={i}>
+                                    <path d={`M50 ${y} Q${30 - i * 2} ${y - 5} ${25 - i * 2} ${y - 10}`} stroke="#1B5E20" strokeWidth="2" fill="none" />
+                                    <path d={`M50 ${y} Q${70 + i * 2} ${y - 5} ${75 + i * 2} ${y - 10}`} stroke="#1B5E20" strokeWidth="2" fill="none" />
+                                </g>
+                            ))}
+                        </svg>
+                    </div>
+
+                    {/* === BAMBOO STALKS - SIDES === */}
+                    <div className="absolute top-20 left-4 w-6 h-full opacity-15">
+                        <svg viewBox="0 0 20 400" fill="none" className="w-full h-full">
+                            <rect x="5" y="0" width="10" height="400" fill="#1B4D3E" rx="3" />
+                            {[50, 120, 190, 260, 330].map((y, i) => (
+                                <rect key={i} x="3" y={y} width="14" height="8" fill="#0D2818" rx="2" />
+                            ))}
+                        </svg>
+                    </div>
+
+                    <div className="absolute top-32 left-12 w-4 h-full opacity-10">
+                        <svg viewBox="0 0 20 400" fill="none" className="w-full h-full">
+                            <rect x="5" y="0" width="10" height="400" fill="#1B4D3E" rx="3" />
+                            {[70, 140, 210, 280, 350].map((y, i) => (
+                                <rect key={i} x="3" y={y} width="14" height="8" fill="#0D2818" rx="2" />
+                            ))}
+                        </svg>
+                    </div>
+
+                    <div className="absolute top-10 right-6 w-5 h-full opacity-12">
+                        <svg viewBox="0 0 20 400" fill="none" className="w-full h-full">
+                            <rect x="5" y="0" width="10" height="400" fill="#1B4D3E" rx="3" />
+                            {[60, 130, 200, 270, 340].map((y, i) => (
+                                <rect key={i} x="3" y={y} width="14" height="8" fill="#0D2818" rx="2" />
+                            ))}
+                        </svg>
+                    </div>
+
+                    {/* === FLOATING LEAVES - SCATTERED === */}
+                    <div className="absolute top-[15%] left-[20%] w-12 h-12 opacity-20 rotate-[25deg]">
+                        <svg viewBox="0 0 50 50" fill="none">
+                            <path d="M25 45 Q10 30 15 15 Q25 5 35 15 Q40 30 25 45" fill="#1B5E20" />
+                            <path d="M25 45 L25 12" stroke="#2D6A4F" strokeWidth="1" />
+                        </svg>
+                    </div>
+
+                    <div className="absolute top-[60%] left-[15%] w-10 h-10 opacity-15 rotate-[-15deg]">
+                        <svg viewBox="0 0 50 50" fill="none">
+                            <path d="M25 45 Q10 30 15 15 Q25 5 35 15 Q40 30 25 45" fill="#184E40" />
+                        </svg>
+                    </div>
+
+                    <div className="absolute top-[45%] right-[18%] w-14 h-14 opacity-18 rotate-[40deg]">
+                        <svg viewBox="0 0 50 50" fill="none">
+                            <path d="M25 45 Q10 30 15 15 Q25 5 35 15 Q40 30 25 45" fill="#1B5E20" />
+                            <path d="M25 45 L25 12" stroke="#2D6A4F" strokeWidth="1" />
+                        </svg>
+                    </div>
+
+                    <div className="absolute top-[75%] right-[25%] w-8 h-8 opacity-12 rotate-[-30deg]">
+                        <svg viewBox="0 0 50 50" fill="none">
+                            <path d="M25 45 Q10 30 15 15 Q25 5 35 15 Q40 30 25 45" fill="#184E40" />
+                        </svg>
+                    </div>
+
+                    {/* === ATMOSPHERIC GLOW EFFECTS === */}
+                    <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-emerald-900/20 rounded-full blur-[100px]" />
+                    <div className="absolute bottom-1/3 right-1/4 w-[500px] h-[500px] bg-green-900/15 rounded-full blur-[120px]" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-teal-900/10 rounded-full blur-[150px]" />
+
+                    {/* === VIGNETTE EFFECT === */}
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.5)_100%)]" />
+
+                    {/* === TOP/BOTTOM GRADIENT BARS === */}
+                    <div className="absolute top-0 left-0 w-full h-20 bg-gradient-to-b from-black/50 to-transparent" />
+                    <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-black/60 to-transparent" />
+
+                    {/* === SUBTLE NOISE TEXTURE === */}
+                    <div className="absolute inset-0 opacity-[0.03]" style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                    }} />
+                </div>
+
                 <Header />
 
-                <main className="pt-24 pb-12 px-4">
+                <main className="pt-24 pb-12 px-4 relative z-10">
                     {/* Error Toast */}
                     {error && (
                         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-500/10 border border-red-500 text-red-500 rounded-lg">
@@ -312,20 +544,19 @@ export default function SnakeLadderRoomPage() {
                     )}
 
                     {/* Connection Status */}
-                    <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                        <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-                        {isConnected ? 'Connected' : 'Connecting...'}
+                    <div className="fixed bottom-4 right-4 flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm border border-emerald-500/20">
+                        <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.8)]'}`} />
+                        <span className="text-emerald-200/80">{isConnected ? 'Connected' : 'Connecting...'}</span>
                     </div>
 
                     {/* Tutorial Button */}
                     <div className="fixed top-24 right-4 z-40">
-                        <Button
-                            variant="secondary"
-                            size="sm"
+                        <button
                             onClick={() => setShowTutorial(true)}
+                            className="px-4 py-2 text-sm font-bold text-emerald-200 bg-black/40 backdrop-blur-sm border border-emerald-500/30 rounded-xl hover:bg-emerald-500/20 hover:border-emerald-400/50 transition-all shadow-lg"
                         >
-                            Rules ℹ️
-                        </Button>
+                            Rules 📜
+                        </button>
                     </div>
 
                     {/* Waiting Room */}
@@ -392,15 +623,23 @@ export default function SnakeLadderRoomPage() {
 
                             <div className={`flex flex-col lg:flex-row gap-6 items-start justify-center ${isFinished ? 'brightness-50 pointer-events-none' : ''}`}>
                                 {/* Left Panel - Game Info */}
-                                <div className="w-full lg:w-64 order-2 lg:order-1 flex-shrink-0">
-                                    <Card className="p-4">
-                                        <h3 className="text-lg font-semibold text-[var(--text)] mb-4">Game Info</h3>
+                                <div className="w-full lg:w-72 order-2 lg:order-1 flex-shrink-0">
+                                    <div
+                                        className="p-5 rounded-2xl border border-emerald-500/30 shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+                                        style={{
+                                            background: 'linear-gradient(145deg, rgba(13,40,24,0.95) 0%, rgba(26,58,42,0.95) 100%)',
+                                            backdropFilter: 'blur(20px)',
+                                        }}
+                                    >
+                                        <h3 className="text-lg font-bold text-emerald-300 mb-4 flex items-center gap-2 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]">
+                                            <span className="text-xl">🎲</span> Game Info
+                                        </h3>
 
                                         {/* Current Turn */}
                                         <div className="mb-4">
-                                            <p className="text-xs text-[var(--text-muted)] mb-2">Current Turn</p>
+                                            <p className="text-xs text-emerald-400/80 font-medium mb-2 uppercase tracking-wider">Current Turn</p>
                                             <div
-                                                className="px-3 py-2 rounded-lg text-white font-medium text-center"
+                                                className="px-4 py-2.5 rounded-xl text-white font-bold text-center shadow-lg"
                                                 style={{ backgroundColor: PLAYER_COLORS[gameState.currentPlayer]?.hex }}
                                             >
                                                 {players[gameState.currentPlayer]?.username}
@@ -410,7 +649,7 @@ export default function SnakeLadderRoomPage() {
 
                                         {/* Dice */}
                                         <div className="mb-4">
-                                            <p className="text-xs text-[var(--text-muted)] mb-2">Dice</p>
+                                            <p className="text-xs text-emerald-400/80 font-medium mb-2 uppercase tracking-wider">Dice</p>
                                             <div className="flex justify-center">
                                                 <Dice
                                                     value={gameState.diceValue || gameState.lastRoll}
@@ -424,19 +663,19 @@ export default function SnakeLadderRoomPage() {
 
                                         {/* Status Messages */}
                                         {gameState.lastRoll && (
-                                            <p className="text-sm text-[var(--text-muted)] text-center mb-2">
-                                                Last roll: <span className="font-bold text-[var(--text)]">{gameState.lastRoll}</span>
+                                            <p className="text-sm text-emerald-300/80 text-center mb-2">
+                                                Last roll: <span className="font-bold text-emerald-200">{gameState.lastRoll}</span>
                                                 {gameState.lastRoll === 6 && ' 🎉'}
                                             </p>
                                         )}
 
                                         {gameState.canRollAgain && gameState.currentPlayer === myPlayerIndex && (
-                                            <p className="text-sm text-green-500 text-center">Roll again!</p>
+                                            <p className="text-sm text-emerald-300 font-bold text-center animate-pulse drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]">🎲 Roll again!</p>
                                         )}
 
                                         {/* Players */}
-                                        <div className="mt-4 pt-4 border-t border-[var(--border)]">
-                                            <p className="text-xs text-[var(--text-muted)] mb-3">Players</p>
+                                        <div className="mt-4 pt-4 border-t border-emerald-500/20">
+                                            <p className="text-xs text-emerald-400/80 font-medium mb-3 uppercase tracking-wider">Players</p>
                                             <div className="space-y-2">
                                                 {Object.entries(gameState.players).map(([idx, pState]) => {
                                                     const pIdx = parseInt(idx);
@@ -446,16 +685,16 @@ export default function SnakeLadderRoomPage() {
                                                     return (
                                                         <div
                                                             key={idx}
-                                                            className={`flex items-center justify-between text-sm p-2 rounded-lg ${isActive ? 'bg-[var(--surface-alt)]' : ''}`}
+                                                            className={`flex items-center justify-between text-sm p-2.5 rounded-xl transition-all ${isActive ? 'bg-emerald-500/20 ring-2 ring-emerald-400/50' : 'hover:bg-emerald-500/10'}`}
                                                         >
                                                             <span className="flex items-center gap-2">
                                                                 <span
                                                                     className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
                                                                     style={{ backgroundColor: PLAYER_COLORS[pIdx]?.hex }}
                                                                 />
-                                                                <span className="text-[var(--text)]">{player?.username}</span>
+                                                                <span className="text-emerald-100 font-medium">{player?.username}</span>
                                                             </span>
-                                                            <span className="font-mono font-bold text-[var(--text)]">
+                                                            <span className="font-mono font-bold text-emerald-300">
                                                                 {displayPos === 0 ? 'Start' : displayPos}
                                                             </span>
                                                         </div>
@@ -463,7 +702,7 @@ export default function SnakeLadderRoomPage() {
                                                 })}
                                             </div>
                                         </div>
-                                    </Card>
+                                    </div>
                                 </div>
 
                                 {/* Center - Board */}
