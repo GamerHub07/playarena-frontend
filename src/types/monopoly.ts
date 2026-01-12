@@ -34,37 +34,38 @@ export interface DrawnCard {
     text: string;
 }
 
-export type GameLogType = 
-  | 'PASS_GO'
-  | 'RENT_PAID'
-  | 'RENT_RECEIVED'
-  | 'TAX_PAID'
-  | 'PROPERTY_BOUGHT'
-  | 'PROPERTY_SOLD'
-  | 'JAIL_FINE'
-  | 'CARD_COLLECT'
-  | 'CARD_PAY'
-  | 'CARD_TRANSFER'
-  | 'HOUSE_BUILT'
-  | 'HOTEL_BUILT';
+export type GameLogType =
+    | 'PASS_GO'
+    | 'RENT_PAID'
+    | 'RENT_RECEIVED'
+    | 'TAX_PAID'
+    | 'PROPERTY_BOUGHT'
+    | 'PROPERTY_SOLD'
+    | 'JAIL_FINE'
+    | 'CARD_COLLECT'
+    | 'CARD_PAY'
+    | 'CARD_TRANSFER'
+    | 'HOUSE_BUILT'
+    | 'HOTEL_BUILT';
 
 export interface GameLogEntry {
-  id: string;
-  type: GameLogType;
-  playerId: string;
-  playerName: string;
-  amount: number;
-  description: string;
-  timestamp: number;
-  relatedPlayerId?: string;
-  relatedPlayerName?: string;
-  propertyName?: string;
+    id: string;
+    type: GameLogType;
+    playerId: string;
+    playerName: string;
+    amount: number;
+    description: string;
+    timestamp: number;
+    relatedPlayerId?: string;
+    relatedPlayerName?: string;
+    propertyName?: string;
 }
 
 export interface MonopolyGameState {
     currentTurnIndex: number;
     phase: TurnPhase;
     dice: [number, number] | null;
+    diceSeed?: number;
     board: BoardSquare[];
     playerState: Record<string, MonopolyPlayerState>;
     lastCard?: DrawnCard | null;

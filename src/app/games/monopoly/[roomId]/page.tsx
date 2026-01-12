@@ -114,7 +114,7 @@ export default function MonopolyGameRoom() {
         });
 
         const unsubWinner = on('game:winner', (data: unknown) => {
-            const { winner, leaderboard } = data as { 
+            const { winner, leaderboard } = data as {
                 winner: { username: string } | null,
                 leaderboard: Array<{ username: string; rank: number }>
             };
@@ -235,7 +235,7 @@ export default function MonopolyGameRoom() {
                 setRoom(joinRes.data);
                 setPlayers(joinRes.data.players);
                 setShowJoinModal(false);
-                
+
                 // Explicitly emit socket join to ensure real-time connection
                 // This is needed because the useEffect may not trigger due to state timing
                 if (isConnected) {
@@ -310,8 +310,8 @@ export default function MonopolyGameRoom() {
 
             {/* Leaderboard Overlay */}
             {winner && (
-                <LeaderboardScreen 
-                    winner={winner} 
+                <LeaderboardScreen
+                    winner={winner}
                     leaderboard={leaderboard}
                     onHub={handleLeaveRoom}
                 />
@@ -398,6 +398,15 @@ export default function MonopolyGameRoom() {
 
                             {/* Right Panel - Actions */}
                             <div className="space-y-4">
+                                {/* Property Decision Card - appearing at top of sidebar */}
+                                {showPropertyCard && getCurrentProperty() && (
+                                    <PropertyCard
+                                        property={getCurrentProperty()!}
+                                        playerCash={gameState.playerState[guest.sessionId]?.cash || 0}
+                                        onBuy={handleBuyProperty}
+                                        onDecline={handleDeclineProperty}
+                                    />
+                                )}
                                 <Card className="p-5">
                                     <h3 className="text-lg font-semibold text-white mb-4">Game Info</h3>
 
@@ -482,7 +491,7 @@ export default function MonopolyGameRoom() {
                                 <GameLogPanel logs={gameState.gameLog || []} />
 
                                 {/* Bankrupt Button (Testing) */}
-                                <Button 
+                                <Button
                                     onClick={handleBankrupt}
                                     className="w-full bg-red-900/50 hover:bg-red-900 text-red-200 border border-red-800"
                                 >
@@ -492,14 +501,7 @@ export default function MonopolyGameRoom() {
                         </div>
 
                         {/* Property Decision Modal */}
-                        {showPropertyCard && getCurrentProperty() && (
-                            <PropertyCard
-                                property={getCurrentProperty()!}
-                                playerCash={gameState.playerState[guest.sessionId]?.cash || 0}
-                                onBuy={handleBuyProperty}
-                                onDecline={handleDeclineProperty}
-                            />
-                        )}
+
 
                         {/* Debt Modal - sell properties to pay debt */}
                         {isMyTurn() && gameState.phase === 'DEBT' && (
