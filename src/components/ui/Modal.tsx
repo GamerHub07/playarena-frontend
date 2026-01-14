@@ -1,6 +1,7 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
     isOpen: boolean;
@@ -35,8 +36,10 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
         lg: 'max-w-lg',
     };
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+    if (typeof window === 'undefined') return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm"
@@ -62,6 +65,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
                     {children}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

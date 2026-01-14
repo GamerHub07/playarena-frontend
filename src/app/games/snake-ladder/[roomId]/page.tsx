@@ -10,6 +10,7 @@ import SnakeLadderBoard from '@/components/games/snake-ladder/SnakeLadderBoard';
 import Dice from '@/components/games/ludo/Dice';
 import Card from '@/components/ui/Card';
 import { useGuest } from '@/hooks/useGuest';
+import { useAuth } from '@/contexts/AuthContext';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
@@ -26,6 +27,7 @@ export default function SnakeLadderRoomPage() {
     const roomCode = (params.roomId as string).toUpperCase();
 
     const { guest, loading: guestLoading, login } = useGuest();
+    const { user } = useAuth();
     const { isConnected, emit, on } = useSocket();
 
     const [room, setRoom] = useState<Room | null>(null);
@@ -84,8 +86,19 @@ export default function SnakeLadderRoomPage() {
                         setDisplayedPositions(positions);
                     }
 
-                    // If user has no session, show join modal (they came via shared link)
-                    if (!guest) {
+                    // Check if current user is already a participant
+                    const currentSessionId = guest?.sessionId;
+                    const isParticipant = res.data.players.some(p => p.sessionId === currentSessionId);
+
+                    if (currentSessionId && !isParticipant) {
+                        // We have a session but are not in the room. Auto-join via API.
+                        try {
+                            await roomApi.join(roomCode, currentSessionId);
+                        } catch (e) {
+                            setShowJoinModal(true);
+                        }
+                    } else if (!guest && !user) {
+                        // If user has no session, show join modal (they came via shared link)
                         setShowJoinModal(true);
                     }
                 } else {
@@ -98,7 +111,7 @@ export default function SnakeLadderRoomPage() {
         };
 
         fetchRoom();
-    }, [roomCode, guest, guestLoading]);
+    }, [roomCode, guest, guestLoading, user]);
 
     // Socket listeners
     useEffect(() => {

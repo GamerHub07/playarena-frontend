@@ -4,6 +4,7 @@ import Providers from "@/components/Providers";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -135,16 +136,19 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${spaceGrotesk.variable} antialiased`}>
+
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <Providers>
-            {children}
-            <Analytics />
-          </Providers>
+          <AuthProvider>
+            <Providers>
+              {children}
+            </Providers>
+          </AuthProvider>
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>

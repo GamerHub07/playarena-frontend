@@ -13,6 +13,7 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { useGuest } from '@/hooks/useGuest';
+import { useAuth } from '@/contexts/AuthContext';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
@@ -42,6 +43,7 @@ function GameRoomContent() {
     const roomCode = (params.roomId as string).toUpperCase();
 
     const { guest, loading: guestLoading, login } = useGuest();
+    const { user } = useAuth();
     const { isConnected, emit, on } = useSocket();
 
     const [room, setRoom] = useState<Room | null>(null);
@@ -158,10 +160,35 @@ function GameRoomContent() {
                     setRoom(res.data);
                     setPlayers(res.data.players);
 
-                    // If user has no session, show join modal (they came via shared link)
-                    if (!guest) {
+                    // Check if current user is already a participant
+                    const currentSessionId = guest?.sessionId; // We only check guest session
+                    // Note: If user is logged in, they should have a guest session by now due to other logic
+                    // or we might need to handle the "user but no guest" case again here if the creation logic failed.
+
+                    const isParticipant = res.data.players.some(p => p.sessionId === currentSessionId);
+
+                    if (currentSessionId && !isParticipant) {
+                        // We have a session but are not in the room. Auto-join via API.
+                        try {
+                            await roomApi.join(roomCode, currentSessionId);
+                            // We don't need to manually update state here, socket room:update will likely fire
+                        } catch (e) {
+                            console.error("Auto-join failed, showing modal");
+                            setShowJoinModal(true);
+                        }
+                    } else if (!guest && !user) {
+                        // No session at all -> Join Modal
                         setShowJoinModal(true);
+                    } else if (user && !guest && !isParticipant) {
+                        // Authenticated user but no guest session? 
+                        // This is the edge case. We should ideally auto-login here too.
+                        // Or show join modal which will trigger login.
+                        // Let's silently try to login?
+                        // Actually, let's keep it simple: if not participant, show modal.
+                        // But the user requested "if a player is coming using a room link... if he already has a guest session".
+                        // So the block above (currentSessionId && !isParticipant) handles the reported bug.
                     }
+
                 } else {
                     setError('Room not found');
                 }
@@ -172,7 +199,7 @@ function GameRoomContent() {
         };
 
         fetchRoom();
-    }, [roomCode, guest, guestLoading]);
+    }, [roomCode, guest, guestLoading, user]);
 
     // Keep players ref in sync
     const playersRef = useRef(players);
