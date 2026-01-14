@@ -168,25 +168,29 @@ function GameRoomContent() {
                     const isParticipant = res.data.players.some(p => p.sessionId === currentSessionId);
 
                     if (currentSessionId && !isParticipant) {
-                        // We have a session but are not in the room. Auto-join via API.
-                        try {
-                            await roomApi.join(roomCode, currentSessionId);
-                            // We don't need to manually update state here, socket room:update will likely fire
-                        } catch (e) {
-                            console.error("Auto-join failed, showing modal");
-                            setShowJoinModal(true);
+                        // Check if we are already in the room by username (e.g. lost session ID persistence)
+                        // This prevents creating a duplicate player if we are authenticated
+                        const isUsernameInRoom = user && res.data.players.some(p => p.username === user.username);
+
+                        if (!isUsernameInRoom) {
+                            // We have a session but are not in the room. Auto-join via API.
+                            try {
+                                await roomApi.join(roomCode, currentSessionId);
+                                // We don't need to manually update state here, socket room:update will likely fire
+                            } catch (e) {
+                                console.error("Auto-join failed, showing modal");
+                                setShowJoinModal(true);
+                            }
                         }
                     } else if (!guest && !user) {
                         // No session at all -> Join Modal
                         setShowJoinModal(true);
                     } else if (user && !guest && !isParticipant) {
                         // Authenticated user but no guest session? 
-                        // This is the edge case. We should ideally auto-login here too.
-                        // Or show join modal which will trigger login.
-                        // Let's silently try to login?
-                        // Actually, let's keep it simple: if not participant, show modal.
-                        // But the user requested "if a player is coming using a room link... if he already has a guest session".
-                        // So the block above (currentSessionId && !isParticipant) handles the reported bug.
+                        const isUsernameInRoom = res.data.players.some(p => p.username === user.username);
+                        if (!isUsernameInRoom) {
+                            setShowJoinModal(true);
+                        }
                     }
 
                 } else {

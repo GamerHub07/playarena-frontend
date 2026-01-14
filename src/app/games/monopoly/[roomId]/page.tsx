@@ -71,14 +71,24 @@ export default function MonopolyGameRoom() {
                     const isParticipant = res.data.players.some(p => p.sessionId === currentSessionId);
 
                     if (currentSessionId && !isParticipant) {
-                        // We have a session but are not in the room. Auto-join via API.
-                        try {
-                            await roomApi.join(roomCode, currentSessionId);
-                        } catch (e) {
-                            setShowJoinModal(true);
+                        const isUsernameInRoom = user && res.data.players.some(p => p.username === user.username);
+
+                        if (!isUsernameInRoom) {
+                            // We have a session but are not in the room. Auto-join via API.
+                            try {
+                                await roomApi.join(roomCode, currentSessionId);
+                            } catch (e) {
+                                setShowJoinModal(true);
+                            }
                         }
                     } else if (!guest && !user) {
                         setShowJoinModal(true);
+                    } else if (user && !guest) {
+                        // Check if user is already in (by username)
+                        const isUsernameInRoom = res.data.players.some(p => p.username === user.username);
+                        if (!isUsernameInRoom) {
+                            setShowJoinModal(true);
+                        }
                     }
                 } else {
                     setError('Room not found');

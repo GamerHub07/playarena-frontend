@@ -91,15 +91,24 @@ export default function SnakeLadderRoomPage() {
                     const isParticipant = res.data.players.some(p => p.sessionId === currentSessionId);
 
                     if (currentSessionId && !isParticipant) {
-                        // We have a session but are not in the room. Auto-join via API.
-                        try {
-                            await roomApi.join(roomCode, currentSessionId);
-                        } catch (e) {
-                            setShowJoinModal(true);
+                        const isUsernameInRoom = user && res.data.players.some(p => p.username === user.username);
+
+                        if (!isUsernameInRoom) {
+                            // We have a session but are not in the room. Auto-join via API.
+                            try {
+                                await roomApi.join(roomCode, currentSessionId);
+                            } catch (e) {
+                                setShowJoinModal(true);
+                            }
                         }
                     } else if (!guest && !user) {
                         // If user has no session, show join modal (they came via shared link)
                         setShowJoinModal(true);
+                    } else if (user && !guest) {
+                        const isUsernameInRoom = res.data.players.some(p => p.username === user.username);
+                        if (!isUsernameInRoom) {
+                            setShowJoinModal(true);
+                        }
                     }
                 } else {
                     setError('Room not found');
