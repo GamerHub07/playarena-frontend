@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useRef, useState, useEffect } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { HeroBackground } from '@/components/landing/HeroBackground';
 
 interface Game {
     id: string;
@@ -66,278 +68,307 @@ const GAMES: Game[] = [
 
 export default function HomePage() {
     const scrollRef = useRef<HTMLDivElement>(null);
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const heroRef = useRef<HTMLDivElement>(null);
-    // Default to unmuted - sound should play immediately
-    const [isMuted, setIsMuted] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [games, setGames] = useState<Game[]>(GAMES);
 
     const scrollToGames = () => {
         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const toggleSound = () => {
-        if (videoRef.current) {
-            videoRef.current.muted = !videoRef.current.muted;
-            setIsMuted(!isMuted);
-        }
-    };
-
-    // Auto-mute when scrolling out of Hero section
     useEffect(() => {
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                // Mute if less than 50% visible (user scrolling away)
-                if (entry.intersectionRatio < 0.5 && videoRef.current && !videoRef.current.muted) {
-                    videoRef.current.muted = true;
-                    setIsMuted(true);
-                }
-            },
-            {
-                threshold: [0.5]
-            }
-        );
+        const interval = setInterval(() => {
+            setGames((currentGames: Game[]) => {
+                // Move first game to the end
+                const newGames = [...currentGames];
+                const firstGame = newGames.shift();
+                if (firstGame) newGames.push(firstGame);
+                return newGames;
+            });
+        }, 3000);
 
-        if (heroRef.current) {
-            observer.observe(heroRef.current);
-        }
-
-        return () => {
-            if (heroRef.current) {
-                observer.unobserve(heroRef.current);
-            }
-        };
-    }, []);
-
-    // Robust Autoplay Logic: Attempt Unmute -> Fallback to Muted -> Wait for Click
-    useEffect(() => {
-        const video = videoRef.current;
-        if (!video) return;
-
-        // Function to attempt playing safely
-        const attemptPlay = async () => {
-            try {
-                // Try to play unmuted first
-                video.muted = false;
-                await video.play();
-                setIsMuted(false);
-                console.log("Auto-play with sound successful.");
-            } catch (err) {
-                // If it fails (expected behavior), revert to muted
-                console.log("Auto-play with sound prevented. Fallback to muted.");
-                video.muted = true;
-                setIsMuted(true);
-                try {
-                    await video.play();
-                } catch (e) {
-                    console.error("Video playback failed completely", e);
-                }
-            }
-        };
-
-        attemptPlay();
-
-        // Setup interaction listener to unmute if we are currently muted
-        const handleInteraction = () => {
-            if (video.muted) {
-                video.muted = false;
-                setIsMuted(false);
-                video.play().catch(e => console.log("Interaction play failed", e));
-            }
-        };
-
-        const events = ['click', 'touchstart', 'keydown'];
-        events.forEach(event => window.addEventListener(event, handleInteraction));
-
-        // Note: We don't remove listeners immediately so that if the user pauses/mutes later,
-        // we could potentially re-enable? Actually, better to remove them once we succeed?
-        // But user might mute manually. 
-        // Let's keep it simple: If muted, interaction unmutes.
-        // But we should be careful not to override user's manual mute? 
-        // Current logic: simple toggle. Interaction always unmutes. 
-        // We'll keep listeners for now as per "click to play sound" requirement.
-
-        return () => {
-            events.forEach(event => window.removeEventListener(event, handleInteraction));
-        };
+        return () => clearInterval(interval);
     }, []);
 
     return (
-        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30">
+        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/30 overflow-x-hidden">
             <Header />
 
-            <main>
-                {/* Hero Section Container with Video */}
-                <section ref={heroRef} className="relative h-[90vh]  flex flex-col items-center justify-center overflow-hidden bg-black">
-                    {/* Hero Video Layer */}
-                    <div className="absolute inset-0  z-0" suppressHydrationWarning>
-                        <video
-                            ref={videoRef}
-                            autoPlay
-                            loop
-                            playsInline
-                            className="w-full h-full object-cover opacity-60"
-                            suppressHydrationWarning
+            <main className="flex-grow">
+                {/* Hero Section */}
+                <section ref={containerRef} className="relative min-h-[95vh] flex items-start pt-32 md:pt-40 pb-32 overflow-hidden bg-background">
+                    {/* Animated Gaming Background */}
+                    <HeroBackground />
+
+                    <div className="container mx-auto px-4 sm:px-6 lg:px-8  grid lg:grid-cols-2 gap-8 lg:gap-16 items-center h-full relative z-10">
+
+                        {/* Left Content */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -50 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                            className="flex flex-col items-start text-left z-10 lg:pl-35 self-start"
                         >
-                            <source src="/loading.mp4" type="video/mp4" />
-                        </video>
-                        {/* Gradient Overlays for Video */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-background" />
-                    </div>
+                            {/* <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2, duration: 0.6 }}
+                                className="inline-flex items-center gap-2 px-4 py-2 mb-8 rounded-full bg-foreground/5 border border-foreground/10 text-sm font-bold tracking-wide uppercase"
+                            >
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-slow" />
+                                Online Multiplayer
+                            </motion.div> */}
 
-                    {/* Sound Toggle */}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); toggleSound(); }}
-                        className="absolute bottom-8 right-8 z-30 p-3 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 text-white transition-all border border-white/10 group"
-                        title={isMuted ? "Unmute Video" : "Mute Video"}
-                    >
-                        {isMuted ? (
-                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clipRule="evenodd" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                            </svg>
-                        ) : (
-                            <div className="flex items-center gap-1 h-6">
-                                <span className="w-1 h-3 bg-white rounded-full animate-[music_1s_ease-in-out_infinite]" />
-                                <span className="w-1 h-5 bg-white rounded-full animate-[music_1.2s_ease-in-out_infinite]" />
-                                <span className="w-1 h-2 bg-white rounded-full animate-[music_0.8s_ease-in-out_infinite]" />
+                            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.9] mb-6 text-foreground">
+                                <span className="block overflow-hidden">
+                                    <motion.span
+                                        initial={{ y: "100%" }}
+                                        animate={{ y: 0 }}
+                                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+                                        className="block"
+                                    >
+                                        NEXT
+                                    </motion.span>
+                                </span>
+                                <span className="block overflow-hidden text-primary/80">
+                                    <motion.span
+                                        initial={{ y: "100%" }}
+                                        animate={{ y: 0 }}
+                                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                                        className="block"
+                                    >
+                                        LEVEL
+                                    </motion.span>
+                                </span>
+                                <span className="block overflow-hidden">
+                                    <motion.span
+                                        initial={{ y: "100%" }}
+                                        animate={{ y: 0 }}
+                                        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+                                        className="block"
+                                    >
+                                        GAMING
+                                    </motion.span>
+                                </span>
+                            </h1>
+
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5, duration: 0.8 }}
+                                className="text-base md:text-lg text-muted-foreground max-w-lg mb-10 leading-relaxed"
+                            >
+                                Step into the arena. Experience award-winning classic board games reimagined for the modern web. Completely free, no downloads required.
+                            </motion.p>
+
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.7, duration: 0.8 }}
+                                className="flex flex-wrap gap-4"
+                            >
+                                <button
+                                    onClick={scrollToGames}
+                                    className="px-6 py-3 bg-foreground text-background rounded-xl font-bold text-base transition-transform hover:scale-105 active:scale-95 shadow-xl hover:shadow-2xl"
+                                >
+                                    Start Playing
+                                </button>
+                                <a
+                                    href="#how-it-works"
+                                    className="px-6 py-3 bg-transparent border-2 border-foreground/10 text-foreground rounded-xl font-bold text-base transition-colors hover:bg-foreground/5 hover:border-foreground/30"
+                                >
+                                    How it Works
+                                </a>
+                            </motion.div>
+                        </motion.div>
+
+                        {/* Right Visuals - 3D Card Composition */}
+                        <div className="relative h-[400px] md:h-[450px] lg:h-[500px] w-full hidden md:flex items-center justify-center perspective-1000">
+                            {/* Floating Elements Background */}
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+                                className="absolute inset-0 z-0 pointer-events-none opacity-20 dark:opacity-10"
+                            >
+                                <div className="absolute top-1/4 left-1/4 w-32 h-32 border-4 border-foreground/20 rounded-full border-dashed" />
+                                <div className="absolute bottom-1/3 right-1/4 w-48 h-48 border-2 border-primary/20 rounded-full" />
+                            </motion.div>
+
+                            {/* Cards Stack */}
+                            <div className="relative z-10 w-full max-w-xs md:max-w-sm aspect-[3/4]">
+                                {games.map((game, index) => {
+                                    // Only show top 3 prominently, others hidden/back
+                                    const isVisible = index < 3;
+                                    return (
+                                        <motion.div
+                                            key={game.id}
+                                            layoutId={game.id}
+                                            animate={{
+                                                opacity: isVisible ? 1 : 0,
+                                                x: isVisible ? index * 40 - 40 : 0,
+                                                y: isVisible ? index * 40 - 40 : 50,
+                                                scale: isVisible ? 1 - index * 0.05 : 0.8,
+                                                zIndex: 10 - index,
+                                                rotateY: isVisible ? -15 + (index * 5) : 0
+                                            }}
+                                            transition={{
+                                                duration: 0.8,
+                                                ease: [0.16, 1, 0.3, 1]
+                                            }}
+                                            className="absolute inset-0 rounded-3xl p-2 bg-surface shadow-2xl border border-border cursor-pointer group"
+                                            style={{
+                                                transformOrigin: "center center",
+                                                display: index > 3 ? 'none' : 'block' // Optimization: completely hide ones far back
+                                            }}
+                                        >
+                                            <div className="relative w-full h-full rounded-2xl overflow-hidden bg-background">
+                                                <Link href={game.available ? game.href : '#'} className="block w-full h-full relative" draggable={false}>
+                                                    <Image
+                                                        src={game.image}
+                                                        alt={game.title}
+                                                        fill
+                                                        className="object-cover"
+                                                        draggable={false}
+                                                    />
+                                                    {/* Minimal Overlay */}
+                                                    <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
+                                                        <h3 className="text-white text-2xl font-bold">{game.title}</h3>
+                                                        <p className="text-white/80 text-sm mt-1">{game.players}</p>
+                                                    </div>
+                                                </Link>
+                                            </div>
+                                        </motion.div>
+                                    );
+                                })}
                             </div>
-                        )}
-                    </button>
-
-                    {/* Hero Content */}
-                    <div className="relative z-10 px-4 text-center max-w-5xl mx-auto mt-[-4rem]">
-                        <div className="mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-sm font-bold text-white shadow-lg cursor-default">
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                ONLINE NOW
-                            </span>
-                        </div>
-
-                        <h1 className="text-6xl md:text-8xl lg:text-9xl font-black tracking-tighter mb-6 leading-[0.9] animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                            <span className="text-white drop-shadow-lg">
-                                NEXT GEN
-                            </span>
-                            <br />
-                            <span className="text-white drop-shadow-[0_4px_0_rgba(0,0,0,0.5)]" style={{
-                                textShadow: '0 0 20px rgba(139, 92, 246, 0.5), 0 0 40px rgba(139, 92, 246, 0.3)',
-                                WebkitTextStroke: '2px #8B5CF6',
-                                color: 'transparent'
-                            }}>
-                                GAMING
-                            </span>
-                        </h1>
-
-                        <p className="text-xl md:text-2xl text-gray-200 mb-12 max-w-2xl mx-auto font-medium animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                            Experience award-winning multiplayer games directly in your browser. No downloads. Just pure fun.
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-center animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-                            <button
-                                onClick={scrollToGames}
-                                className="px-10 py-5 bg-white text-black rounded-2xl font-bold text-xl transition-all hover:scale-105 hover:bg-gray-100 shadow-[0_0_30px_rgba(255,255,255,0.3)]"
-                            >
-                                Start Playing
-                            </button>
-
-                            <a
-                                href="#how-it-works"
-                                className="px-10 py-5 rounded-2xl font-bold text-xl text-white border-2 border-white/20 hover:bg-white/10 backdrop-blur-sm transition-all"
-                            >
-                                How it Works
-                            </a>
                         </div>
                     </div>
+
+                    {/* Scroll Indicator */}
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 2, duration: 1 }}
+                        className="absolute bottom-25 left-1/2 -translate-x-1/2 z-20 cursor-pointer hidden md:flex flex-col items-center gap-2 group"
+                        onClick={scrollToGames}
+                    >
+                        <span className="text-xs uppercase tracking-widest text-muted-foreground/60 group-hover:text-primary/80 transition-colors">Scroll to Explore</span>
+                        <motion.div
+                            animate={{ y: [0, 8, 0] }}
+                            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                            className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full flex justify-center p-1 group-hover:border-primary/50 transition-colors"
+                        >
+                            <motion.div className="w-1 h-2 bg-muted-foreground/50 rounded-full group-hover:bg-primary transition-colors" />
+                        </motion.div>
+                    </motion.div>
                 </section>
 
-                {/* Games Grid Section */}
-                <section id="games" ref={scrollRef} className="py-24 px-4 md:px-6 bg-background">
-                    <div className="text-center mb-16">
-                        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
-                            Choose Your Arena
-                        </h2>
-                        <div className="w-20 h-1.5 bg-primary mx-auto rounded-full" />
-                    </div>
+                {/* Games Grid Section (Cleaned up) */}
+                <section id="games" ref={scrollRef} className="py-16 md:py-24 px-4 bg-surface/30">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+                            <div className="max-w-xl">
+                                <h2 className="text-4xl md:text-5xl font-black mb-4 text-foreground tracking-tight">
+                                    CHOOSE YOUR <span className="text-primary/80">ARENA</span>
+                                </h2>
+                                <p className="text-muted-foreground text-lg">
+                                    Select a game to start playing instantly with friends.
+                                </p>
+                            </div>
+                            <div className="h-px bg-border flex-grow ml-8 hidden md:block" />
+                        </div>
 
-                    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {GAMES.map((game) => (
-                            <Link
-                                key={game.id}
-                                href={game.available ? game.href : '#'}
-                                className={`
-                                    group relative rounded-[2rem] overflow-hidden transition-all duration-300 hover:-translate-y-2
-                                    ${!game.available ? 'opacity-80 grayscale-[0.8]' : 'hover:shadow-2xl shadow-card bg-surface'}
-                                `}
-                            >
-                                <div className="relative aspect-[4/3] overflow-hidden">
-                                    <Image
-                                        src={game.image}
-                                        alt={game.title}
-                                        fill
-                                        className="object-cover transition-transform duration-700 group-hover:scale-110"
-                                    />
-                                    {!game.available && (
-                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                                            <span className="px-4 py-2 bg-black/50 backdrop-blur text-white font-bold rounded-lg border border-white/20">Coming Soon</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {GAMES.map((game, i) => (
+                                <Link
+                                    key={game.id}
+                                    href={game.available ? game.href : '#'}
+                                    className="block h-full"
+                                >
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: i * 0.1 }}
+                                        className={`
+                                            group relative rounded-[1.5rem] overflow-hidden 
+                                            ${!game.available ? 'opacity-70' : 'hover:shadow-2xl shadow-lg'}
+                                            bg-background dark:bg-zinc-900/50
+                                            aspect-[4/5] w-full max-w-xs mx-auto
+                                            transition-all duration-300
+                                        `}
+                                    >
+                                        <Image
+                                            src={game.image}
+                                            alt={game.title}
+                                            fill
+                                            className={`object-cover transition-none ${!game.available ? 'grayscale' : ''}`}
+                                        />
+
+                                        {/* Hover Overlay */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-8">
+                                            <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                                                <h3 className="text-3xl font-black text-white tracking-tight mb-2 drop-shadow-md">{game.title}</h3>
+
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <span className="px-3 py-1 rounded-full bg-white text-black text-xs font-bold uppercase tracking-wider">
+                                                        {game.players}
+                                                    </span>
+                                                </div>
+
+                                                <p className="text-white/90 text-sm leading-relaxed line-clamp-3 drop-shadow-sm">
+                                                    {game.description}
+                                                </p>
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                                <div className="p-6">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h3 className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">{game.title}</h3>
-                                        <span className="text-sm font-medium text-text-muted bg-surface-alt px-2 py-1 rounded-md">{game.players}</span>
-                                    </div>
-                                    <p className="text-text-muted line-clamp-2">{game.description}</p>
-                                </div>
-                            </Link>
-                        ))}
+
+                                        {!game.available && (
+                                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] z-20">
+                                                <span className="px-5 py-2.5 bg-white/10 backdrop-blur-md text-white font-bold rounded-2xl border border-white/20 tracking-wider text-sm shadow-xl">COMING SOON</span>
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                </Link>
+                            ))}
+                        </div>
                     </div>
                 </section>
 
-                {/* How It Works Section */}
-                <section id="how-it-works" className="py-24 bg-surface relative overflow-hidden">
-                    {/* Background decoration */}
-                    <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-                    <div className="max-w-7xl mx-auto px-4 relative z-10">
-                        <div className="text-center max-w-2xl mx-auto mb-16">
-                            <h2 className="text-4xl font-bold text-foreground mb-6">Simple as 1-2-3</h2>
-                            <p className="text-xl text-text-muted">
-                                We removed all the friction. You are just seconds away from playing with your friends.
+                {/* How It Works Section (Simplified) */}
+                <section id="how-it-works" className="py-20 md:py-32 bg-background relative overflow-hidden">
+                    <div className="container mx-auto px-4 relative z-10">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="text-center max-w-3xl mx-auto mb-20"
+                        >
+                            <h2 className="text-4xl md:text-5xl font-black text-foreground mb-6">SIMPLE AS 1-2-3</h2>
+                            <p className="text-xl text-muted-foreground">
+                                No registration. No download. Just share a link and play.
                             </p>
-                        </div>
+                        </motion.div>
 
                         <div className="grid md:grid-cols-3 gap-8">
                             {[
-                                {
-                                    title: 'Pick a Name',
-                                    desc: 'Choose any username you like. No passwords to remember.',
-                                    step: '01'
-                                },
-                                {
-                                    title: 'Create Room',
-                                    desc: 'Get a unique room code to share with your friends.',
-                                    step: '02'
-                                },
-                                {
-                                    title: 'Start Playing',
-                                    desc: 'Wait for them to join and let the games begin!',
-                                    step: '03'
-                                },
+                                { title: 'Pick a Name', desc: 'Choose any username. No passwords needed.', step: '01' },
+                                { title: 'Create Room', desc: 'Get a unique code to share with friends.', step: '02' },
+                                { title: 'Start Playing', desc: 'Wait for them to join and let the fun begin!', step: '03' },
                             ].map((item, i) => (
-                                <div key={i} className="relative group">
-                                    <div className="bg-background p-8 rounded-3xl border border-border shadow-soft hover:shadow-card transition-all duration-300 h-full relative z-10">
-                                        <div className="text-6xl font-black text-surface-alt absolute top-4 right-6 select-none opacity-50 group-hover:opacity-100 transition-opacity">
-                                            {item.step}
-                                        </div>
-
-                                        <div className="relative z-10 pt-8">
-                                            <h3 className="text-2xl font-bold text-foreground mb-4">{item.title}</h3>
-                                            <p className="text-text-muted leading-relaxed text-lg">{item.desc}</p>
-                                        </div>
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    whileHover={{ y: -10 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: i * 0.2 }}
+                                    className="bg-surface p-10 rounded-3xl border border-border relative overflow-hidden group hover:border-primary/30 transition-colors"
+                                >
+                                    <div className="absolute top-0 right-0 p-8 opacity-10 font-black text-8xl text-foreground select-none group-hover:opacity-20 transition-opacity">
+                                        {item.step}
                                     </div>
-                                    {/* Offset Background Card */}
-                                    <div className="absolute inset-0 bg-surface-alt rounded-3xl transform translate-x-2 translate-y-2 -z-0 transition-transform group-hover:translate-x-3 group-hover:translate-y-3" />
-                                </div>
+                                    <h3 className="text-2xl font-bold text-foreground mb-4 relative z-10">{item.title}</h3>
+                                    <p className="text-muted-foreground leading-relaxed relative z-10">{item.desc}</p>
+                                </motion.div>
                             ))}
                         </div>
                     </div>
@@ -345,21 +376,6 @@ export default function HomePage() {
             </main>
 
             <Footer />
-
-            <style jsx global>{`
-                @keyframes fadeInUp {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .animate-fade-in-up {
-                    animation: fadeInUp 0.8s ease-out forwards;
-                    opacity: 0;
-                }
-                @keyframes music {
-                    0%, 100% { height: 25%; }
-                    50% { height: 100%; }
-                }
-            `}</style>
         </div>
     );
 }
