@@ -6,9 +6,11 @@ let socket: Socket | null = null;
 
 export const getSocket = (): Socket => {
     if (!socket) {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         socket = io(SOCKET_URL, {
             autoConnect: false,
             transports: ['websocket', 'polling'],
+            auth: { token },
         });
     }
     return socket;

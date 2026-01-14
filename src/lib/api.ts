@@ -10,6 +10,32 @@ const api = axios.create({
     },
 });
 
+// Add interceptor for auth token
+api.interceptors.request.use((config) => {
+    if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    }
+    return config;
+});
+
+export const authApi = {
+    register: async (userData: any) => {
+        const { data } = await api.post('/auth/register', userData);
+        return data;
+    },
+    login: async (creds: any) => {
+        const { data } = await api.post('/auth/login', creds);
+        return data;
+    },
+    getProfile: async () => {
+        const { data } = await api.get('/auth/profile');
+        return data;
+    }
+};
+
 export const guestApi = {
     create: async (username: string): Promise<ApiResponse<Guest>> => {
         const { data } = await api.post('/guest', { username });

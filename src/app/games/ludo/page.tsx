@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Card from '@/components/ui/Card';
 import { useGuest } from '@/hooks/useGuest';
+import { useAuth } from '@/contexts/AuthContext';
 import { roomApi } from '@/lib/api';
 
 export default function LudoPage() {
@@ -47,8 +48,66 @@ export default function LudoPage() {
         }
     };
 
+    const { user } = useAuth();
+
+    // ...
+
     const handleCreateRoom = async (sessionId?: string) => {
+        // If logged in user, they use their token for auth, we don't strictly need sessionId for *creation* 
+        // IF the backend supports it. However, the current backend implementation of createRoom 
+        // expects a sessionId OR we need to update it to use the user ID.
+        // Actually, looking at roomController.ts: it checks for sessionId and verifies guest.
+        // We need to ensure that for authed users, we either pass a "dummy" sessionId 
+        // or update the backend to handle authed user creation differently.
+
+        // Wait! The user asked: "when a user is creating a room he should not need to enter a username if logged in"
+        // If I am logged in, I have a user object. 
+        // But the backend `createRoom` currently enforces `GuestSession.findOne({ sessionId })`.
+        // This means we might need to update the backend OR use the existing guest session if it exists.
+
+        // Let's assume for now we use the guest session if it exists. 
+        // But if I am logged in, I might NOT have a guest session?
+        // Actually, the app creates a guest session automatically? No.
+
+        // If I am logged in, I should be able to create a room.
+        // For now, let's fix the frontend to not PROMPT for username if `user` exists.
+
         const sid = sessionId || guest?.sessionId;
+
+        // If we are logged in (`user`), we should proceed. 
+        // BUT the backend `createRoom` MIGHT fail if we don't send a valid guest sessionId.
+        // Let's check `roomController.ts`. 
+        // It says: `const guest = await GuestSession.findOne({ sessionId });`
+        // If `!guest`, it returns 401. 
+        // So even if we are logged in, we need a guest session CURRENTLY.
+        // 
+        // However, the USER request implies they are logged in and it asks for username.
+        // If I am logged in, I have a `user.username`. 
+        // The frontend `handleCreateRoom` checks `if (!sid)`. 
+        // If I am logged in but have no guest session, `sid` is undefined, so it shows modal.
+
+
+        // Modification:
+        // We need to allow `handleCreateRoom` to proceed if `user` is present, 
+        // AND we probably need to auto-create a guest session for the user if one doesn't exist, 
+        // OR (better) update the backend to accept authenticated users. 
+
+        // Given I cannot easily change the entire backend auth flow for rooms in one step without risk,
+        // The safest/quickest fix for "not entering username" is:
+        // If `user` exists, we can silently "login" as a guest using their simple username 
+        // behind the scenes if `guest` is missing.
+
+        if (user && !guest) {
+            setIsLoading(true);
+            const result = await login(user.username);
+            setIsLoading(false);
+            if (result) {
+                // Recurse with new session
+                handleCreateRoom(result.sessionId);
+            }
+            return;
+        }
+
         if (!sid) {
             setPendingAction('create');
             setShowLoginModal(true);
