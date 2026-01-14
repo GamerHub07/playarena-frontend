@@ -6,7 +6,7 @@ import GamePawn from '@/components/games/shared/GamePawn';
 
 interface MonopolyTokenProps {
   playerIndex: number;
-  size?: number;
+  size?: number | string;
   glow?: boolean;
   className?: string;
 }
