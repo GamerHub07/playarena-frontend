@@ -8,6 +8,8 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import { useGuest } from '@/hooks/useGuest';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
 import { Room, Player } from '@/types/game';
@@ -29,6 +31,7 @@ export default function MonopolyGameRoom() {
     const roomCode = (params.roomId as string).toUpperCase();
 
     const { guest, loading: guestLoading, login } = useGuest();
+    const { user } = useAuth();
     const { isConnected, emit, on } = useSocket();
 
     const [room, setRoom] = useState<Room | null>(null);
@@ -63,9 +66,29 @@ export default function MonopolyGameRoom() {
                     setRoom(res.data);
                     setPlayers(res.data.players);
 
-                    // If user has no session, show join modal (they came via shared link)
-                    if (!guest) {
+                    // Check if current user is already a participant
+                    const currentSessionId = guest?.sessionId;
+                    const isParticipant = res.data.players.some(p => p.sessionId === currentSessionId);
+
+                    if (currentSessionId && !isParticipant) {
+                        const isUsernameInRoom = user && res.data.players.some(p => p.username === user.username);
+
+                        if (!isUsernameInRoom) {
+                            // We have a session but are not in the room. Auto-join via API.
+                            try {
+                                await roomApi.join(roomCode, currentSessionId);
+                            } catch (e) {
+                                setShowJoinModal(true);
+                            }
+                        }
+                    } else if (!guest && !user) {
                         setShowJoinModal(true);
+                    } else if (user && !guest) {
+                        // Check if user is already in (by username)
+                        const isUsernameInRoom = res.data.players.some(p => p.username === user.username);
+                        if (!isUsernameInRoom) {
+                            setShowJoinModal(true);
+                        }
                     }
                 } else {
                     setError('Room not found');
@@ -77,7 +100,7 @@ export default function MonopolyGameRoom() {
         };
 
         fetchRoom();
-    }, [roomCode, guest, guestLoading]);
+    }, [roomCode, guest, guestLoading, user]);
 
     // Socket listeners
     useEffect(() => {
@@ -163,11 +186,15 @@ export default function MonopolyGameRoom() {
         router.push('/games/monopoly');
     }, [emit, router]);
 
+    // Sound effects
+    const { playDiceRoll } = useSoundEffects();
+
     const handleRollDice = useCallback(() => {
         if (!gameState || (gameState.phase !== 'ROLL' && gameState.phase !== 'JAIL')) return;
         setRolling(true);
+        playDiceRoll(); // Play dice roll sound
         emit('game:action', { roomCode, action: 'ROLL_DICE' });
-    }, [emit, roomCode, gameState]);
+    }, [emit, roomCode, gameState, playDiceRoll]);
 
     const handleBuyProperty = useCallback(() => {
         emit('game:action', { roomCode, action: 'BUY_PROPERTY' });

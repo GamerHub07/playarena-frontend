@@ -35,11 +35,17 @@ export default function SnakeLadderBoard({
     }), []);
 
     // Group players by position
+    // Fall back to gameState.players if displayedPositions is empty or missing
     const playersByPosition: Record<number, number[]> = {};
     const waitingPlayers: number[] = [];
 
-    Object.entries(displayedPositions).forEach(([playerIdx, position]) => {
+    // Use gameState.players as the source of truth for which players exist
+    // but use displayedPositions for the animated position (with fallback to gameState)
+    Object.entries(gameState.players).forEach(([playerIdx, pState]) => {
         const idx = parseInt(playerIdx);
+        // Use displayed position if available, otherwise fall back to game state position
+        const position = displayedPositions[idx] ?? pState.position;
+
         if (position === 0) {
             waitingPlayers.push(idx);
         } else if (position > 0) {
@@ -218,7 +224,7 @@ export default function SnakeLadderBoard({
                         );
                     })}
 
-                    {/* Slim Realistic Snakes */}
+                    {/* === FUN CARTOONISH SNAKES WITH BIG CUTE EYES === */}
                     {Object.entries(SNAKES).map(([headStr, tail], index) => {
                         const head = parseInt(headStr);
                         const start = positionToGrid(head);
@@ -234,102 +240,255 @@ export default function SnakeLadderBoard({
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         const angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
-                        // Body Generation (Centerline)
-                        const steps = 30;
-                        const points = [];
-                        const waves = Math.max(1, distance / 100);
-                        const amplitude = 25 * (index % 2 === 0 ? 1 : -1);
+                        // Fun colorful cartoon snake themes
+                        const cartoonThemes = [
+                            { body: '#4ADE80', bodyDark: '#22C55E', belly: '#86EFAC', spots: '#166534', cheek: '#FB7185' }, // Happy Green
+                            { body: '#FB923C', bodyDark: '#F97316', belly: '#FED7AA', spots: '#C2410C', cheek: '#F472B6' }, // Friendly Orange  
+                            { body: '#F87171', bodyDark: '#EF4444', belly: '#FECACA', spots: '#B91C1C', cheek: '#FDA4AF' }, // Cute Red
+                            { body: '#60A5FA', bodyDark: '#3B82F6', belly: '#BFDBFE', spots: '#1E40AF', cheek: '#F9A8D4' }, // Cool Blue
+                            { body: '#C084FC', bodyDark: '#A855F7', belly: '#E9D5FF', spots: '#7E22CE', cheek: '#FBCFE8' }, // Playful Purple
+                        ];
+                        const theme = cartoonThemes[index % cartoonThemes.length];
+                        const snakeId = `cartoon-snake-${head}`;
+
+                        // Smooth curvy body path
+                        const steps = 25;
+                        const points: { x: number, y: number }[] = [];
+                        const waves = Math.max(1.5, distance / 90);
+                        const amplitude = 22 * (index % 2 === 0 ? 1 : -1);
 
                         for (let i = 0; i <= steps; i++) {
                             const t = i / steps;
                             const x = t * distance;
-                            // Smooth sine wave
-                            const y = amplitude * Math.sin(t * waves * Math.PI * 2);
+                            const taper = Math.sin(t * Math.PI);
+                            const y = amplitude * Math.sin(t * waves * Math.PI * 2) * taper;
                             points.push({ x, y });
                         }
 
-                        // Construct simple centerline path
                         const pathD = points.map((p, i) =>
-                            (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`)
+                            i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`
                         ).join(' ');
-
-                        // Theme Config
-                        const themeColors = [
-                            { head: '#2E7D32' }, // Green
-                            { head: '#EF6C00' }, // Orange
-                            { head: '#C62828' }, // Red
-                            { head: '#1565C0' }, // Blue
-                            { head: '#6A1B9A' }  // Purple
-                        ];
-                        const themeIdx = index % 5;
-                        const headColor = themeColors[themeIdx].head;
-                        const gradientId = `snakeGradient-${themeIdx}`;
 
                         return (
                             <g key={`snake-${headStr}`} transform={`translate(${x1}, ${y1}) rotate(${angle})`}>
-                                {/* Snake Body - Slim Vector Path */}
-                                {/* Layer 1: Base Color Gradient */}
+                                {/* Defs for this snake */}
+                                <defs>
+                                    {/* Body gradient - cute 3D look */}
+                                    <linearGradient id={`${snakeId}-body`} x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor={theme.belly} />
+                                        <stop offset="30%" stopColor={theme.body} />
+                                        <stop offset="70%" stopColor={theme.bodyDark} />
+                                        <stop offset="100%" stopColor={theme.spots} />
+                                    </linearGradient>
+
+                                    {/* Cute spots pattern */}
+                                    <pattern id={`${snakeId}-spots`} x="0" y="0" width="20" height="14" patternUnits="userSpaceOnUse">
+                                        <circle cx="5" cy="7" r="3" fill={theme.spots} opacity="0.3" />
+                                        <circle cx="15" cy="3" r="2" fill={theme.spots} opacity="0.25" />
+                                        <circle cx="15" cy="11" r="2.5" fill={theme.spots} opacity="0.2" />
+                                    </pattern>
+                                </defs>
+
+                                {/* === SNAKE BODY WITH SHADOW === */}
+                                {/* Shadow layer */}
                                 <path
                                     d={pathD}
                                     fill="none"
-                                    stroke={`url(#${gradientId})`}
-                                    strokeWidth="15"
+                                    stroke="rgba(0,0,0,0.25)"
+                                    strokeWidth={20}
                                     strokeLinecap="round"
-                                    filter="url(#shadow)"
+                                    strokeLinejoin="round"
+                                    transform="translate(2, 4)"
                                 />
-                                {/* Layer 2: Scale Texture Overlay */}
+
+                                {/* Main body */}
                                 <path
                                     d={pathD}
                                     fill="none"
-                                    stroke="url(#snakeScales)"
-                                    strokeWidth="15"
+                                    stroke={`url(#${snakeId}-body)`}
+                                    strokeWidth={18}
                                     strokeLinecap="round"
-                                    style={{ mixBlendMode: 'multiply' }}
+                                    strokeLinejoin="round"
+                                />
+
+                                {/* Cute spots overlay */}
+                                <path
+                                    d={pathD}
+                                    fill="none"
+                                    stroke={`url(#${snakeId}-spots)`}
+                                    strokeWidth={16}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                />
+
+                                {/* Shiny highlight on body */}
+                                <path
+                                    d={pathD}
+                                    fill="none"
+                                    stroke="rgba(255,255,255,0.4)"
+                                    strokeWidth={5}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeDasharray="10 20"
+                                    transform="translate(-1, -3)"
+                                />
+
+                                {/* Belly line */}
+                                <path
+                                    d={pathD}
+                                    fill="none"
+                                    stroke={theme.belly}
+                                    strokeWidth={6}
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                     opacity="0.5"
+                                    transform="translate(0, 3)"
                                 />
 
-                                {/* Head Group - Slim & Small */}
-                                {/* Positioned at 0,0 (Start) and rotated 180 to face backwards */}
+                                {/* === CUTE CARTOON HEAD === */}
                                 <g transform="rotate(180)">
+                                    {/* Head shadow */}
+                                    <ellipse cx="3" cy="4" rx="22" ry="18" fill="rgba(0,0,0,0.2)" />
 
-                                    {/* Tongue */}
-                                    <path
-                                        d="M 12 0 L 22 -4 M 12 0 L 22 4"
-                                        stroke="#D32F2F"
-                                        strokeWidth="1.5"
-                                        strokeLinecap="round"
-                                        transform="translate(-24, 0)"
-                                    />
-
-                                    {/* Head Shape - Slimmer Ellipse */}
-                                    <ellipse
-                                        cx="0" cy="0"
-                                        rx="13" ry="16"
-                                        fill={headColor}
-                                        stroke="rgba(0,0,0,0.2)" strokeWidth="1"
-                                    />
-
-                                    {/* Eyes - Smaller */}
-                                    <g transform="translate(-4, 0)">
-                                        {/* Left Eye */}
-                                        <g transform="translate(-5, -6)">
-                                            <circle r="3.5" fill="#fff" />
-                                            <circle cx="-1" cy="0" r="1.5" fill="#000" />
-                                            <circle cx="-1.5" cy="-1" r="1" fill="#fff" opacity="0.8" />
-                                        </g>
-
-                                        {/* Right Eye */}
-                                        <g transform="translate(-5, 6)">
-                                            <circle r="3.5" fill="#fff" />
-                                            <circle cx="-1" cy="0" r="1.5" fill="#000" />
-                                            <circle cx="-1.5" cy="-1" r="1" fill="#fff" opacity="0.8" />
-                                        </g>
+                                    {/* Playful tongue sticking out */}
+                                    <g transform="translate(-32, 0)">
+                                        <path
+                                            d="M 0 0 C 8 0 12 -3 16 -5"
+                                            stroke="#FF6B6B"
+                                            strokeWidth="3"
+                                            strokeLinecap="round"
+                                            fill="none"
+                                        />
+                                        <path
+                                            d="M 0 0 C 8 0 12 3 16 5"
+                                            stroke="#FF6B6B"
+                                            strokeWidth="3"
+                                            strokeLinecap="round"
+                                            fill="none"
+                                        />
+                                        {/* Tongue tips */}
+                                        <circle cx="16" cy="-5" r="2" fill="#EF4444" />
+                                        <circle cx="16" cy="5" r="2" fill="#EF4444" />
                                     </g>
 
-                                    {/* Nostrils */}
-                                    <circle cx="-12" cy="-2.5" r="0.8" fill="rgba(0,0,0,0.4)" />
-                                    <circle cx="-12" cy="2.5" r="0.8" fill="rgba(0,0,0,0.4)" />
+                                    {/* Main head shape */}
+                                    <ellipse
+                                        cx="0" cy="0"
+                                        rx="22" ry="18"
+                                        fill={theme.body}
+                                        stroke={theme.bodyDark}
+                                        strokeWidth="2"
+                                    />
 
+                                    {/* Head highlight */}
+                                    <ellipse
+                                        cx="-5" cy="-6"
+                                        rx="12" ry="8"
+                                        fill={theme.belly}
+                                        opacity="0.5"
+                                    />
+
+                                    {/* Cute rosy cheeks */}
+                                    <ellipse cx="8" cy="-10" rx="5" ry="3" fill={theme.cheek} opacity="0.6" />
+                                    <ellipse cx="8" cy="10" rx="5" ry="3" fill={theme.cheek} opacity="0.6" />
+
+                                    {/* Snout bump */}
+                                    <ellipse
+                                        cx="-18" cy="0"
+                                        rx="6" ry="5"
+                                        fill={theme.body}
+                                    />
+
+                                    {/* Cute nostrils */}
+                                    <circle cx="-20" cy="-2" r="1.5" fill={theme.spots} />
+                                    <circle cx="-20" cy="2" r="1.5" fill={theme.spots} />
+
+                                    {/* === BIG CUTE CARTOON EYES === */}
+                                    {/* Left Eye */}
+                                    <g transform="translate(-2, -10)">
+                                        {/* Eye shadow */}
+                                        <ellipse cx="1" cy="2" rx="10" ry="9" fill="rgba(0,0,0,0.15)" />
+
+                                        {/* Eye white (sclera) */}
+                                        <ellipse cx="0" cy="0" rx="10" ry="9" fill="white" stroke={theme.bodyDark} strokeWidth="1" />
+
+                                        {/* Iris - big and colorful */}
+                                        <ellipse cx="-2" cy="1" rx="6" ry="6" fill="#2D3748" />
+
+                                        {/* Pupil */}
+                                        <ellipse cx="-2" cy="1" rx="3" ry="3" fill="#0A0A0A" />
+
+                                        {/* Big main sparkle */}
+                                        <ellipse cx="-4" cy="-2" rx="3" ry="2.5" fill="white" />
+
+                                        {/* Small sparkle */}
+                                        <circle cx="1" cy="3" r="1.5" fill="white" opacity="0.8" />
+
+                                        {/* Tiny sparkle */}
+                                        <circle cx="-1" cy="-4" r="1" fill="white" opacity="0.6" />
+
+                                        {/* Cute eyelid curve */}
+                                        <path d="M -9 -4 Q 0 -8 9 -4" stroke={theme.bodyDark} strokeWidth="1.5" fill="none" />
+                                    </g>
+
+                                    {/* Right Eye */}
+                                    <g transform="translate(-2, 10)">
+                                        {/* Eye shadow */}
+                                        <ellipse cx="1" cy="-2" rx="10" ry="9" fill="rgba(0,0,0,0.15)" />
+
+                                        {/* Eye white (sclera) */}
+                                        <ellipse cx="0" cy="0" rx="10" ry="9" fill="white" stroke={theme.bodyDark} strokeWidth="1" />
+
+                                        {/* Iris - big and colorful */}
+                                        <ellipse cx="-2" cy="-1" rx="6" ry="6" fill="#2D3748" />
+
+                                        {/* Pupil */}
+                                        <ellipse cx="-2" cy="-1" rx="3" ry="3" fill="#0A0A0A" />
+
+                                        {/* Big main sparkle */}
+                                        <ellipse cx="-4" cy="-4" rx="3" ry="2.5" fill="white" />
+
+                                        {/* Small sparkle */}
+                                        <circle cx="1" cy="1" r="1.5" fill="white" opacity="0.8" />
+
+                                        {/* Tiny sparkle */}
+                                        <circle cx="-1" cy="-6" r="1" fill="white" opacity="0.6" />
+
+                                        {/* Cute eyelid curve */}
+                                        <path d="M -9 4 Q 0 8 9 4" stroke={theme.bodyDark} strokeWidth="1.5" fill="none" />
+                                    </g>
+
+                                    {/* Cute eyebrows (friendly expression) */}
+                                    <path d="M -12 -16 Q -4 -20 4 -17" stroke={theme.spots} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+                                    <path d="M -12 16 Q -4 20 4 17" stroke={theme.spots} strokeWidth="2.5" strokeLinecap="round" fill="none" />
+
+                                    {/* Optional smile lines near eyes */}
+                                    <path d="M 8 -4 Q 12 -2 10 2" stroke={theme.spots} strokeWidth="1" fill="none" opacity="0.3" />
+                                    <path d="M 8 4 Q 12 2 10 -2" stroke={theme.spots} strokeWidth="1" fill="none" opacity="0.3" />
+                                </g>
+
+                                {/* === CUTE TAIL TIP === */}
+                                <g transform={`translate(${distance}, ${points[points.length - 1]?.y || 0})`}>
+                                    <path
+                                        d="M 0 0 Q 10 0 18 0"
+                                        stroke={theme.body}
+                                        strokeWidth="8"
+                                        strokeLinecap="round"
+                                    />
+                                    <path
+                                        d="M 12 0 Q 20 0 26 0"
+                                        stroke={theme.bodyDark}
+                                        strokeWidth="5"
+                                        strokeLinecap="round"
+                                    />
+                                    <path
+                                        d="M 22 0 Q 28 0 32 0"
+                                        stroke={theme.spots}
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                    />
+                                    {/* Tail highlight */}
+                                    <circle cx="10" cy="-2" r="2" fill="rgba(255,255,255,0.4)" />
                                 </g>
                             </g>
                         );

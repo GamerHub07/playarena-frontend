@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Card from '@/components/ui/Card';
 import { useGuest } from '@/hooks/useGuest';
+import { useAuth } from '@/contexts/AuthContext';
 import { roomApi } from '@/lib/api';
 
 export default function MonopolyPage() {
@@ -47,8 +48,24 @@ export default function MonopolyPage() {
         }
     };
 
+    const { user } = useAuth();
+
+    // ...
+
     const handleCreateRoom = async (sessionId?: string) => {
         const sid = sessionId || guest?.sessionId;
+
+        // If user is logged in but no guest session exists, auto-create one
+        if (user && !guest) {
+            setIsLoading(true);
+            const result = await login(user.username);
+            setIsLoading(false);
+            if (result) {
+                handleCreateRoom(result.sessionId);
+            }
+            return;
+        }
+
         if (!sid) {
             setPendingAction('create');
             setShowLoginModal(true);
@@ -101,10 +118,18 @@ export default function MonopolyPage() {
         setIsLoading(false);
     };
 
-    const openJoinModal = () => {
-        if (!guest) {
+    const openJoinModal = async () => {
+        if (!guest && !user) {
             setPendingAction('join');
             setShowLoginModal(true);
+        } else if (user && !guest) {
+            // Auto-login for join flow if user is auth'd but no guest session
+            setIsLoading(true);
+            const result = await login(user.username);
+            setIsLoading(false);
+            if (result) {
+                setShowJoinModal(true);
+            }
         } else {
             setShowJoinModal(true);
         }
