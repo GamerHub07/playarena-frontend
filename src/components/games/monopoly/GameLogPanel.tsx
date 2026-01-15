@@ -29,7 +29,12 @@ const LOG_ICONS: Record<GameLogType, React.ReactNode> = {
   CARD_PAY: <GiCardRandom className="text-purple-500" />,
   CARD_TRANSFER: <GiCardRandom className="text-purple-500" />,
   HOUSE_BUILT: <GiHouse className="text-green-600" />,
+  HOUSE_SOLD: <GiHouse className="text-orange-600" />,
   HOTEL_BUILT: <FaHotel className="text-red-600" />,
+  TRADE_PROPOSED: <GiScrollUnfurled className="text-blue-400" />,
+  TRADE_ACCEPTED: <GiCash className="text-green-500" />,
+  TRADE_REJECTED: <GiPayMoney className="text-red-500" />,
+  TRADE_CANCELLED: <GiPriceTag className="text-gray-500" />,
 };
 
 export default function GameLogPanel({ logs }: GameLogPanelProps) {
