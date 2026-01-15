@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGuest } from '@/hooks/useGuest';
 import { Logo } from '@/components/ui/Logo';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginModal from '../auth/LoginModal';
@@ -84,6 +85,9 @@ export default function Header() {
 
                     {/* Right Section */}
                     <div className="flex items-center gap-4">
+                        {/* Theme Toggle */}
+                        <ThemeToggle />
+
                         <div className={`h-6 w-px transition-colors duration-300 ${isTransparent ? 'bg-white/20' : 'bg-border'}`} aria-hidden="true" />
 
                         {/* Auth Section */}

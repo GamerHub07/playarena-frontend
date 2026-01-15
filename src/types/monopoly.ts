@@ -34,6 +34,18 @@ export interface DrawnCard {
     text: string;
 }
 
+export interface TradeOffer {
+    id: string;
+    fromPlayerId: string;
+    toPlayerId: string;
+    offeringProperties: string[];
+    offeringCash: number;
+    requestingProperties: string[];
+    requestingCash: number;
+    status: 'pending' | 'accepted' | 'rejected' | 'cancelled';
+    createdAt: number;
+}
+
 export type GameLogType =
     | 'PASS_GO'
     | 'RENT_PAID'
@@ -46,7 +58,12 @@ export type GameLogType =
     | 'CARD_PAY'
     | 'CARD_TRANSFER'
     | 'HOUSE_BUILT'
-    | 'HOTEL_BUILT';
+    | 'HOTEL_BUILT'
+    | 'HOUSE_SOLD'
+    | 'TRADE_PROPOSED'
+    | 'TRADE_ACCEPTED'
+    | 'TRADE_REJECTED'
+    | 'TRADE_CANCELLED';
 
 export interface GameLogEntry {
     id: string;
@@ -71,6 +88,7 @@ export interface MonopolyGameState {
     lastCard?: DrawnCard | null;
     doublesCount?: number;
     gameLog: GameLogEntry[];
+    pendingTrades?: TradeOffer[];
 }
 
 // Player token colors
