@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef } from "react";
 import { ChessPiece } from "./ChessPieces";
 
-export type BoardTheme = "green" | "wood" | "blue" | "purple" | "coral" | "ice" | "neon" | "dark";
+export type BoardTheme = "green" | "wood" | "blue" | "purple" | "coral" | "ice" | "neon" | "dark" | "marble" | "forest" | "sunset" | "ocean" | "cherry" | "sand" | "midnight" | "emerald";
 
 interface ChessBoardProps {
   fen: string;
@@ -11,6 +11,7 @@ interface ChessBoardProps {
   orientation: "white" | "black";
   canMove: boolean;
   theme?: BoardTheme;
+  pieceTheme?: BoardTheme;
   size?: number;
   winner?: "white" | "black" | null;
 }
@@ -81,6 +82,71 @@ const THEMES: Record<BoardTheme, { light: string; dark: string; lightHighlight: 
     lightSelected: "#6a6a6a",
     darkSelected: "#4d4d4d",
   },
+  // New themes
+  marble: {
+    light: "#f5f5f5",
+    dark: "#a8a8a8",
+    lightHighlight: "#e8e8a8",
+    darkHighlight: "#b8b878",
+    lightSelected: "#ffffa0",
+    darkSelected: "#c8c898",
+  },
+  forest: {
+    light: "#c8dbb3",
+    dark: "#3d5a3d",
+    lightHighlight: "#a8d878",
+    darkHighlight: "#5a8a5a",
+    lightSelected: "#b8e888",
+    darkSelected: "#689868",
+  },
+  sunset: {
+    light: "#ffe4c9",
+    dark: "#d4826a",
+    lightHighlight: "#ffc8a8",
+    darkHighlight: "#e8a088",
+    lightSelected: "#ffb888",
+    darkSelected: "#f0a898",
+  },
+  ocean: {
+    light: "#d4e8f2",
+    dark: "#2e5a7c",
+    lightHighlight: "#a8d8f8",
+    darkHighlight: "#4888b8",
+    lightSelected: "#98c8e8",
+    darkSelected: "#5898c8",
+  },
+  cherry: {
+    light: "#fce8ec",
+    dark: "#c4586c",
+    lightHighlight: "#ffc8d8",
+    darkHighlight: "#e8889c",
+    lightSelected: "#ffb8c8",
+    darkSelected: "#f098a8",
+  },
+  sand: {
+    light: "#f4e8d4",
+    dark: "#c4a882",
+    lightHighlight: "#e8d8a8",
+    darkHighlight: "#d8c498",
+    lightSelected: "#e0d0a0",
+    darkSelected: "#d0c090",
+  },
+  midnight: {
+    light: "#2c3e50",
+    dark: "#1a252f",
+    lightHighlight: "#3d566e",
+    darkHighlight: "#2a3f54",
+    lightSelected: "#4a6a8a",
+    darkSelected: "#3a5a7a",
+  },
+  emerald: {
+    light: "#d4f0e0",
+    dark: "#2d8a5a",
+    lightHighlight: "#98e8b8",
+    darkHighlight: "#48a878",
+    lightSelected: "#88d8a8",
+    darkSelected: "#58b888",
+  },
 };
 
 // File letters
@@ -138,20 +204,22 @@ function PromotionModal({
   isWhite,
   onSelect,
   position,
+  theme,
 }: {
   isWhite: boolean;
   onSelect: (piece: string) => void;
   position: { x: number; y: number };
+  theme: BoardTheme;
 }) {
   const pieces = isWhite ? ["Q", "R", "B", "N"] : ["q", "r", "b", "n"];
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onClick={(e) => e.stopPropagation()}
     >
       <div
-        className="bg-[#312e2b] rounded-lg shadow-2xl p-2 flex flex-col gap-1 animate-in fade-in zoom-in duration-200"
+        className="bg-[#312e2b] rounded-xl shadow-2xl p-3 flex flex-col gap-2 animate-in fade-in zoom-in duration-200"
         style={{
           position: "absolute",
           left: position.x,
@@ -166,9 +234,9 @@ function PromotionModal({
           <button
             key={piece}
             onClick={() => onSelect(piece.toLowerCase())}
-            className="w-20 h-20 bg-[#779556] hover:bg-[#8bc34a] rounded transition-colors flex items-center justify-center"
+            className="w-20 h-20 bg-[#3d3935] hover:bg-[#4d4945] hover:scale-105 rounded-lg transition-all duration-150 flex items-center justify-center"
           >
-            <ChessPiece piece={piece} size={64} />
+            <ChessPiece piece={piece} size={64} theme={theme} />
           </button>
         ))}
       </div>
@@ -182,9 +250,12 @@ export default function ChessBoard({
   orientation,
   canMove,
   theme = "green",
+  pieceTheme,
   size = 600,
   winner = null,
 }: ChessBoardProps) {
+  // Use pieceTheme if provided, otherwise fall back to theme
+  const effectivePieceTheme = pieceTheme ?? theme;
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [legalMoves, setLegalMoves] = useState<string[]>([]);
   const [draggedPiece, setDraggedPiece] = useState<{
@@ -537,8 +608,10 @@ export default function ChessBoard({
                   {/* Chess piece */}
                   {piece && !isDragSource && (
                     <div
-                      className="pointer-events-none transition-transform duration-500"
+                      className="pointer-events-none"
                       style={{
+                        // Smooth transition for any transforms
+                        transition: "transform 0.2s cubic-bezier(0.22, 1, 0.36, 1)",
                         // Rotate the losing king 90 degrees
                         transform: (
                           winner &&
@@ -547,7 +620,7 @@ export default function ChessBoard({
                         ) ? 'rotate(90deg)' : 'rotate(0deg)',
                       }}
                     >
-                      <ChessPiece piece={piece} size={pieceSize} />
+                      <ChessPiece piece={piece} size={pieceSize} theme={effectivePieceTheme} />
                     </div>
                   )}
 
@@ -588,9 +661,12 @@ export default function ChessBoard({
             style={{
               left: draggedPiece.x - pieceSize / 2,
               top: draggedPiece.y - pieceSize / 2,
+              transform: "scale(1.15)",
+              filter: "drop-shadow(0 8px 16px rgba(0,0,0,0.4))",
+              transition: "filter 0.1s ease",
             }}
           >
-            <ChessPiece piece={draggedPiece.piece} size={pieceSize * 1.1} />
+            <ChessPiece piece={draggedPiece.piece} size={pieceSize} theme={effectivePieceTheme} />
           </div>
         )}
       </div>
@@ -601,6 +677,7 @@ export default function ChessBoard({
           isWhite={promotionData.isWhite}
           onSelect={handlePromotionSelect}
           position={promotionData.position}
+          theme={effectivePieceTheme}
         />
       )}
     </div>

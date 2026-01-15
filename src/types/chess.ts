@@ -24,6 +24,8 @@ export type ChessGameStatus =
 export interface ChessMove {
   from: string;
   to: string;
+  san?: string;       // Standard Algebraic Notation (e.g., "Nf3", "O-O")
+  promotion?: string; // Promotion piece if any
 }
 
 export interface ChessGameState {
