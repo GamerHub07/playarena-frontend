@@ -28,6 +28,10 @@ interface BoardProps {
   gameState: MonopolyGameState;
   players: Player[];
   currentSessionId: string;
+  onBuildHouse?: (propertyId: string) => void;
+  onBuildHotel?: (propertyId: string) => void;
+  onSellProperty?: (propertyId: string) => void;
+  onSellHouse?: (propertyId: string) => void;
 }
 
 // Square type icons mapping to React components
@@ -55,7 +59,19 @@ const COLOR_NAMES: Record<string, string> = {
   blue: '#4f4fc8',
 };
 
-export default function Board({ gameState, players }: BoardProps) {
+// Color group sizes for monopoly check
+const COLOR_GROUP_SIZES: Record<string, number> = {
+  brown: 2,
+  lightBlue: 3,
+  pink: 3,
+  orange: 3,
+  red: 3,
+  yellow: 3,
+  green: 3,
+  blue: 2,
+};
+
+export default function Board({ gameState, players, currentSessionId, onBuildHouse, onBuildHotel, onSellProperty, onSellHouse }: BoardProps) {
   const board = gameState?.board;
   const [selectedProperty, setSelectedProperty] = useState<BoardSquare | null>(null);
   const [theme, setTheme] = useState<'dark' | 'classic'>('dark');
@@ -134,6 +150,48 @@ export default function Board({ gameState, players }: BoardProps) {
   const getOwnerIndex = (owner: string | null | undefined) => {
     if (!owner) return -1;
     return players.findIndex(p => p.sessionId === owner);
+  };
+
+  // Check if player owns a complete monopoly
+  const hasMonopoly = (playerId: string, color: string): boolean => {
+    if (!color || !COLOR_GROUP_SIZES[color]) return false;
+    const propertiesOfColor = board.filter(
+      s => s.type === 'PROPERTY' && s.color === color
+    );
+    const ownedCount = propertiesOfColor.filter(s => s.owner === playerId).length;
+    return ownedCount === COLOR_GROUP_SIZES[color];
+  };
+
+  // Check if can build house on a property (even building rule)
+  const canBuildHouseCheck = (property: BoardSquare): boolean => {
+    if (!property.color || !property.owner) return false;
+    if (!hasMonopoly(property.owner, property.color)) return false;
+    const houses = property.houses ?? 0;
+    if (houses >= 4) return false;
+    const colorProps = board.filter(s => s.type === 'PROPERTY' && s.color === property.color);
+    const minHouses = Math.min(...colorProps.map(p => p.houses ?? 0));
+    return houses <= minHouses;
+  };
+
+  // Check if can build hotel
+  const canBuildHotelCheck = (property: BoardSquare): boolean => {
+    if (!property.color || !property.owner) return false;
+    if (!hasMonopoly(property.owner, property.color)) return false;
+    const houses = property.houses ?? 0;
+    if (houses !== 4) return false;
+    const colorProps = board.filter(s => s.type === 'PROPERTY' && s.color === property.color);
+    const minHouses = Math.min(...colorProps.map(p => p.houses ?? 0));
+    return minHouses >= 4;
+  };
+
+  // Check if can sell house (even selling rule - can only sell if this property has the most houses)
+  const canSellHouseCheck = (property: BoardSquare): boolean => {
+    if (!property.color || !property.owner) return false;
+    const houses = property.houses ?? 0;
+    if (houses === 0) return false;
+    const colorProps = board.filter(s => s.type === 'PROPERTY' && s.color === property.color);
+    const maxHouses = Math.max(...colorProps.map(p => p.houses ?? 0));
+    return houses >= maxHouses;
   };
 
   // Render a corner square with Theme Support
@@ -445,7 +503,7 @@ export default function Board({ gameState, players }: BoardProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-8">
       {/* Theme Toggle Control */}
-      <div className="mb-6 flex items-center gap-3 bg-slate-900/80 p-1.5 rounded-full backdrop-blur-md border border-white/10 shadow-xl z-50">
+      <div className="mb-6 flex items-center gap-3 bg-slate-900/80 p-1.5 rounded-full backdrop-blur-md border border-white/10 shadow-xl">
         <span className="text-slate-400 text-xs font-bold uppercase tracking-wider ml-3 mr-1">Theme</span>
         <div className="flex bg-slate-950/50 rounded-full p-1 border border-white/5">
           <button
@@ -634,6 +692,28 @@ export default function Board({ gameState, players }: BoardProps) {
             owner={selectedProperty.owner ? players.find(p => p.sessionId === selectedProperty.owner) : undefined}
             ownerIndex={selectedProperty.owner ? players.findIndex(p => p.sessionId === selectedProperty.owner) : undefined}
             onClose={() => setSelectedProperty(null)}
+            isMyProperty={selectedProperty.owner === currentSessionId}
+            hasMonopoly={selectedProperty.owner && selectedProperty.color ? hasMonopoly(selectedProperty.owner, selectedProperty.color) : false}
+            canBuildHouse={canBuildHouseCheck(selectedProperty)}
+            canBuildHotel={canBuildHotelCheck(selectedProperty)}
+            canSellHouse={canSellHouseCheck(selectedProperty)}
+            playerCash={gameState.playerState[currentSessionId]?.cash ?? 0}
+            onBuildHouse={(propertyId) => {
+              onBuildHouse?.(propertyId);
+              setSelectedProperty(null);
+            }}
+            onBuildHotel={(propertyId) => {
+              onBuildHotel?.(propertyId);
+              setSelectedProperty(null);
+            }}
+            onSellProperty={(propertyId) => {
+              onSellProperty?.(propertyId);
+              setSelectedProperty(null);
+            }}
+            onSellHouse={(propertyId) => {
+              onSellHouse?.(propertyId);
+              setSelectedProperty(null);
+            }}
           />
         )}
       </div>
