@@ -75,6 +75,64 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
   const board = gameState?.board;
   const [selectedProperty, setSelectedProperty] = useState<BoardSquare | null>(null);
   const [theme, setTheme] = useState<'dark' | 'classic'>('dark');
+  
+  // Track animated token positions (for hop animation)
+  const [animatedPositions, setAnimatedPositions] = useState<Record<string, number>>({});
+  const prevPositionsRef = useRef<Record<string, number>>({});
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Effect to handle hop animation when player positions change
+  useEffect(() => {
+    players.forEach((player) => {
+      const playerState = gameState.playerState[player.sessionId];
+      if (!playerState) return;
+      
+      const currentPos = playerState.position ?? 0;
+      const prevPos = prevPositionsRef.current[player.sessionId] ?? currentPos;
+      const animatedPos = animatedPositions[player.sessionId] ?? currentPos;
+      
+      // If position changed and not currently animating to target
+      if (currentPos !== prevPos && animatedPos !== currentPos) {
+        // Calculate steps to animate through
+        const steps: number[] = [];
+        let pos = prevPos;
+        
+        // Handle wrap-around (going past GO)
+        while (pos !== currentPos) {
+          pos = (pos + 1) % 40;
+          steps.push(pos);
+        }
+        
+        // Animate through each step with 250ms delay
+        steps.forEach((step, index) => {
+          setTimeout(() => {
+            setAnimatedPositions(prev => ({
+              ...prev,
+              [player.sessionId]: step
+            }));
+          }, (index + 1) * 250);
+        });
+        
+        // Update prev position after animation starts
+        prevPositionsRef.current[player.sessionId] = currentPos;
+      }
+      
+      // Initialize if first render
+      if (prevPositionsRef.current[player.sessionId] === undefined) {
+        prevPositionsRef.current[player.sessionId] = currentPos;
+        setAnimatedPositions(prev => ({
+          ...prev,
+          [player.sessionId]: currentPos
+        }));
+      }
+    });
+    
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, [gameState.playerState, players]);
 
   // THEME CONFIGURATION
   const themeConfig = {
@@ -150,6 +208,62 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
   const getOwnerIndex = (owner: string | null | undefined) => {
     if (!owner) return -1;
     return players.findIndex(p => p.sessionId === owner);
+  };
+
+  // Calculate position coordinates for token animation (percentage based)
+  // Board is 11x11 grid: corners at (0,10), (10,10), (0,0), (10,0)
+  const getSquarePosition = (pos: number): { x: number; y: number } => {
+    // Grid percentages (11 cells, corners are larger ~13%, regular ~7.4%)
+    const cornerSize = 13;
+    const regularSize = (100 - 2 * cornerSize) / 9;
+    
+    // Position 0 = GO (bottom-right corner)
+    // Position 10 = Jail (bottom-left corner)
+    // Position 20 = Free Parking (top-left corner)
+    // Position 30 = Go To Jail (top-right corner)
+    
+    if (pos === 0) return { x: 100 - cornerSize / 2, y: 100 - cornerSize / 2 }; // GO
+    if (pos === 10) return { x: cornerSize / 2, y: 100 - cornerSize / 2 }; // Jail
+    if (pos === 20) return { x: cornerSize / 2, y: cornerSize / 2 }; // Free Parking
+    if (pos === 30) return { x: 100 - cornerSize / 2, y: cornerSize / 2 }; // Go To Jail
+    
+    // Bottom row (positions 1-9, right to left)
+    if (pos >= 1 && pos <= 9) {
+      const cellIndex = 9 - pos; // pos=1->8, pos=9->0 (right to left)
+      return { 
+        x: cornerSize + regularSize * cellIndex + regularSize / 2, 
+        y: 100 - cornerSize / 2 
+      };
+    }
+    
+    // Left side (positions 11-19, bottom to top)
+    if (pos >= 11 && pos <= 19) {
+      const cellIndex = 8 - (pos - 11); // 8,7,6,5,4,3,2,1,0
+      return { 
+        x: cornerSize / 2, 
+        y: cornerSize + regularSize * cellIndex + regularSize / 2 
+      };
+    }
+    
+    // Top row (positions 21-29, left to right)
+    if (pos >= 21 && pos <= 29) {
+      const cellIndex = pos - 21; // 0,1,2,3,4,5,6,7,8
+      return { 
+        x: cornerSize + regularSize * cellIndex + regularSize / 2, 
+        y: cornerSize / 2 
+      };
+    }
+    
+    // Right side (positions 31-39, top to bottom)
+    if (pos >= 31 && pos <= 39) {
+      const cellIndex = pos - 31; // 0,1,2,3,4,5,6,7,8
+      return { 
+        x: 100 - cornerSize / 2, 
+        y: cornerSize + regularSize * cellIndex + regularSize / 2 
+      };
+    }
+    
+    return { x: 50, y: 50 }; // fallback
   };
 
   // Check if player owns a complete monopoly
@@ -269,24 +383,6 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
             {config.label}
           </div>
         </div>
-
-        {/* Tokens */}
-        {playersHere.length > 0 && (
-          <div className={`absolute inset-0 pointer-events-none`}>
-            {playersHere.map((p, i) => (
-              <div
-                key={p.idx}
-                className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 transition-transform"
-                style={{
-                  marginLeft: `${(i - (playersHere.length - 1) / 2) * 1.5}vmin`,
-                  marginTop: '2vmin'
-                }}
-              >
-                <MonopolyToken playerIndex={p.idx} size={24} className="drop-shadow-lg w-[3vmin] h-[3vmin]" />
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     );
   };
@@ -460,30 +556,6 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
             ) : (
               <GiElectric className={`text-white text-[1.4vmin] ${layout.textRotate}`} />
             )}
-          </div>
-        )}
-
-        {/* Player Tokens - Floating orbit style */}
-        {playersHere.length > 0 && (
-          <div className="absolute inset-0 pointer-events-none z-30">
-            {playersHere.map((p, i) => {
-              const offset = (i * 360) / playersHere.length;
-              return (
-                <div
-                  key={p.idx}
-                  className="absolute left-1/2 top-1/2 transition-all duration-500 ease-out"
-                  style={{
-                    transform: `translate(-50%, -50%) rotate(${offset}deg) translateY(-1.75vmin) rotate(-${offset}deg)`,
-                  }}
-                >
-                  <MonopolyToken
-                    playerIndex={p.idx}
-                    size={20}
-                    className="drop-shadow-lg shadow-black w-[2.2vmin] h-[2.2vmin]"
-                  />
-                </div>
-              );
-            })}
           </div>
         )}
 
@@ -681,6 +753,54 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
               if (i === 0) return renderCornerSquare(board[idx], idx, gridStyle);
               if (i === 10) return renderCornerSquare(board[idx], idx, gridStyle);
               return renderSquare(board[idx], idx, 'bottom', gridStyle);
+            })}
+          </div>
+
+          {/* Animated Token Overlay - Renders all tokens with hop animation */}
+          <div className="absolute inset-0 pointer-events-none z-50">
+            {players.map((player, playerIdx) => {
+              const playerState = gameState.playerState[player.sessionId];
+              if (!playerState || playerState.bankrupt) return null;
+              
+              // Use animated position for smooth hop animation
+              const animPos = animatedPositions[player.sessionId] ?? playerState.position ?? 0;
+              const coords = getSquarePosition(animPos);
+              
+              // Calculate offset for multiple players on same square
+              const playersOnSquare = players.filter(p => {
+                const ps = gameState.playerState[p.sessionId];
+                const ap = animatedPositions[p.sessionId] ?? ps?.position ?? 0;
+                return ap === animPos && ps && !ps.bankrupt;
+              });
+              const myIndexOnSquare = playersOnSquare.findIndex(p => p.sessionId === player.sessionId);
+              const totalOnSquare = playersOnSquare.length;
+              
+              // Offset calculation for multiple players
+              const offsetAngle = (myIndexOnSquare * 360) / totalOnSquare;
+              const offsetRadius = totalOnSquare > 1 ? 2.5 : 0;
+              const offsetX = Math.cos(offsetAngle * Math.PI / 180) * offsetRadius;
+              const offsetY = Math.sin(offsetAngle * Math.PI / 180) * offsetRadius;
+              
+              return (
+                <div
+                  key={player.sessionId}
+                  className="absolute transition-all duration-150 ease-out"
+                  style={{
+                    left: `${coords.x + offsetX}%`,
+                    top: `${coords.y + offsetY}%`,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  <div className="animate-bounce-subtle">
+                    <MonopolyToken
+                      playerIndex={playerIdx}
+                      size={totalOnSquare === 1 ? '4vmin' : totalOnSquare === 2 ? '2vmin' : '1vmin'}
+                      glow={playerIdx === gameState.currentTurnIndex}
+                      className="drop-shadow-[0_3px_6px_rgba(0,0,0,0.9)]"
+                    />
+                  </div>
+                </div>
+              );
             })}
           </div>
         </div>
