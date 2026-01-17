@@ -23,7 +23,7 @@ const GAMES: Game[] = [
         id: 'ludo',
         title: 'Ludo',
         players: '2-4 Players',
-        image: '/games/ludo.png',
+        image: '/games/ludo3.png',
         href: '/games/ludo',
         available: true,
         description: 'The classic game of strategy and luck. Roll the dice and race your tokens home.',
@@ -41,29 +41,30 @@ const GAMES: Game[] = [
         id: 'business',
         title: 'Business',
         players: '2-4 Players',
-        image: '/games/business.png',
+        image: '/games/business2.png',
         href: '/games/monopoly',
         available: true,
         description: 'Build your empire, trade properties, and become the ultimate tycoon.',
     },
     {
+        id: 'poker',
+        title: 'Poker',
+        players: '2-6 Players',
+        image: '/games/poker1.png',
+        href: '/games/poker',
+        available: true,
+        description: 'Bluff, bet, and win big in the world\'s most popular card game.',
+    },
+    {
         id: 'chess',
         title: 'Chess',
         players: '2 Players',
-        image: '/games/chess.png',
+        image: '/games/chess2.png',
         href: '/games/chess',
         available: false,
         description: 'The ultimate game of strategy. Checkmate your opponent in this timeless classic.',
     },
-    {
-        id: 'poker',
-        title: 'Poker',
-        players: '2-6 Players',
-        image: '/games/poker.png',
-        href: '/games/poker',
-        available: true,
-        description: 'Bluff, bet, and win big in the world\'s most popular card game.',
-    }
+
 ];
 
 export default function HomePage() {
@@ -293,7 +294,7 @@ export default function HomePage() {
                                             group relative rounded-[1.5rem] overflow-hidden 
                                             ${!game.available ? 'opacity-70' : 'hover:shadow-2xl shadow-lg'}
                                             bg-background dark:bg-zinc-900/50
-                                            aspect-[4/5] w-full max-w-xs mx-auto
+                                            aspect-[9/8] w-full mx-auto
                                             transition-all duration-300
                                         `}
                                     >

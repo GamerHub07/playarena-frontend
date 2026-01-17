@@ -77,7 +77,7 @@ export default function PlayerPanel({
                     {/* Avatar / Token */}
                     <div className="relative">
                         <div className={`
-                            relative flex items-center justify-center w-14 h-14 rounded-2xl
+                            relative flex items-center justify-center w-8 h-8 rounded-2xl
                             bg-gradient-to-b from-[#2a2a35] to-[#15151a]
                             shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_4px_10px_rgba(0,0,0,0.5)]
                             ${isCurrentTurn ? 'ring-2 ring-[#22c55e] ring-offset-2 ring-offset-[#0f172a]' : 'border border-white/5'}
@@ -85,15 +85,15 @@ export default function PlayerPanel({
                             <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/5 to-transparent opacity-50" />
                             <MonopolyToken
                                 playerIndex={playerIndex}
-                                size={36}
+                                size={24}
                                 className="drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)] filter contrast-125"
                             />
                         </div>
 
                         {/* Status Indicators */}
                         {playerState.inJail && (
-                            <div className="absolute -top-3 -right-3 w-7 h-7 bg-orange-600 rounded-lg flex items-center justify-center shadow-lg border border-orange-400 z-20 animate-bounce-subtle">
-                                <GiPrisoner className="text-white text-sm" />
+                            <div className="absolute -top-3 -right-3 w-5 h-5 bg-orange-600 rounded-lg flex items-center justify-center shadow-lg border border-orange-400 z-20 animate-bounce-subtle">
+                                <GiPrisoner className="text-white text-xs" />
                             </div>
                         )}
                         {playerState.bankrupt && (
@@ -135,12 +135,7 @@ export default function PlayerPanel({
                             )}
                         </div>
                     </div>
-                </div>
-
-                {/* Stats Grid - Glass Effect Panels */}
-                <div className="grid grid-cols-2 gap-2 mb-1">
-                    {/* Cash Panel */}
-                    <div className="rounded-xl bg-[#0a0a0c]/60 p-3 border border-white/5 relative overflow-hidden group/stats">
+                    <div className="rounded-xl bg-[#0a0a0c]/60 p-2 border border-white/5 relative overflow-hidden group/stats">
                         <div className="absolute top-0 right-0 p-2 opacity-5 scale-150 rotate-12 transition-transform group-hover/stats:scale-125">
                             <GiMoneyStack className="text-white text-3xl" />
                         </div>
@@ -153,9 +148,15 @@ export default function PlayerPanel({
                             </span>
                         </div>
                     </div>
+                </div>
+
+                {/* Stats Grid - Glass Effect Panels */}
+                {/* <div className="grid grid-cols-2 gap-2 mb-1"> */}
+                    {/* Cash Panel */}
+                    
 
                     {/* Net Worth Panel */}
-                    <div className="rounded-xl bg-[#0a0a0c]/60 p-3 border border-white/5 relative overflow-hidden">
+                    {/* <div className="rounded-xl bg-[#0a0a0c]/60 p-3 border border-white/5 relative overflow-hidden">
                         <div className="flex flex-col">
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5 flex items-center gap-1">
                                 <IoTrendingUp className="text-slate-600" /> Net Worth
@@ -170,11 +171,11 @@ export default function PlayerPanel({
                                 />
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div> */}
+                {/* </div> */}
 
                 {/* Properties Accordion */}
-                <div className="mt-3">
+                <div className="mt-1">
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className={`
@@ -195,9 +196,9 @@ export default function PlayerPanel({
 
                     <div className={`
                         overflow-hidden transition-all duration-300 ease-in-out
-                        ${isExpanded && ownedProperties.length > 0 ? 'max-h-80 opacity-100 mt-2' : 'max-h-0 opacity-0 mt-0'}
+                        ${isExpanded && ownedProperties.length > 0 ? 'opacity-100 mt-2' : 'max-h-0 opacity-0 mt-0'}
                     `}>
-                        <div className="flex flex-col gap-1.5 pr-1 overflow-y-auto max-h-60 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                        <div className="flex flex-col gap-1.5 pr-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                             {ownedProperties.map((prop) => {
                                 const propColor = (prop.color ? COLOR_NAMES[prop.color] : null) || prop.color || '#64748b';
                                 return (

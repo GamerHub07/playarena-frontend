@@ -20,10 +20,9 @@ import PlayerPanel from '@/components/games/monopoly/PlayerPanel';
 import Dice from '@/components/games/monopoly/Dice';
 import PropertyCard from '@/components/games/monopoly/PropertyCard';
 import GameLogPanel from '@/components/games/monopoly/GameLogPanel';
-import SellPropertyModal from '@/components/games/monopoly/SellPropertyModal';
-import BuildPanel from '@/components/games/monopoly/BuildPanel';
 import LeaderboardScreen from '@/components/games/monopoly/LeaderboardScreen';
 import PropertyDetailsModal from '@/components/games/monopoly/PropertyDetailsModal';
+import TradeModal from '@/components/games/monopoly/TradeModal';
 
 export default function MonopolyGameRoom() {
     const params = useParams();
@@ -50,6 +49,7 @@ export default function MonopolyGameRoom() {
     const [joinUsername, setJoinUsername] = useState('');
     const [joinError, setJoinError] = useState('');
     const [joining, setJoining] = useState(false);
+    const [showTradeModal, setShowTradeModal] = useState(false);
 
     const currentPlayer = players.find(p => p.sessionId === guest?.sessionId);
     const isHost = currentPlayer?.isHost || false;
@@ -223,6 +223,10 @@ export default function MonopolyGameRoom() {
         emit('game:action', { roomCode, action: 'BUILD_HOTEL', data: { propertyId } });
     }, [emit, roomCode]);
 
+    const handleSellHouse = useCallback((propertyId: string) => {
+        emit('game:action', { roomCode, action: 'SELL_HOUSE', data: { propertyId } });
+    }, [emit, roomCode]);
+
     const handlePayJailFine = useCallback(() => {
         emit('game:action', { roomCode, action: 'PAY_JAIL_FINE' });
     }, [emit, roomCode]);
@@ -235,6 +239,30 @@ export default function MonopolyGameRoom() {
         if (confirm('Are you sure you want to go Bankrupt? This will remove you from the game.')) {
             emit('game:action', { roomCode, action: 'BANKRUPT' });
         }
+    }, [emit, roomCode]);
+
+    // Trade handlers
+    const handleProposeTrade = useCallback((data: {
+        toPlayerId: string;
+        offeringProperties: string[];
+        offeringCash: number;
+        requestingProperties: string[];
+        requestingCash: number;
+    }) => {
+        emit('game:action', { roomCode, action: 'PROPOSE_TRADE', data });
+    }, [emit, roomCode]);
+
+    const handleAcceptTrade = useCallback((tradeId: string) => {
+        emit('game:action', { roomCode, action: 'ACCEPT_TRADE', data: { tradeId } });
+        setShowTradeModal(false);
+    }, [emit, roomCode]);
+
+    const handleRejectTrade = useCallback((tradeId: string) => {
+        emit('game:action', { roomCode, action: 'REJECT_TRADE', data: { tradeId } });
+    }, [emit, roomCode]);
+
+    const handleCancelTrade = useCallback((tradeId: string) => {
+        emit('game:action', { roomCode, action: 'CANCEL_TRADE', data: { tradeId } });
     }, [emit, roomCode]);
 
     // Handle join via shared link (creates session and joins room)
@@ -420,20 +448,15 @@ export default function MonopolyGameRoom() {
                                     gameState={gameState}
                                     players={players}
                                     currentSessionId={guest.sessionId}
+                                    onBuildHouse={handleBuildHouse}
+                                    onBuildHotel={handleBuildHotel}
+                                    onSellProperty={handleSellProperty}
+                                    onSellHouse={handleSellHouse}
                                 />
                             </div>
 
                             {/* Right Panel - Actions */}
                             <div className="space-y-4">
-                                {/* Property Decision Card - appearing at top of sidebar */}
-                                {showPropertyCard && getCurrentProperty() && (
-                                    <PropertyCard
-                                        property={getCurrentProperty()!}
-                                        playerCash={gameState.playerState[guest.sessionId]?.cash || 0}
-                                        onBuy={handleBuyProperty}
-                                        onDecline={handleDeclineProperty}
-                                    />
-                                )}
                                 <Card className="p-5">
                                     <h3 className="text-lg font-semibold text-white mb-4">Game Info</h3>
 
@@ -497,25 +520,37 @@ export default function MonopolyGameRoom() {
                                         </div>
                                     )}
 
-                                    {/* End Turn Button */}
+                                    {/* End Turn / Clear Debt Button */}
                                     {isMyTurn() && gameState.phase === 'END_TURN' && (
                                         <Button onClick={handleEndTurn} className="w-full">
                                             End Turn
                                         </Button>
                                     )}
+                                    {isMyTurn() && gameState.phase === 'DEBT' && (
+                                        <Button disabled className="w-full !bg-red-600 !text-white cursor-not-allowed">
+                                            💸 Clear Debt (₹{Math.abs(gameState.playerState[guest.sessionId]?.cash || 0)})
+                                        </Button>
+                                    )}
                                 </Card>
 
                                 {/* Build Panel */}
-                                <BuildPanel
-                                    gameState={gameState}
-                                    mySessionId={guest.sessionId}
-                                    isMyTurn={isMyTurn()}
-                                    onBuildHouse={handleBuildHouse}
-                                    onBuildHotel={handleBuildHotel}
-                                />
+
 
                                 {/* Game Log */}
                                 <GameLogPanel logs={gameState.gameLog || []} />
+
+                                {/* Trade Button */}
+                                <Button
+                                    onClick={() => setShowTradeModal(true)}
+                                    className="w-full bg-amber-600 hover:bg-amber-700 text-white relative"
+                                >
+                                    🤝 Trade
+                                    {(gameState.pendingTrades?.filter(t => t.status === 'pending' && t.toPlayerId === guest.sessionId).length ?? 0) > 0 && (
+                                        <span className="absolute top-1 right-2 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center animate-pulse">
+                                            {gameState.pendingTrades?.filter(t => t.status === 'pending' && t.toPlayerId === guest.sessionId).length}
+                                        </span>
+                                    )}
+                                </Button>
 
                                 {/* Bankrupt Button (Testing) */}
                                 <Button
@@ -527,20 +562,22 @@ export default function MonopolyGameRoom() {
                             </div>
                         </div>
 
-                        {/* Property Decision Modal */}
-
-
-                        {/* Debt Modal - sell properties to pay debt */}
-                        {isMyTurn() && gameState.phase === 'DEBT' && (
-                            <SellPropertyModal
-                                properties={gameState.board.filter(
-                                    s => gameState.playerState[guest.sessionId]?.properties.includes(s.id)
-                                )}
-                                debtAmount={Math.abs(gameState.playerState[guest.sessionId]?.cash || 0)}
-                                playerCash={gameState.playerState[guest.sessionId]?.cash || 0}
-                                onSell={handleSellProperty}
-                            />
+                        {/* Property Decision Modal - Centered Overlay */}
+                        {showPropertyCard && getCurrentProperty() && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                                <div className="animate-in zoom-in-95 duration-200 max-w-sm w-full mx-4">
+                                    <PropertyCard
+                                        property={getCurrentProperty()!}
+                                        playerCash={gameState.playerState[guest.sessionId]?.cash || 0}
+                                        onBuy={handleBuyProperty}
+                                        onDecline={handleDeclineProperty}
+                                    />
+                                </div>
+                            </div>
                         )}
+
+
+
 
                         {/* Property Details Modal from Player Panel */}
                         {selectedPropertyFromPanel && (
@@ -581,6 +618,21 @@ export default function MonopolyGameRoom() {
                     </Button>
                 </div>
             </Modal>
+
+
+            {/* Trade Modal */}
+            {showTradeModal && gameState && guest && (
+                <TradeModal
+                    gameState={gameState}
+                    players={players}
+                    mySessionId={guest.sessionId}
+                    onClose={() => setShowTradeModal(false)}
+                    onProposeTrade={handleProposeTrade}
+                    onAcceptTrade={handleAcceptTrade}
+                    onRejectTrade={handleRejectTrade}
+                    onCancelTrade={handleCancelTrade}
+                />
+            )}
         </div>
     );
 }
