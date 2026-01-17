@@ -643,9 +643,7 @@ export default function PokerGameRoom() {
             });
         }
 
-        return () => {
-            hasJoinedRef.current = false;
-        };
+
     }, [guest, isConnected, room, roomCode, emit, players]);
 
     // Reset slider when turn ends
