@@ -4,7 +4,7 @@ import React from 'react';
 
 interface GamePawnProps {
   color: string;  // Main color (hex)
-  size?: number;
+  size?: number | string;
   glow?: boolean;
   accentColor?: string;
   useGoldAccents?: boolean;
