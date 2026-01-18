@@ -106,40 +106,37 @@ const THEME_CONFIGS: Record<PokerTheme, ThemeConfig> = {
         useAnimations: false,
     },
     premium: {
-        // Gradient background
-        pageBackground: 'linear-gradient(135deg, #0f172a 0%, #064e3b 50%, #0f172a 100%)',
-        // Rich emerald table with gradients
-        tableBackground: 'linear-gradient(180deg, #5c3d2e 0%, #3d2517 50%, #2d1810 100%)',
-        tableFelt: 'radial-gradient(ellipse at center, #1a6b4a 0%, #0f4a33 40%, #0a3322 80%, #061f15 100%)',
-        tableBorder: 'rgba(255,255,255,0.1)',
-        tableRail: 'linear-gradient(180deg, #5c3d2e 0%, #3d2517 50%, #2d1810 100%)',
-        // Premium card styling with gradients
-        cardBack: 'linear-gradient(135deg, #1e3a5f 0%, #0d1b2a 50%, #1e3a5f 100%)',
-        cardBackBorder: '#3b82f6',
-        cardFront: 'linear-gradient(145deg, #ffffff 0%, #f3f4f6 50%, #e5e7eb 100%)',
-        // Premium player styling
-        playerCard: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
-        playerCardActive: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-        playerBorder: 'rgba(255, 255, 255, 0.1)',
-        playerActiveBorder: '#10b981',
-        // Premium UI styling
-        actionBar: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%)',
-        actionBarBorder: 'rgba(16, 185, 129, 0.3)',
-        infoBar: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)',
-        accentColor: '#10b981',
-        textPrimary: '#ffffff',
+        pageBackground: '#0f172a', // Deep slate
+        tableBackground: '#1e293b',
+        tableFelt: '#14532d', // Matte green felt
+        tableBorder: '#334155',
+        tableRail: '#1e293b',
+
+        playerCard: '#111827', // Dark slate
+        playerCardActive: '#14532d',
+        playerBorder: '#334155',
+        playerActiveBorder: '#22c55e',
+
+        actionBar: '#020617',
+        actionBarBorder: '#1e293b',
+        infoBar: '#020617',
+
+        accentColor: '#22c55e',
+        textPrimary: '#f8fafc',
         textSecondary: '#94a3b8',
-        // Gradient buttons
-        btnFold: 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-        btnCheck: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-        btnCall: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-        btnRaise: 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
-        btnAllIn: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)',
-        // Full effects
-        useGradients: true,
-        useGlow: true,
+
+        // Outline Button Styles (Border colors)
+        btnFold: '#EF4444', // Red-500
+        btnCheck: '#94A3B8', // Slate-400
+        btnCall: '#10B981', // Emerald-500
+        btnRaise: '#10B981', // Emerald-500
+        btnAllIn: '#EF4444', // Red-500
+
+        useGradients: false,
+        useGlow: false,
         useAnimations: true,
     }
+
 };
 
 // ═══════════════════════════════════════════════════════════════
@@ -177,6 +174,21 @@ const PLAYER_AVATARS = ['🎩', '👑', '🎭', '💎', '🌟', '🔥', '⭐', '
 // CARD COMPONENT
 // ═══════════════════════════════════════════════════════════════
 
+// Helper to get card image path
+function getCardImage(card: CardType): string {
+    const suit = card.suit;
+    let rank = card.rank;
+    // Map single digits to 0-padded (e.g., "2" -> "02")
+    if (['2', '3', '4', '5', '6', '7', '8', '9'].includes(rank)) {
+        rank = '0' + rank;
+    }
+
+    // Construct path: /kenney_playing-cards-pack/PNG/Cards (large)/card_[suit]_[rank].png
+    // Note: We use encodeURI to handle spaces and parentheses if needed, but standard browser paths usually handle them or we can escape them.
+    // Safe encoded path: Cards%20(large)
+    return `/kenney_playing-cards-pack/PNG/Cards%20(large)/card_${suit}_${rank}.png`;
+}
+
 function PokerCard({ card, hidden = false, small = false, glow = false, theme = 'premium' }: {
     card?: CardType;
     hidden?: boolean;
@@ -186,93 +198,42 @@ function PokerCard({ card, hidden = false, small = false, glow = false, theme = 
 }) {
     const themeConfig = THEME_CONFIGS[theme];
     const sizeClasses = small
-        ? 'w-10 h-14 rounded-lg text-sm'
-        : 'w-16 h-22 rounded-xl text-base';
+        ? 'w-16 h-24 md:w-40 md:h-60' // Player cards: VERY BIG as requested
+        : 'w-24 h-36 md:w-32 md:h-48'; // Community cards: kept compact (perfect as per user)
+
+    // Base styles for the container
+    const containerClasses = `${sizeClasses} relative rounded-lg transition-transform hover:z-10 ${themeConfig.useAnimations && !hidden ? 'duration-300' : ''
+        }`;
+
+    // Shadow styles - Removed as per request to remove "glossy border" styling
+    // Kept minimal shadow for depth if needed, but removing the "glossy" heavy shadow/border look.
+    const shadowStyle = {
+        // Simple subtle shadow, flat look
+        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+    };
 
     if (hidden || !card) {
-        // Card back
-        const isClassic = theme === 'classic';
         return (
-            <div
-                className={`${sizeClasses} relative overflow-hidden`}
-                style={{
-                    background: themeConfig.cardBack,
-                    border: `2px solid ${themeConfig.cardBackBorder}`,
-                    boxShadow: isClassic ? '0 2px 8px rgba(0,0,0,0.4)' : '0 4px 20px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1)',
-                }}
-            >
-                {/* Card back pattern */}
-                {isClassic ? (
-                    // Classic diamond pattern
-                    <div className="absolute inset-1 border border-white/20 rounded">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-white/60 text-lg font-bold">♦</span>
-                        </div>
-                    </div>
-                ) : (
-                    // Premium pattern
-                    <>
-                        <div className="absolute inset-0 opacity-30" style={{
-                            backgroundImage: `repeating-linear-gradient(
-                                45deg,
-                                transparent,
-                                transparent 5px,
-                                rgba(59, 130, 246, 0.3) 5px,
-                                rgba(59, 130, 246, 0.3) 10px
-                            )`
-                        }} />
-                        <div className="absolute inset-2 border border-blue-400/30 rounded-md" />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-blue-400 text-2xl">♠</span>
-                        </div>
-                    </>
-                )}
+            <div className={containerClasses} style={shadowStyle}>
+                <img
+                    src="/kenney_playing-cards-pack/PNG/Cards%20(large)/card_back.png"
+                    alt="Card Back"
+                    className="w-full h-full object-contain"
+                    draggable={false}
+                />
             </div>
         );
     }
 
-    const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
-    const color = isRed ? '#dc2626' : '#1f2937';
-    const symbol = SUIT_SYMBOLS[card.suit];
-    const isClassic = theme === 'classic';
-
     return (
-        <div
-            className={`${sizeClasses} relative overflow-hidden transition-all ${themeConfig.useAnimations ? 'duration-300 hover:scale-110 hover:-translate-y-1' : ''}`}
-            style={{
-                background: isClassic ? '#ffffff' : 'linear-gradient(145deg, #ffffff 0%, #f3f4f6 50%, #e5e7eb 100%)',
-                borderRadius: small ? '8px' : '12px',
-                border: '1px solid rgba(0,0,0,0.2)',
-                boxShadow: isClassic
-                    ? '0 2px 6px rgba(0,0,0,0.2)'
-                    : glow
-                        ? `0 8px 32px rgba(234, 179, 8, 0.5), 0 4px 16px rgba(0,0,0,0.3)`
-                        : '0 4px 16px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.1)',
-            }}
-        >
-            {/* Card content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-1" style={{ color }}>
-                <span className={`font-black ${small ? 'text-lg' : 'text-2xl'} leading-none`}>
-                    {card.rank}
-                </span>
-                <span className={`${small ? 'text-lg' : 'text-3xl'} leading-none mt-0.5`}>
-                    {symbol}
-                </span>
-            </div>
-            {/* Top-left corner */}
-            <div className="absolute top-1 left-1.5 flex flex-col items-center text-xs leading-none" style={{ color }}>
-                <span className="font-bold">{card.rank}</span>
-                <span className="text-sm">{symbol}</span>
-            </div>
-            {/* Bottom-right corner (rotated) */}
-            <div className="absolute bottom-1 right-1.5 flex flex-col items-center text-xs leading-none rotate-180" style={{ color }}>
-                <span className="font-bold">{card.rank}</span>
-                <span className="text-sm">{symbol}</span>
-            </div>
-            {/* Shine effect - only for premium */}
-            {!isClassic && (
-                <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent pointer-events-none" />
-            )}
+        <div className={containerClasses} style={shadowStyle}>
+            <img
+                src={getCardImage(card)}
+                alt={`${card.rank} of ${card.suit}`}
+                className="w-full h-full object-contain"
+                style={{ imageRendering: '-webkit-optimize-contrast' }}
+                draggable={false}
+            />
         </div>
     );
 }
@@ -312,23 +273,15 @@ function PlayerSeat({
             className={`absolute flex flex-col items-center gap-1.5 transition-all ${themeConfig.useAnimations ? 'duration-500' : ''} ${isCurrentTurn && !isClassic ? 'scale-110 z-20' : 'z-10'}`}
             style={position}
         >
-            {/* Turn indicator ring - premium only */}
-            {isCurrentTurn && !isClassic && (
-                <div
-                    className="absolute -inset-4 rounded-full animate-ping opacity-30"
-                    style={{ backgroundColor: playerColor.hex }}
-                />
-            )}
+
 
             {/* Hand Hint - show for premium only */}
             {handEval && !isClassic && (
                 <div
-                    className="px-3 py-1 rounded-full text-xs font-bold shadow-lg"
+                    className="px-3 py-1 rounded-full text-xs font-bold shadow-md"
                     style={{
-                        background: `linear-gradient(135deg, ${handEval.color} 0%, ${handEval.color}dd 100%)`,
+                        background: handEval.color,
                         color: 'white',
-                        boxShadow: `0 4px 15px ${handEval.color}60`,
-                        animation: 'pulse 2s infinite',
                     }}
                 >
                     {handEval.emoji} {handEval.description}
@@ -357,87 +310,61 @@ function PlayerSeat({
 
             {/* Player info card */}
             <div
-                className={`relative px-4 py-2 ${isClassic ? 'rounded' : 'rounded-2xl'} flex items-center gap-2 ${player.folded ? 'opacity-40' : ''}`}
+                className={`relative px-3 py-2 rounded-lg flex items-center gap-3 backdrop-blur-sm transition-colors duration-200 ${player.folded ? 'opacity-40 grayscale' : ''}`}
                 style={{
-                    background: isClassic
-                        ? (isCurrentTurn ? themeConfig.playerCardActive : themeConfig.playerCard)
-                        : isCurrentTurn
-                            ? `linear-gradient(135deg, ${playerColor.hex} 0%, ${playerColor.hex}cc 100%)`
-                            : themeConfig.playerCard,
+                    background: 'rgba(15, 23, 42, 0.9)', // Slate-900, highly opaque
                     border: isMe
-                        ? `2px solid ${themeConfig.playerActiveBorder}`
+                        ? '2px solid #10B981' // Emerald-500
                         : isCurrentTurn
-                            ? `2px solid ${isClassic ? themeConfig.accentColor : playerColor.hex}`
-                            : `1px solid ${themeConfig.playerBorder}`,
-                    boxShadow: isClassic
-                        ? '0 2px 8px rgba(0,0,0,0.4)'
-                        : isCurrentTurn
-                            ? `0 8px 32px ${playerColor.hex}50, 0 4px 12px rgba(0,0,0,0.5)`
-                            : '0 4px 12px rgba(0,0,0,0.4)',
+                            ? '2px solid #FBBF24' // Amber-400
+                            : '1px solid rgba(148, 163, 184, 0.2)', // Slate-400, low opacity
+                    boxShadow: isCurrentTurn ? '0 0 15px rgba(251, 191, 36, 0.1)' : 'none',
+                    minWidth: '140px',
                 }}
             >
                 {/* Avatar - premium only */}
                 {!isClassic && <span className="text-xl">{avatar}</span>}
 
                 {/* Name & Chips */}
-                <div className="flex flex-col">
-                    <div className="flex items-center gap-1">
-                        {player.isDealer && <span className={`text-xs ${isClassic ? 'bg-yellow-600' : 'bg-yellow-500/80'} px-1.5 py-0.5 rounded text-black font-bold`}>D</span>}
-                        {player.isSmallBlind && <span className={`text-xs ${isClassic ? 'bg-blue-600' : 'bg-blue-500/80'} px-1 py-0.5 rounded text-white`}>SB</span>}
-                        {player.isBigBlind && <span className={`text-xs ${isClassic ? 'bg-purple-600' : 'bg-purple-500/80'} px-1 py-0.5 rounded text-white`}>BB</span>}
-                        <span className={`font-semibold truncate max-w-[70px] ${isCurrentTurn ? 'text-white' : 'text-gray-200'}`}>
+                <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                        {isCurrentTurn && <span className="px-1.5 py-0.5 rounded bg-yellow-400 text-black text-[10px] font-bold animate-pulse shadow-[0_0_10px_rgba(250,204,21,0.5)]">TURN</span>}
+                        {isMe && <span className="px-1.5 py-0.5 rounded bg-emerald-500 text-black text-[10px] font-bold">YOU</span>}
+                        {player.isDealer && <span className="w-4 h-4 rounded-full bg-white text-black text-[10px] font-bold flex items-center justify-center" title="Dealer">D</span>}
+                        {player.isSmallBlind && <span className="w-4 h-4 rounded-full bg-slate-600 text-white text-[10px] font-bold flex items-center justify-center" title="Small Blind">S</span>}
+                        {player.isBigBlind && <span className="w-4 h-4 rounded-full bg-slate-600 text-white text-[10px] font-bold flex items-center justify-center" title="Big Blind">B</span>}
+                        <span className={`text-sm font-bold truncate ${isCurrentTurn ? 'text-white' : 'text-slate-200'}`}>
                             {player.username}
                         </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                        <span className="text-yellow-400 font-bold text-sm">{isClassic ? '$' : '💰 $'}{player.chips.toLocaleString()}</span>
+                    <div className="flex items-center gap-1.5 pl-0.5">
+                        <span className="text-emerald-400 font-bold text-xs font-mono tracking-wide">${player.chips.toLocaleString()}</span>
                     </div>
                 </div>
-
-                {/* Me indicator */}
-                {isMe && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-green-500 rounded-full text-[10px] font-bold text-white">
-                        YOU
-                    </div>
-                )}
             </div>
 
             {/* Current bet chip */}
             {player.currentBet > 0 && (
-                <div
-                    className="flex items-center gap-1 px-3 py-1 rounded-full font-bold text-sm"
-                    style={{
-                        background: isClassic ? '#2e7d32' : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-                        boxShadow: isClassic ? 'none' : '0 4px 12px rgba(22, 163, 74, 0.4)',
-                    }}
-                >
-                    {!isClassic && <span className="text-sm">🪙</span>}
-                    <span className="text-white">${player.currentBet}</span>
+                <div className="px-3 py-1 bg-slate-900/90 rounded-full border border-slate-700 flex items-center gap-1 shadow-sm">
+                    <span className="text-white text-xs font-bold font-mono">${player.currentBet}</span>
                 </div>
             )}
 
             {/* Status badges */}
             <div className="flex gap-1">
                 {player.folded && (
-                    <div className={`${isClassic ? 'bg-gray-600' : 'bg-gray-700/90'} text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium`}>
-                        {isClassic ? 'Folded' : '❌ Folded'}
+                    <div className="px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-[10px] font-bold text-slate-400">
+                        FOLD
                     </div>
                 )}
                 {player.allIn && (
-                    <div
-                        className="px-3 py-1 rounded-full text-xs font-bold text-white"
-                        style={{
-                            background: isClassic ? '#c62828' : 'linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)',
-                            animation: !isClassic ? 'pulse 1s infinite' : 'none',
-                            boxShadow: isClassic ? 'none' : '0 0 20px rgba(220, 38, 38, 0.6)',
-                        }}
-                    >
-                        {isClassic ? 'ALL-IN' : '🔥 ALL-IN'}
+                    <div className="px-2 py-0.5 rounded bg-red-500/10 border border-red-500 text-[10px] font-bold text-red-500">
+                        ALL-IN
                     </div>
                 )}
                 {/* Removed lastAction popup per user request */}
             </div>
-        </div>
+        </div >
     );
 }
 
@@ -920,37 +847,25 @@ export default function PokerGameRoom() {
             className="min-h-screen overflow-hidden"
             style={{ background: themeConfig.pageBackground }}
         >
-            {/* Ambient background effects - premium only */}
-            {!isClassic && (
-                <div className="fixed inset-0 pointer-events-none">
-                    <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-                    <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
-                </div>
-            )}
 
             <Header />
 
             <main className="pt-20 pb-4 px-4 relative z-10">
                 <div className="max-w-7xl mx-auto">
                     {/* Game Info Bar */}
-                    <div className="flex justify-between items-center mb-4 px-4">
+                    <div className="flex justify-between items-center mb-4 px-4 h-12">
+                        {/* Left Side: Room & Hand */}
                         <div className="flex items-center gap-4">
-                            <div
-                                className={`flex items-center gap-2 px-4 py-2 ${isClassic ? 'rounded-lg' : 'rounded-xl'}`}
-                                style={{
-                                    background: themeConfig.infoBar,
-                                    border: `1px solid ${themeConfig.playerBorder}`,
-                                    boxShadow: isClassic ? 'none' : '0 4px 12px rgba(0,0,0,0.3)',
-                                }}
-                            >
-                                {!isClassic && <span className="text-emerald-400">🎰</span>}
-                                <span className="text-gray-400 text-sm">Room:</span>
-                                <span className="font-mono font-bold text-white tracking-wider">{roomCode}</span>
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm">
+                                <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Room</span>
+                                <span className="font-mono font-bold text-white text-sm">{roomCode}</span>
                             </div>
-                            <div className="text-gray-400 text-sm">
-                                Hand <span className="text-white font-bold">#{gameState?.handNumber}</span>
+                            <div className="text-slate-400 text-xs font-medium uppercase tracking-wider">
+                                Hand <span className="text-white font-bold ml-1">#{gameState?.handNumber}</span>
                             </div>
                         </div>
+
+                        {/* Right Side: Controls & Game Stats */}
                         <div className="flex items-center gap-3">
                             {/* Theme Selector - Dropdown */}
                             <PokerThemeSelector
@@ -961,26 +876,19 @@ export default function PokerGameRoom() {
                                 }}
                                 compact
                             />
+
                             <PokerHandsGuideButton />
-                            <div
-                                className={`px-4 py-2 ${isClassic ? 'rounded-lg' : 'rounded-xl'} text-sm`}
-                                style={{
-                                    background: themeConfig.infoBar,
-                                    border: `1px solid ${themeConfig.playerBorder}`,
-                                }}
-                            >
-                                <span className="text-gray-400">Phase:</span>
-                                <span className={`ml-2 font-semibold ${isClassic ? 'text-green-400' : 'text-emerald-400'}`}>{phaseToString(gameState?.phase || 'waiting')}</span>
+
+                            <div className="h-4 w-px bg-slate-700 mx-1" /> {/* Separator */}
+
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm">
+                                <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Phase</span>
+                                <span className="font-semibold text-emerald-400 text-sm capitalize">{phaseToString(gameState?.phase || 'waiting')}</span>
                             </div>
-                            <div
-                                className={`px-5 py-2 ${isClassic ? 'rounded-lg' : 'rounded-xl'} font-bold text-lg flex items-center gap-2`}
-                                style={{
-                                    background: isClassic ? '#b8860b' : 'linear-gradient(135deg, #ca8a04 0%, #a16207 100%)',
-                                    boxShadow: isClassic ? 'none' : '0 4px 20px rgba(202, 138, 4, 0.4)',
-                                }}
-                            >
-                                {!isClassic && <span>💰</span>}
-                                <span className="text-white">${gameState?.pot || 0}</span>
+
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/50 border border-slate-700/50 backdrop-blur-sm min-w-[80px] justify-center">
+                                <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Pot</span>
+                                <span className="text-yellow-400 font-bold text-sm font-mono">${gameState?.pot || 0}</span>
                             </div>
                         </div>
                     </div>
@@ -1000,8 +908,8 @@ export default function PokerGameRoom() {
                         <div
                             className="absolute inset-[7%] rounded-[50%] overflow-hidden"
                             style={{
-                                background: isClassic ? themeConfig.tableFelt : 'radial-gradient(ellipse at center, #1a6b4a 0%, #0f4a33 40%, #0a3322 80%, #061f15 100%)',
-                                boxShadow: isClassic ? 'inset 0 0 30px rgba(0,0,0,0.3)' : 'inset 0 0 100px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.3)',
+                                background: themeConfig.tableFelt,
+                                boxShadow: 'inset 0 0 40px rgba(0,0,0,0.6)',
                             }}
                         >
                             {/* Felt texture overlay - premium only */}
@@ -1014,17 +922,17 @@ export default function PokerGameRoom() {
                                 />
                             )}
 
-                            {/* Inner decorative ring - premium only */}
-                            {!isClassic && (
-                                <>
-                                    <div className="absolute inset-6 border border-emerald-400/20 rounded-[50%]" />
-                                    <div className="absolute inset-12 border border-emerald-400/10 rounded-[50%]" />
-                                </>
-                            )}
+                            <div
+                                className="absolute inset-0 opacity-[0.08]"
+                                style={{
+                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+                                }}
+                            />
+
                         </div>
 
                         {/* Community cards */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-3">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-3 items-center">
                             {gameState?.communityCards.map((card, i) => (
                                 <div key={i} className={`transform ${!isClassic ? 'hover:scale-110' : ''} transition-transform`}>
                                     <PokerCard card={card} theme={theme} />
@@ -1034,7 +942,7 @@ export default function PokerGameRoom() {
                             {Array.from({ length: 5 - (gameState?.communityCards.length || 0) }).map((_, i) => (
                                 <div
                                     key={`empty-${i}`}
-                                    className={`w-16 h-22 ${isClassic ? 'rounded-lg border border-dashed border-gray-500/40 bg-gray-500/10' : 'rounded-xl border-2 border-dashed border-emerald-500/30 bg-emerald-500/5'}`}
+                                    className={`w-16 h-24 md:w-24 md:h-36 ${isClassic ? 'rounded-lg border border-dashed border-gray-500/40 bg-gray-500/10' : 'rounded-lg border border-dashed border-emerald-500/30 bg-emerald-500/5'}`}
                                 />
                             ))}
                         </div>
@@ -1074,19 +982,25 @@ export default function PokerGameRoom() {
                         <div
                             className="fixed z-50"
                             style={{
-                                left: `calc(50% + ${actionBarPos.x}px)`,
-                                top: `calc(85% + ${actionBarPos.y}px)`,
-                                transform: 'translate(-50%, -50%)',
+                                bottom: '40px',
+                                right: '40px',
+                                transform: `translate(${actionBarPos.x}px, ${actionBarPos.y}px)`,
                             }}
                         >
                             <div
-                                className={`p-5 ${isClassic ? 'rounded-lg' : 'rounded-2xl'} cursor-grab active:cursor-grabbing`}
+                                className={`
+                                    relative flex flex-col items-center
+                                    ${isClassic ? 'rounded-xl' : 'rounded-3xl'}
+                                    cursor-grab active:cursor-grabbing
+                                    transition-all duration-200
+                                `}
                                 style={{
-                                    background: themeConfig.actionBar,
-                                    backdropFilter: isClassic ? 'none' : 'blur(20px)',
-                                    border: `1px solid ${themeConfig.actionBarBorder}`,
-                                    boxShadow: isClassic ? '0 4px 15px rgba(0,0,0,0.3)' : '0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(16, 185, 129, 0.1)',
-                                    minWidth: '380px',
+                                    background: 'rgba(15, 23, 42, 0.6)',
+                                    border: '1px solid rgba(51, 65, 85, 0.5)',
+                                    backdropFilter: 'blur(8px)',
+                                    minWidth: 'auto',
+                                    padding: '1.5rem',
+                                    borderRadius: '1rem',
                                 }}
                                 onMouseDown={(e) => {
                                     if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'BUTTON') return;
@@ -1103,75 +1017,132 @@ export default function PokerGameRoom() {
                                 onMouseUp={() => setIsDragging(false)}
                                 onMouseLeave={() => setIsDragging(false)}
                             >
-                                {/* Header - premium only */}
-                                {!isClassic && (
-                                    <div className="flex justify-center mb-3">
-                                        <div className="w-12 h-1 bg-emerald-500/50 rounded-full" />
+                                {/* Drag Handle */}
+                                <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-white/10 rounded-full" />
+
+                                {/* "Your Turn" Indicator */}
+                                <div className="mb-6 flex items-center justify-center gap-2">
+                                    {/* SIMPLIFIED "Your Turn" Indicator */}
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse" />
+                                        <span className="text-yellow-400 font-bold tracking-wider text-sm">YOUR TURN</span>
                                     </div>
-                                )}
-                                <div className={`text-center ${isClassic ? 'text-green-400' : 'text-emerald-400'} mb-4 font-bold text-lg flex items-center justify-center gap-2`}>
-                                    {!isClassic && <span className="animate-pulse">🎯</span>} Your Turn
+                                    {!isClassic && gameState.minRaise > 0 && (
+                                        <div className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 text-gray-400 border border-white/5">
+                                            Min Raise: ${gameState.minRaise}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Raise slider */}
                                 {availableActions.includes('raise') && showRaiseSlider && (
-                                    <div className="mb-5 px-2">
-                                        <div className="flex justify-between text-sm mb-2">
-                                            <span className="text-emerald-400 font-medium">Raise: ${raiseAmount}</span>
-                                            <span className="text-gray-500">Max: ${maxRaise}</span>
+                                    <div className="w-full mb-6 px-2 animate-in fade-in slide-in-from-bottom-4 duration-200">
+                                        <div className="flex justify-between items-end mb-3">
+                                            <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Raise Amount</span>
+                                            <span className="text-2xl font-bold text-white font-mono">${raiseAmount.toLocaleString()}</span>
                                         </div>
-                                        <input
-                                            type="range"
-                                            min={minRaise}
-                                            max={maxRaise}
-                                            value={raiseAmount}
-                                            onChange={(e) => setRaiseAmount(Number(e.target.value))}
-                                            className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                                            style={{
-                                                background: `linear-gradient(to right, #10b981 0%, #10b981 ${((raiseAmount - minRaise) / (maxRaise - minRaise)) * 100}%, #374151 ${((raiseAmount - minRaise) / (maxRaise - minRaise)) * 100}%, #374151 100%)`,
-                                            }}
-                                        />
+                                        <div className="relative h-6 flex items-center">
+                                            <input
+                                                type="range"
+                                                min={minRaise}
+                                                max={maxRaise}
+                                                value={raiseAmount}
+                                                onChange={(e) => setRaiseAmount(Number(e.target.value))}
+                                                className="w-full h-2 rounded-lg appearance-none cursor-pointer absolute z-20 opacity-0"
+                                            />
+                                            {/* Custom Track */}
+                                            <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden relative z-10 pointer-events-none">
+                                                <div
+                                                    className="h-full bg-emerald-500 transition-all duration-75 ease-out"
+                                                    style={{ width: `${((raiseAmount - minRaise) / (maxRaise - minRaise)) * 100}%` }}
+                                                />
+                                            </div>
+                                            {/* Custom Thumb (Visual only) */}
+                                            <div
+                                                className="absolute w-6 h-6 bg-white rounded-full shadow-lg border-2 border-emerald-500 z-10 pointer-events-none transition-all duration-75 ease-out"
+                                                style={{ left: `calc(${((raiseAmount - minRaise) / (maxRaise - minRaise)) * 100}% - 12px)` }}
+                                            />
+                                        </div>
+                                        <div className="flex justify-between mt-2">
+                                            <button
+                                                onClick={() => setRaiseAmount(minRaise)}
+                                                className="text-xs text-gray-500 hover:text-white transition-colors"
+                                            >
+                                                Min ${minRaise}
+                                            </button>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => setRaiseAmount(Math.min(maxRaise, raiseAmount + (minRaise)))}
+                                                    className="px-2 py-1 rounded bg-slate-700 text-xs text-white hover:bg-slate-600"
+                                                >
+                                                    +BB
+                                                </button>
+                                                <button
+                                                    onClick={() => setRaiseAmount(Math.floor(gameState.pot / 2))}
+                                                    className="px-2 py-1 rounded bg-slate-700 text-xs text-white hover:bg-slate-600"
+                                                >
+                                                    1/2 Pot
+                                                </button>
+                                                <button
+                                                    onClick={() => setRaiseAmount(gameState.pot)}
+                                                    className="px-2 py-1 rounded bg-slate-700 text-xs text-white hover:bg-slate-600"
+                                                >
+                                                    Pot
+                                                </button>
+                                            </div>
+                                            <button
+                                                onClick={() => setRaiseAmount(maxRaise)}
+                                                className="text-xs text-gray-500 hover:text-white transition-colors"
+                                            >
+                                                Max ${maxRaise}
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 
                                 {/* Action buttons */}
-                                <div className="flex gap-2 justify-center flex-wrap">
+                                <div className="flex gap-4 items-end">
+                                    {/* FOLD */}
                                     {availableActions.includes('fold') && (
                                         <button
                                             onClick={() => handleAction('fold')}
-                                            className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
-                                            style={{ background: themeConfig.btnFold }}
+                                            className="w-24 h-16 rounded-md border-2 font-bold text-lg transition-all hover:bg-red-500/10 active:scale-95 flex flex-col items-center justify-center relative group"
+                                            style={{ borderColor: isClassic ? '#b71c1c' : themeConfig.btnFold, color: isClassic ? '#effddb' : themeConfig.btnFold }}
                                         >
-                                            {isClassic ? 'Fold' : '❌ Fold'}
+                                            <span className="absolute -top-3 right-0 text-[10px] text-gray-500 bg-slate-900 px-1">F</span>
+                                            FOLD
                                         </button>
                                     )}
+
+                                    {/* CHECK */}
                                     {availableActions.includes('check') && (
                                         <button
                                             onClick={() => handleAction('check')}
-                                            className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
-                                            style={{ background: themeConfig.btnCheck }}
+                                            className="w-24 h-16 rounded-md border-2 font-bold text-lg transition-all hover:bg-slate-500/10 active:scale-95 flex flex-col items-center justify-center relative"
+                                            style={{ borderColor: isClassic ? '#757575' : themeConfig.btnCheck, color: isClassic ? '#e0e0e0' : themeConfig.btnCheck }}
                                         >
-                                            {isClassic ? 'Check' : '✓ Check'}
+                                            <span className="absolute -top-3 right-0 text-[10px] text-gray-500 bg-slate-900 px-1">K</span>
+                                            CHECK
                                         </button>
                                     )}
-                                    {availableActions.includes('call') && (() => {
-                                        // Calculate actual callable amount (may be less than toCall if short-stacked)
-                                        const actualCallAmount = myPlayer ? Math.min(toCall, myPlayer.chips) : toCall;
-                                        const isAllInCall = myPlayer && myPlayer.chips <= toCall;
 
+                                    {/* CALL */}
+                                    {availableActions.includes('call') && (() => {
+                                        const actualCallAmount = myPlayer ? Math.min(toCall, myPlayer.chips) : toCall;
                                         return (
                                             <button
                                                 onClick={() => handleAction('call')}
-                                                className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
-                                                style={{ background: themeConfig.btnCall }}
+                                                className="w-28 h-16 rounded-md border-2 font-bold transition-all hover:bg-emerald-500/10 active:scale-95 flex flex-col items-center justify-center relative"
+                                                style={{ borderColor: isClassic ? '#2e7d32' : themeConfig.btnCall, color: isClassic ? '#a5d6a7' : themeConfig.btnCall }}
                                             >
-                                                {isClassic
-                                                    ? (isAllInCall ? `Call $${actualCallAmount} (All-in)` : `Call $${toCall}`)
-                                                    : (isAllInCall ? `📞 Call $${actualCallAmount} (All-in)` : `📞 Call $${toCall}`)
-                                                }
+                                                <span className="absolute -top-3 right-0 text-[10px] text-gray-500 bg-slate-900 px-1">C</span>
+                                                <span className="text-sm">CALL</span>
+                                                <span className="text-lg">${actualCallAmount}</span>
                                             </button>
                                         );
                                     })()}
+
+                                    {/* RAISE */}
                                     {availableActions.includes('raise') && (
                                         !showRaiseSlider ? (
                                             <button
@@ -1179,40 +1150,40 @@ export default function PokerGameRoom() {
                                                     setRaiseAmount(minRaise);
                                                     setShowRaiseSlider(true);
                                                 }}
-                                                className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
-                                                style={{ background: themeConfig.btnRaise }}
+                                                className="w-28 h-16 rounded-md border-2 font-bold transition-all hover:bg-emerald-500/10 active:scale-95 flex flex-col items-center justify-center relative"
+                                                style={{ borderColor: isClassic ? '#f9a825' : themeConfig.btnRaise, color: isClassic ? '#fff59d' : themeConfig.btnRaise }}
                                             >
-                                                {isClassic ? 'Raise' : '📈 Raise'}
+                                                <span className="absolute -top-3 right-0 text-[10px] text-gray-500 bg-slate-900 px-1">R</span>
+                                                RAISE
                                             </button>
                                         ) : (
-                                            <>
+                                            <div className="flex gap-2">
                                                 <button
                                                     onClick={() => setShowRaiseSlider(false)}
-                                                    className={`px-4 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
-                                                    style={{
-                                                        background: isClassic ? '#444' : 'rgba(255, 255, 255, 0.1)',
-                                                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                                                    }}
+                                                    className="w-12 h-16 rounded-md border border-slate-600 text-slate-400 hover:text-white hover:border-slate-400 flex items-center justify-center"
                                                 >
-                                                    ←
+                                                    ✕
                                                 </button>
                                                 <button
                                                     onClick={() => handleAction('raise', raiseAmount)}
-                                                    className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white`}
-                                                    style={{ background: themeConfig.btnRaise }}
+                                                    className="w-28 h-16 rounded-md border-2 font-bold transition-all hover:bg-emerald-500/10 active:scale-95 flex flex-col items-center justify-center"
+                                                    style={{ borderColor: themeConfig.btnRaise, color: themeConfig.btnRaise }}
                                                 >
-                                                    ${raiseAmount}
+                                                    <span className="text-xs">CONFIRM</span>
+                                                    <span className="text-lg">${raiseAmount}</span>
                                                 </button>
-                                            </>
+                                            </div>
                                         )
                                     )}
+
+                                    {/* ALL IN */}
                                     {availableActions.includes('all-in') && (
                                         <button
                                             onClick={() => handleAction('all-in')}
-                                            className={`px-5 py-2.5 ${isClassic ? 'rounded' : 'rounded-xl'} font-bold text-white ${!isClassic ? 'animate-pulse' : ''}`}
-                                            style={{ background: themeConfig.btnAllIn }}
+                                            className="w-24 h-16 rounded-md border-2 font-bold text-lg transition-all hover:bg-red-500/10 active:scale-95 flex flex-col items-center justify-center"
+                                            style={{ borderColor: themeConfig.btnAllIn, color: themeConfig.btnAllIn }}
                                         >
-                                            {isClassic ? 'ALL-IN' : '🔥 ALL-IN!'}
+                                            ALL IN
                                         </button>
                                     )}
                                 </div>

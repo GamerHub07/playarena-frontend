@@ -363,16 +363,9 @@ export function PokerHandsGuideButton() {
         <>
             <button
                 onClick={() => setIsOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all hover:scale-105 active:scale-95"
-                style={{
-                    background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%)',
-                    border: '1px solid rgba(139, 92, 246, 0.4)',
-                    boxShadow: '0 4px 15px rgba(139, 92, 246, 0.2)',
-                    color: '#a78bfa',
-                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/50 border border-slate-700/50 text-slate-400 font-medium hover:bg-slate-800 hover:text-white transition-colors text-sm"
             >
-                <span className="text-lg">📖</span>
-                <span className="hidden sm:inline">Hand Rankings</span>
+                <span>Hand Rankings</span>
             </button>
             <PokerHandsGuide isOpen={isOpen} onClose={() => setIsOpen(false)} />
         </>
