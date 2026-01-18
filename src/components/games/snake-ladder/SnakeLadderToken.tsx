@@ -35,7 +35,7 @@ export default function SnakeLadderToken({
 
     return (
         <div
-            className="absolute transition-all duration-300 ease-out hover:z-50"
+            className="absolute transition-all duration-500 ease-out hover:z-50"
             style={{
                 width: pawnSize,
                 height: pawnSize,

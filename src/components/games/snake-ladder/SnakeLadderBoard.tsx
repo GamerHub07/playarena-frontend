@@ -18,6 +18,9 @@ interface SnakeLadderBoardProps {
     displayedPositions: Record<number, number>;
     currentSessionId: string;
     isAnimating: boolean;
+    onTokenClick?: () => void;
+    myPlayerIndex: number;
+    canMove: boolean;
 }
 
 export default function SnakeLadderBoard({
@@ -25,6 +28,9 @@ export default function SnakeLadderBoard({
     players,
     displayedPositions,
     isAnimating,
+    onTokenClick,
+    myPlayerIndex,
+    canMove,
 }: SnakeLadderBoardProps) {
     const cellSize = 60;
     const boardSize = cellSize * 10;
@@ -496,7 +502,7 @@ export default function SnakeLadderBoard({
                 </svg>
 
                 {/* Tokens Layer */}
-                <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 30 }}>
+                <div className="absolute inset-0" style={{ zIndex: 30 }}>
                     {Object.entries(playersByPosition).map(([posStr, pIndices]) => {
                         const pos = parseInt(posStr);
                         const grid = positionToGrid(pos);
@@ -506,7 +512,7 @@ export default function SnakeLadderBoard({
                         return (
                             <div
                                 key={pos}
-                                className="absolute flex items-center justify-center transition-all duration-300"
+                                className="absolute transition-all duration-500"
                                 style={{
                                     left: cellX,
                                     top: cellY,
@@ -514,17 +520,60 @@ export default function SnakeLadderBoard({
                                     height: cellSize,
                                 }}
                             >
-                                {pIndices.map((pIdx, i) => (
-                                    <SnakeLadderToken
-                                        key={pIdx}
-                                        playerIndex={pIdx}
-                                        username={players[pIdx]?.username || 'Player'}
-                                        size={cellSize}
-                                        isMultiple={pIndices.length > 1}
-                                        stackIndex={i}
-                                        totalInStack={pIndices.length}
-                                    />
-                                ))}
+                                {pIndices.map((pIdx, i) => {
+                                    // Check if this token is clickable (belongs to current player and canMove)
+                                    const isMyToken = pIdx === myPlayerIndex;
+                                    const isClickable = isMyToken && canMove && !isAnimating;
+
+                                    return isClickable ? (
+                                        <button
+                                            key={pIdx}
+                                            onClick={onTokenClick}
+                                            className="absolute inset-0 w-full h-full"
+                                            style={{
+                                                cursor: 'pointer',
+                                                outline: 'none',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                padding: 0,
+                                                zIndex: 100, // Ensure clickable token is always on top
+                                            }}
+                                            title="Click to move!"
+                                        >
+                                            {/* Glowing ring to indicate clickable */}
+                                            <div
+                                                className="absolute rounded-full animate-ping"
+                                                style={{
+                                                    left: '50%',
+                                                    top: '50%',
+                                                    transform: 'translate(-50%, -50%)',
+                                                    width: cellSize * 0.7,
+                                                    height: cellSize * 0.7,
+                                                    backgroundColor: PLAYER_COLORS[pIdx]?.hex || '#fff',
+                                                    opacity: 0.4,
+                                                }}
+                                            />
+                                            <SnakeLadderToken
+                                                playerIndex={pIdx}
+                                                username={players[pIdx]?.username || 'Player'}
+                                                size={cellSize}
+                                                isMultiple={pIndices.length > 1}
+                                                stackIndex={i}
+                                                totalInStack={pIndices.length}
+                                            />
+                                        </button>
+                                    ) : (
+                                        <SnakeLadderToken
+                                            key={pIdx}
+                                            playerIndex={pIdx}
+                                            username={players[pIdx]?.username || 'Player'}
+                                            size={cellSize}
+                                            isMultiple={pIndices.length > 1}
+                                            stackIndex={i}
+                                            totalInStack={pIndices.length}
+                                        />
+                                    );
+                                })}
                             </div>
                         );
                     })}
