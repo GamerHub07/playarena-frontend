@@ -73,7 +73,42 @@ const GAMES: Game[] = [
         available: false,
         description: 'The ultimate game of strategy. Checkmate your opponent in this timeless classic.',
     },
-
+    {
+        id: 'sudoku',
+        title: 'Sudoku',
+        players: '1 Player',
+        image: '/games/sudoku.png',
+        href: '/games/sudoku',
+        available: true,
+        description: 'Challenge your mind with the classic number puzzle game.',
+    },
+    {
+        id: '2048',
+        title: '2048',
+        players: '1 Player',
+        image: '/games/2048.png',
+        href: '/games/2048',
+        available: true,
+        description: 'Join the numbers and reach the 2048 tile in this addictive puzzle.',
+    },
+    {
+        id: 'memory',
+        title: 'Memory Flip',
+        players: '1 Player',
+        image: '/games/memory.png',
+        href: '/games/memory',
+        available: true,
+        description: 'Test your memory! Flip cards, find pairs, and race against your own best score.',
+    },
+    {
+        id: 'candy-chakachak',
+        title: 'Candy Chakachak',
+        players: '1 Player',
+        image: '/games/candy.png', // Placeholder, will generate
+        href: '/games/candy-chakachak',
+        available: true,
+        description: 'Match 3 or more sweet treats in this vibrant and juicy puzzle adventure.',
+    },
 ];
 
 export default function HomePage() {
