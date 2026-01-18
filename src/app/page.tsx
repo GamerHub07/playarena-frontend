@@ -82,7 +82,24 @@ const GAMES: Game[] = [
         available: true,
         description: 'Join the numbers and reach the 2048 tile in this addictive puzzle.',
     },
-
+    {
+        id: 'memory',
+        title: 'Memory Flip',
+        players: '1 Player',
+        image: '/games/memory.png',
+        href: '/games/memory',
+        available: true,
+        description: 'Test your memory! Flip cards, find pairs, and race against your own best score.',
+    },
+    {
+        id: 'candy-chakachak',
+        title: 'Candy Chakachak',
+        players: '1 Player',
+        image: '/games/candy.png', // Placeholder, will generate
+        href: '/games/candy-chakachak',
+        available: true,
+        description: 'Match 3 or more sweet treats in this vibrant and juicy puzzle adventure.',
+    },
 ];
 
 export default function HomePage() {
