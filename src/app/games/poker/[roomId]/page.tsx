@@ -112,6 +112,11 @@ const THEME_CONFIGS: Record<PokerTheme, ThemeConfig> = {
         tableBorder: '#334155',
         tableRail: '#1e293b',
 
+        // Card styling
+        cardBack: '#1e293b',
+        cardBackBorder: '#334155',
+        cardFront: '#ffffff',
+
         playerCard: '#111827', // Dark slate
         playerCardActive: '#14532d',
         playerBorder: '#334155',
@@ -1027,9 +1032,9 @@ export default function PokerGameRoom() {
                                         <div className="w-3 h-3 rounded-full bg-yellow-400 animate-pulse" />
                                         <span className="text-yellow-400 font-bold tracking-wider text-sm">YOUR TURN</span>
                                     </div>
-                                    {!isClassic && gameState.minRaise > 0 && (
+                                    {!isClassic && (gameState?.minRaise ?? 0) > 0 && (
                                         <div className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/5 text-gray-400 border border-white/5">
-                                            Min Raise: ${gameState.minRaise}
+                                            Min Raise: ${gameState?.minRaise}
                                         </div>
                                     )}
                                 </div>
@@ -1078,13 +1083,13 @@ export default function PokerGameRoom() {
                                                     +BB
                                                 </button>
                                                 <button
-                                                    onClick={() => setRaiseAmount(Math.floor(gameState.pot / 2))}
+                                                    onClick={() => setRaiseAmount(Math.floor((gameState?.pot || 0) / 2))}
                                                     className="px-2 py-1 rounded bg-slate-700 text-xs text-white hover:bg-slate-600"
                                                 >
                                                     1/2 Pot
                                                 </button>
                                                 <button
-                                                    onClick={() => setRaiseAmount(gameState.pot)}
+                                                    onClick={() => setRaiseAmount(gameState?.pot || 0)}
                                                     className="px-2 py-1 rounded bg-slate-700 text-xs text-white hover:bg-slate-600"
                                                 >
                                                     Pot
