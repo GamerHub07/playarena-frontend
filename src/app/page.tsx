@@ -56,6 +56,15 @@ const GAMES: Game[] = [
         description: 'Bluff, bet, and win big in the world\'s most popular card game.',
     },
     {
+        id: 'tictactoe',
+        title: 'Tic Tac Toe',
+        players: '2 Players',
+        image: '/games/tictactoe.png',
+        href: '/games/tictactoe',
+        available: true,
+        description: 'The classic game of X and O. Simple, quick, and fun!',
+    },
+    {
         id: 'chess',
         title: 'Chess',
         players: '2 Players',
