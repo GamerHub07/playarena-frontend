@@ -64,6 +64,24 @@ const GAMES: Game[] = [
         available: false,
         description: 'The ultimate game of strategy. Checkmate your opponent in this timeless classic.',
     },
+    {
+        id: 'sudoku',
+        title: 'Sudoku',
+        players: '1 Player',
+        image: '/games/sudoku.png',
+        href: '/games/sudoku',
+        available: true,
+        description: 'Challenge your mind with the classic number puzzle game.',
+    },
+    {
+        id: '2048',
+        title: '2048',
+        players: '1 Player',
+        image: '/games/2048.png',
+        href: '/games/2048',
+        available: true,
+        description: 'Join the numbers and reach the 2048 tile in this addictive puzzle.',
+    },
 
 ];
 
