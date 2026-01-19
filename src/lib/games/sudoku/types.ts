@@ -1,3 +1,7 @@
+/**
+ * Sudoku Types (Client-side)
+ */
+
 export type SudokuDifficulty = 'easy' | 'medium' | 'hard';
 
 export interface SudokuCell {
@@ -10,13 +14,19 @@ export interface SudokuCell {
 
 export interface SudokuState {
     board: SudokuCell[][];
-    solution?: number[][];
+    solution: number[][];
     difficulty: SudokuDifficulty;
     mistakes: number;
     isComplete: boolean;
+    isWon: boolean;
     startTime: number;
     endTime: number | null;
     challengeMode: boolean;
     timeLimit: number | null;
-    isWon: boolean;
+}
+
+export interface SudokuMovePayload {
+    row: number;
+    col: number;
+    value: number | null;
 }
