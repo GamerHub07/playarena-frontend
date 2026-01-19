@@ -6,6 +6,8 @@ import { useSocket } from '@/hooks/useSocket';
 import { useGuest } from '@/hooks/useGuest';
 import { MemoryState, MemoryCard as MemoryCardType } from '@/types/memory';
 import { MemoryBoard } from '@/components/games/memory/MemoryBoard';
+import WaitingRoom from '@/components/games/shared/WaitingRoom';
+import { roomApi } from '@/lib/api';
 import { Loader2, RefreshCw, Trophy } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
@@ -16,6 +18,19 @@ export default function MemoryRoom() {
     const { guest } = useGuest();
 
     const [gameState, setGameState] = useState<MemoryState | null>(null);
+    const [room, setRoom] = useState<any>(null);
+    const [players, setPlayers] = useState<any[]>([]);
+
+    // Fetch room data
+    useEffect(() => {
+        if (!roomId) return;
+        roomApi.get(roomId as string).then(res => {
+            if (res.success && res.data) {
+                setRoom(res.data);
+                setPlayers(res.data.players);
+            }
+        });
+    }, [roomId]);
 
     // Join Room
     useEffect(() => {
@@ -27,8 +42,13 @@ export default function MemoryRoom() {
             username: guest.username
         });
 
+        const unsubJoined = on('room:playerJoined', (data: any) => {
+            if (data.players) setPlayers(data.players);
+        });
+
         const unsubStart = on('game:start', (data: any) => {
             setGameState(data.state);
+            setRoom((prev: any) => prev ? { ...prev, status: 'playing' } : prev);
         });
 
         const unsubState = on('game:state', (data: any) => {
@@ -36,11 +56,20 @@ export default function MemoryRoom() {
         });
 
         return () => {
+            unsubJoined();
             unsubStart();
             unsubState();
             emit('room:leave', { roomCode: roomId });
         };
     }, [isConnected, guest, roomId, emit, on]);
+
+    const handleStartGame = () => {
+        emit('game:start', { roomCode: roomId });
+    };
+
+    const handleLeaveRoom = () => {
+        router.push('/');
+    };
 
     const handleCardClick = useCallback((card: MemoryCardType) => {
         if (!roomId || card.isFlipped || card.isMatched) return;
@@ -57,7 +86,35 @@ export default function MemoryRoom() {
         emit('game:action', { roomCode: roomId, action: 'restart' });
     }, [roomId, emit]);
 
-    if (!isConnected || !gameState) {
+    if (!isConnected) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+                <Loader2 className="h-8 w-8 animate-spin text-zinc-900 dark:text-zinc-50" />
+            </div>
+        );
+    }
+
+    if (room?.status === 'waiting' && guest) {
+        return (
+            <div className="flex flex-col items-center min-h-screen bg-zinc-50 dark:bg-zinc-950 py-8 px-4">
+                <WaitingRoom
+                    roomCode={roomId as string}
+                    players={players}
+                    currentSessionId={guest.sessionId}
+                    isHost={players.find(p => p.sessionId === guest.sessionId)?.isHost || false}
+                    minPlayers={1}
+                    maxPlayers={2}
+                    onStart={handleStartGame}
+                    onLeave={handleLeaveRoom}
+                    gameTitle="Memory"
+                    accentColor="#6366f1"
+                    headerContent={<div className="text-6xl mb-2">🧠</div>}
+                />
+            </div>
+        );
+    }
+
+    if (!gameState) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-zinc-50 dark:bg-zinc-950">
                 <Loader2 className="h-8 w-8 animate-spin text-zinc-900 dark:text-zinc-50" />
@@ -66,7 +123,17 @@ export default function MemoryRoom() {
     }
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-zinc-50 dark:bg-zinc-950 py-8 px-4">
+        <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50 to-slate-100 dark:from-[#0f1020] dark:via-[#151730] dark:to-[#0f1020] relative overflow-hidden py-8 px-4">
+            {/* Background Decoration */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5 dark:opacity-10">
+                <div className="absolute top-10 left-10 text-9xl font-black text-indigo-500 -rotate-12 select-none">?</div>
+                <div className="absolute bottom-20 right-20 text-[10rem] font-black text-indigo-500 rotate-12 select-none">?</div>
+                <div className="absolute top-1/3 right-1/4 text-8xl font-black text-indigo-400 rotate-45 select-none">🧠</div>
+                <div className="absolute bottom-1/3 left-10 text-9xl font-black text-indigo-600 -rotate-6 select-none">?</div>
+
+                {/* Grid Pattern */}
+                <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(30deg, #6366f1 1px, transparent 1px)', backgroundSize: '50px 50px', opacity: 0.2 }}></div>
+            </div>
             <div className="w-full max-w-[500px]">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-8">

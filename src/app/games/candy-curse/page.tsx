@@ -11,7 +11,7 @@ import { useGuest } from '@/hooks/useGuest';
 import { useAuth } from '@/contexts/AuthContext';
 import { roomApi } from '@/lib/api';
 
-export default function TicTacToePage() {
+export default function CandyPage() {
     const router = useRouter();
     const { guest, loading, login } = useGuest();
     const { user } = useAuth();
@@ -73,9 +73,9 @@ export default function TicTacToePage() {
         setError('');
 
         try {
-            const res = await roomApi.create(sid, 'tictactoe');
+            const res = await roomApi.create(sid, 'candy-curse');
             if (res.success && res.data) {
-                router.push(`/games/tictactoe/${res.data.code}`);
+                router.push(`/games/candy-curse/${res.data.code}`);
             } else {
                 setError(res.message || 'Failed to create room');
             }
@@ -104,7 +104,7 @@ export default function TicTacToePage() {
         try {
             const res = await roomApi.join(roomCode.toUpperCase(), guest.sessionId);
             if (res.success && res.data) {
-                router.push(`/games/tictactoe/${res.data.code}`);
+                router.push(`/games/candy-curse/${res.data.code}`);
             } else {
                 setError(res.message || 'Room not found');
             }
@@ -147,9 +147,11 @@ export default function TicTacToePage() {
                 <div className="max-w-4xl mx-auto">
                     {/* Title */}
                     <div className="text-center mb-12">
-                        <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">Tic Tac Toe</h1>
+                        <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">
+                            Candy Curse
+                        </h1>
                         <p className="text-[var(--text-muted)] max-w-md mx-auto">
-                            The classic game of X and O. Challenge your friends to a quick match and see who has the best strategy!
+                            Swap, match, and crush candies in this sweet puzzle adventure!
                         </p>
                     </div>
 
@@ -157,25 +159,25 @@ export default function TicTacToePage() {
                     <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
                         <Card className="p-8 text-center">
                             <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <span className="text-3xl">❌</span>
+                                <span className="text-3xl">🍬</span>
                             </div>
-                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Create Room</h2>
-                            <p className="text-sm text-[var(--text-muted)] mb-6">Start a new game and invite your friends</p>
+                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">New Game</h2>
+                            <p className="text-sm text-[var(--text-muted)] mb-6">Start a new sweet adventure</p>
                             <Button
                                 onClick={() => handleCreateRoom()}
                                 loading={isLoading && pendingAction === 'create'}
                                 className="w-full"
                             >
-                                Create Room
+                                Start Game
                             </Button>
                         </Card>
 
                         <Card className="p-8 text-center">
                             <div className="w-16 h-16 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <span className="text-3xl">⭕</span>
+                                <span className="text-3xl">🍭</span>
                             </div>
-                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Join Room</h2>
-                            <p className="text-sm text-[var(--text-muted)] mb-6">Enter a room code to join an existing game</p>
+                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Join Party</h2>
+                            <p className="text-sm text-[var(--text-muted)] mb-6">Enter code to join a candy party</p>
                             <Button
                                 variant="secondary"
                                 onClick={openJoinModal}
@@ -188,17 +190,17 @@ export default function TicTacToePage() {
 
                     {/* Rules */}
                     <div className="mt-16 max-w-2xl mx-auto">
-                        <h3 className="text-xl font-semibold text-[var(--text)] mb-6 text-center">How to Play</h3>
+                        <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-6 text-center">How to Play</h3>
                         <div className="grid sm:grid-cols-2 gap-4">
                             {[
-                                { icon: '❌', text: 'Place X or O on the 3x3 grid' },
-                                { icon: '🔄', text: 'Take turns with your opponent' },
-                                { icon: '📏', text: 'Get 3 of your marks in a row' },
-                                { icon: '🏆', text: 'Win horizontally, vertically, or diagonally' },
+                                { icon: '👆', text: 'Tap two adjacent gems to swap them' },
+                                { icon: '✨', text: 'Match 3 or more of the same color' },
+                                { icon: '💥', text: 'Create chain reactions for huge combos' },
+                                { icon: '🎯', text: 'Reach target score before moves run out' },
                             ].map((rule, i) => (
-                                <div key={i} className="flex items-center gap-3 p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg">
+                                <div key={i} className="flex items-center gap-3 p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm">
                                     <span className="text-2xl">{rule.icon}</span>
-                                    <span className="text-sm text-[var(--text-muted)]">{rule.text}</span>
+                                    <span className="text-sm text-zinc-600 dark:text-zinc-400">{rule.text}</span>
                                 </div>
                             ))}
                         </div>
@@ -206,53 +208,53 @@ export default function TicTacToePage() {
 
                     {/* SEO Content Section */}
                     <section className="mt-20 max-w-3xl mx-auto">
-                        <h2 className="text-2xl font-bold text-[var(--text)] mb-6 text-center">
-                            Why Play Tic Tac Toe Online?
+                        <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mb-6 text-center">
+                            Why Play Candy Curse Online?
                         </h2>
 
                         <div className="grid sm:grid-cols-2 gap-6 mb-10">
                             {[
-                                { icon: '⚡', title: 'Instant Fun', desc: 'Games are quick and exciting, perfect for short breaks.' },
-                                { icon: '🧠', title: 'Brain Teaser', desc: 'Simple rules but requires strategy to master.' },
-                                { icon: '🆓', title: 'Completely Free', desc: 'Play unlimited matches without any cost.' },
-                                { icon: '📱', title: 'Mobile Friendly', desc: 'Play smoothly on any device, anywhere.' },
+                                { icon: '🍬', title: 'Juicy Visuals', desc: 'Satisfying animations and vibrant colors.' },
+                                { icon: '📱', title: 'Mobile Ready', desc: 'Play on any device with touch-optimized controls.' },
+                                { icon: '🆓', title: 'Completely Free', desc: 'No lives system, no paying for moves. Just play.' },
+                                { icon: '⚡', title: 'Instant Load', desc: 'Jump straight into the action in seconds.' },
                             ].map((feature, i) => (
-                                <div key={i} className="p-5 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-soft">
+                                <div key={i} className="p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm">
                                     <div className="flex items-center gap-3 mb-2">
                                         <span className="text-2xl">{feature.icon}</span>
-                                        <h3 className="font-semibold text-[var(--text)]">{feature.title}</h3>
+                                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">{feature.title}</h3>
                                     </div>
-                                    <p className="text-sm text-[var(--text-muted)]">{feature.desc}</p>
+                                    <p className="text-sm text-zinc-600 dark:text-zinc-400">{feature.desc}</p>
                                 </div>
                             ))}
                         </div>
 
                         {/* FAQ Section */}
                         <div className="mt-12">
-                            <h2 className="text-xl font-bold text-[var(--text)] mb-6 text-center">
+                            <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-6 text-center">
                                 Frequently Asked Questions
                             </h2>
                             <div className="space-y-4">
                                 {[
                                     {
-                                        q: 'Is this Tic Tac Toe game free?',
-                                        a: 'Yes, playing Tic Tac Toe on VersusArenas is 100% free and requires no downloads.'
+                                        q: "What is Candy's Curse?",
+                                        a: "It is a match-3 puzzle game where you swap gems to create lines of 3 or more matching colors."
                                     },
                                     {
-                                        q: 'Can I play with a friend?',
-                                        a: 'Yes! Create a room and share the code with your friend to play together online.'
+                                        q: 'How do I win?',
+                                        a: 'Reach the target score within the allowed number of moves.'
                                     },
                                     {
-                                        q: 'Do I need to register?',
-                                        a: 'No registration is required. You can play as a guest immediately.'
+                                        q: 'Is there a time limit?',
+                                        a: 'No, you can take your time. The challenge is limited by moves, not time.'
                                     },
                                 ].map((faq, i) => (
-                                    <details key={i} className="p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg group">
-                                        <summary className="font-medium text-[var(--text)] cursor-pointer list-none flex justify-between items-center">
+                                    <details key={i} className="p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg group">
+                                        <summary className="font-medium text-zinc-900 dark:text-zinc-50 cursor-pointer list-none flex justify-between items-center">
                                             {faq.q}
-                                            <span className="text-[var(--text-muted)] group-open:rotate-180 transition-transform">▼</span>
+                                            <span className="text-zinc-400 group-open:rotate-180 transition-transform">▼</span>
                                         </summary>
-                                        <p className="mt-3 text-sm text-[var(--text-muted)] leading-relaxed">{faq.a}</p>
+                                        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{faq.a}</p>
                                     </details>
                                 ))}
                             </div>
@@ -260,60 +262,6 @@ export default function TicTacToePage() {
                     </section>
                 </div>
             </main>
-
-            {/* Login Modal */}
-            <Modal
-                isOpen={showLoginModal}
-                onClose={() => {
-                    setShowLoginModal(false);
-                    setPendingAction(null);
-                    setError('');
-                }}
-                title="Enter Your Name"
-                size="sm"
-            >
-                <div className="space-y-4">
-                    <Input
-                        placeholder="Your username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                        error={error}
-                        autoFocus
-                    />
-                    <Button onClick={handleLogin} loading={isLoading} className="w-full">
-                        Continue
-                    </Button>
-                </div>
-            </Modal>
-
-            {/* Join Modal */}
-            <Modal
-                isOpen={showJoinModal}
-                onClose={() => {
-                    setShowJoinModal(false);
-                    setRoomCode('');
-                    setError('');
-                }}
-                title="Join Room"
-                size="sm"
-            >
-                <div className="space-y-4">
-                    <Input
-                        placeholder="Enter room code"
-                        value={roomCode}
-                        onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                        onKeyDown={(e) => e.key === 'Enter' && handleJoinRoom()}
-                        error={error}
-                        maxLength={6}
-                        className="text-center text-2xl tracking-widest font-mono"
-                        autoFocus
-                    />
-                    <Button onClick={handleJoinRoom} loading={isLoading} className="w-full">
-                        Join Game
-                    </Button>
-                </div>
-            </Modal>
         </div>
     );
 }

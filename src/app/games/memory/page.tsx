@@ -1,107 +1,190 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
-import { useGuest } from '@/hooks/useGuest';
-import { roomApi } from '@/lib/api';
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
-import { Loader2 } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import Card from '@/components/ui/Card';
+import { useGuest } from '@/hooks/useGuest';
+import { useAuth } from '@/contexts/AuthContext';
+import { roomApi } from '@/lib/api';
 
-export default function MemoryLobby() {
+export default function MemoryPage() {
     const router = useRouter();
     const { guest, loading, login } = useGuest();
-    const [isCreating, setIsCreating] = useState(false);
+    const { user } = useAuth();
+
+    const [showLoginModal, setShowLoginModal] = useState(false);
+    const [showJoinModal, setShowJoinModal] = useState(false);
     const [username, setUsername] = useState('');
+    const [roomCode, setRoomCode] = useState('');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [pendingAction, setPendingAction] = useState<'create' | 'join' | null>(null);
 
-    const handleCreateGame = async () => {
-        setIsCreating(true);
-        let currentGuest = guest;
-
-        if (!currentGuest) {
-            if (!username.trim()) {
-                setIsCreating(false);
-                return;
-            }
-            currentGuest = await login(username);
-            if (!currentGuest) {
-                console.error('Failed to create guest session');
-                setIsCreating(false);
-                return;
-            }
+    const handleLogin = async () => {
+        if (!username.trim() || username.length < 2) {
+            setError('Username must be at least 2 characters');
+            return;
         }
 
-        try {
-            const response = await roomApi.create(currentGuest.sessionId, 'memory');
-            if (response.success && response.data) {
-                router.push(`/games/memory/${response.data.code}`);
-            } else {
-                console.error('Failed to create game:', response.message);
-                setIsCreating(false);
+        setIsLoading(true);
+        setError('');
+
+        const result = await login(username.trim());
+        setIsLoading(false);
+
+        if (result) {
+            setShowLoginModal(false);
+            if (pendingAction === 'create') {
+                handleCreateRoom(result.sessionId);
+            } else if (pendingAction === 'join') {
+                setShowJoinModal(true);
             }
-        } catch (error) {
-            console.error('Failed to create game:', error);
-            setIsCreating(false);
+            setPendingAction(null);
+        } else {
+            setError('Failed to create session');
+        }
+    };
+
+    const handleCreateRoom = async (sessionId?: string) => {
+        const sid = sessionId || guest?.sessionId;
+
+        // If user is logged in but no guest session exists, auto-create one
+        if (user && !guest) {
+            setIsLoading(true);
+            const result = await login(user.username);
+            setIsLoading(false);
+            if (result) {
+                handleCreateRoom(result.sessionId);
+            }
+            return;
+        }
+
+        if (!sid) {
+            setPendingAction('create');
+            setShowLoginModal(true);
+            return;
+        }
+
+        setIsLoading(true);
+        setError('');
+
+        try {
+            const res = await roomApi.create(sid, 'memory');
+            if (res.success && res.data) {
+                router.push(`/games/memory/${res.data.code}`);
+            } else {
+                setError(res.message || 'Failed to create room');
+            }
+        } catch (err) {
+            setError('Failed to create room');
+        }
+
+        setIsLoading(false);
+    };
+
+    const handleJoinRoom = async () => {
+        if (!guest) {
+            setPendingAction('join');
+            setShowLoginModal(true);
+            return;
+        }
+
+        if (!roomCode.trim() || roomCode.length !== 6) {
+            setError('Enter a valid 6-character room code');
+            return;
+        }
+
+        setIsLoading(true);
+        setError('');
+
+        try {
+            const res = await roomApi.join(roomCode.toUpperCase(), guest.sessionId);
+            if (res.success && res.data) {
+                router.push(`/games/memory/${res.data.code}`);
+            } else {
+                setError(res.message || 'Room not found');
+            }
+        } catch (err) {
+            setError('Failed to join room');
+        }
+
+        setIsLoading(false);
+    };
+
+    const openJoinModal = async () => {
+        if (!guest && !user) {
+            setPendingAction('join');
+            setShowLoginModal(true);
+        } else if (user && !guest) {
+            setIsLoading(true);
+            const result = await login(user.username);
+            setIsLoading(false);
+            if (result) {
+                setShowJoinModal(true);
+            }
+        } else {
+            setShowJoinModal(true);
         }
     };
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950">
-                <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full" />
+            <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+        <div className="min-h-screen bg-[var(--background)]">
             <Header />
 
             <main className="pt-24 pb-12 px-4">
                 <div className="max-w-4xl mx-auto">
                     {/* Title */}
                     <div className="text-center mb-12">
-                        <h1 className="text-4xl md:text-5xl font-bold text-zinc-900 dark:text-zinc-50 mb-4">Memory Flip</h1>
-                        <p className="text-zinc-600 dark:text-zinc-400 max-w-md mx-auto">
-                            Test your memory! Flip cards to find matching pairs and clear the board.
+                        <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">
+                            Memory Flip
+                        </h1>
+                        <p className="text-[var(--text-muted)] max-w-md mx-auto">
+                            Test your focus! Find matching pairs of cards to clear the board and win.
                         </p>
                     </div>
 
-                    {/* Action Card */}
-                    <div className="max-w-md mx-auto mb-20">
-                        <Card className="p-8 text-center space-y-6">
-                            <div className="space-y-4">
-                                {!guest && (
-                                    <div className="text-left">
-                                        <Input
-                                            placeholder="Enter your name"
-                                            value={username}
-                                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
-                                            className="mb-2"
-                                            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && username.trim() && handleCreateGame()}
-                                        />
-                                    </div>
-                                )}
-
-                                <Button
-                                    size="lg"
-                                    className="w-full text-lg h-14"
-                                    onClick={handleCreateGame}
-                                    disabled={isCreating || (!guest && !username.trim())}
-                                >
-                                    {isCreating ? (
-                                        <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> {guest ? 'Creating...' : 'Joining...'}</>
-                                    ) : (
-                                        guest ? 'Play Now' : 'Start Playing'
-                                    )}
-                                </Button>
-
-                                <p className="text-xs text-zinc-400">
-                                    Train your brain and beat your best score!
-                                </p>
+                    {/* Action Cards */}
+                    <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                        <Card className="p-8 text-center">
+                            <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <span className="text-3xl">🧩</span>
                             </div>
+                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">New Game</h2>
+                            <p className="text-sm text-[var(--text-muted)] mb-6">Start a new memory challenge</p>
+                            <Button
+                                onClick={() => handleCreateRoom()}
+                                loading={isLoading && pendingAction === 'create'}
+                                className="w-full"
+                            >
+                                Start Game
+                            </Button>
+                        </Card>
+
+                        <Card className="p-8 text-center">
+                            <div className="w-16 h-16 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <span className="text-3xl">👥</span>
+                            </div>
+                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Join Room</h2>
+                            <p className="text-sm text-[var(--text-muted)] mb-6">Enter code to join a friend</p>
+                            <Button
+                                variant="secondary"
+                                onClick={openJoinModal}
+                                className="w-full"
+                            >
+                                Join Room
+                            </Button>
                         </Card>
                     </div>
 

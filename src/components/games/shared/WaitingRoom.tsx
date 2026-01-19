@@ -28,6 +28,7 @@ interface WaitingRoomProps {
     accentColor?: string;
     playerColors?: { hex: string; name: string }[];
     playerEmojis?: string[];
+    headerContent?: React.ReactNode;
 }
 
 export default function WaitingRoom({
@@ -43,6 +44,7 @@ export default function WaitingRoom({
     accentColor = '#3b82f6',
     playerColors = DEFAULT_PLAYER_COLORS,
     playerEmojis,
+    headerContent,
 }: WaitingRoomProps) {
     const [copied, setCopied] = useState(false);
     const [linkCopied, setLinkCopied] = useState(false);
@@ -66,6 +68,11 @@ export default function WaitingRoom({
             <Card className="p-8">
                 {/* Title */}
                 <div className="text-center mb-4">
+                    {headerContent && (
+                        <div className="flex justify-center mb-4">
+                            {headerContent}
+                        </div>
+                    )}
                     <h2 className="text-2xl font-bold text-white">{gameTitle}</h2>
                     <p className="text-[#888] text-sm">Waiting for players...</p>
                 </div>

@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { Gamepad2, Users, User } from 'lucide-react';
 import { HeroBackground } from '@/components/landing/HeroBackground';
 
 interface Game {
@@ -77,7 +78,7 @@ const GAMES: Game[] = [
         id: 'sudoku',
         title: 'Sudoku',
         players: '1 Player',
-        image: '/games/sudoku.png',
+        image: '/games/sudoku2.png',
         href: '/games/sudoku',
         available: true,
         description: 'Challenge your mind with the classic number puzzle game.',
@@ -86,7 +87,7 @@ const GAMES: Game[] = [
         id: '2048',
         title: '2048',
         players: '1 Player',
-        image: '/games/2048.png',
+        image: '/games/2048-.png',
         href: '/games/2048',
         available: true,
         description: 'Join the numbers and reach the 2048 tile in this addictive puzzle.',
@@ -95,17 +96,17 @@ const GAMES: Game[] = [
         id: 'memory',
         title: 'Memory Flip',
         players: '1 Player',
-        image: '/games/memory.png',
+        image: '/games/memory1.png',
         href: '/games/memory',
         available: true,
         description: 'Test your memory! Flip cards, find pairs, and race against your own best score.',
     },
     {
-        id: 'candy-chakachak',
-        title: 'Candy Chakachak',
+        id: 'candy-curse',
+        title: 'Candy’s Curse',
         players: '1 Player',
-        image: '/games/candy.png', // Placeholder, will generate
-        href: '/games/candy-chakachak',
+        image: '/games/candy1.png', // Placeholder, will generate
+        href: '/games/candy-curse',
         available: true,
         description: 'Match 3 or more sweet treats in this vibrant and juicy puzzle adventure.',
     },
@@ -115,6 +116,14 @@ export default function HomePage() {
     const scrollRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [games, setGames] = useState<Game[]>(GAMES);
+    const [activeTab, setActiveTab] = useState<'all' | 'multiplayer' | 'single'>('all');
+
+    const filteredGames = GAMES.filter(game => {
+        if (activeTab === 'all') return true;
+        if (activeTab === 'multiplayer') return game.players !== '1 Player';
+        if (activeTab === 'single') return game.players === '1 Player';
+        return true;
+    });
 
     const scrollToGames = () => {
         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -322,14 +331,49 @@ export default function HomePage() {
                             <div className="h-px bg-border flex-grow ml-8 hidden md:block" />
                         </div>
 
+                        {/* Category Tabs */}
+                        <div className="flex justify-center mb-12">
+                            <div className="inline-flex p-1.5 bg-surface/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg relative">
+                                {[
+                                    { id: 'all', label: 'All Games', icon: Gamepad2 },
+                                    { id: 'multiplayer', label: 'Multiplayer', icon: Users },
+                                    { id: 'single', label: 'Single Player', icon: User }
+                                ].map((tab) => {
+                                    const Icon = tab.icon;
+                                    const isActive = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id as any)}
+                                            className={`
+                                                relative px-6 py-3 rounded-full font-bold text-sm transition-colors duration-300 flex items-center gap-2 z-10
+                                                ${isActive ? 'text-white' : 'text-muted-foreground hover:text-foreground'}
+                                            `}
+                                        >
+                                            {isActive && (
+                                                <motion.div
+                                                    layoutId="activeTab"
+                                                    className="absolute inset-0 bg-primary rounded-full shadow-md -z-10"
+                                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                                />
+                                            )}
+                                            <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'currentColor'}`} />
+                                            <span>{tab.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {GAMES.map((game, i) => (
+                            {filteredGames.map((game, i) => (
                                 <Link
                                     key={game.id}
                                     href={game.available ? game.href : '#'}
                                     className="block h-full"
                                 >
                                     <motion.div
+                                        layout
                                         initial={{ opacity: 0, y: 20 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}

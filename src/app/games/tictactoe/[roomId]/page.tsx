@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import Header from '@/components/layout/Header';
-import WaitingRoom from '@/components/games/tictactoe/WaitingRoom';
+import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import Board from '@/components/games/tictactoe/Board';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
@@ -14,11 +14,11 @@ import { useGuest } from '@/hooks/useGuest';
 import { useSocket } from '@/hooks/useSocket';
 import { roomApi } from '@/lib/api';
 import { Room, Player } from '@/types/game';
-import { 
-    TicTacToeGameState, 
-    TicTacToePlayer, 
+import {
+    TicTacToeGameState,
+    TicTacToePlayer,
     TicTacToeStartPayload,
-    TicTacToeWinnerPayload 
+    TicTacToeWinnerPayload
 } from '@/types/tictactoe';
 
 export default function GameRoomPage() {
@@ -91,7 +91,7 @@ export default function GameRoomPage() {
 
         const unsubRoom = on('room:update', (data: unknown) => {
             const { players: updatedPlayers, status } = data as { players: Player[]; status: string };
-            
+
             // Check if opponent disconnected during game
             // Use status from event data (not stale room state)
             const isGameActive = status === 'playing' || status === 'finished';
@@ -102,7 +102,7 @@ export default function GameRoomPage() {
                     setOpponentLeft(true);
                 }
             }
-            
+
             setPlayers(updatedPlayers);
             setRoom(prev => prev ? { ...prev, status: status as Room['status'] } : null);
         });
@@ -172,7 +172,7 @@ export default function GameRoomPage() {
                 // Ignore errors, socket update will handle it
             }
         };
-        
+
         // Small delay to ensure backend has processed the join
         const timeoutId = setTimeout(refreshRoom, 300);
 
@@ -192,18 +192,18 @@ export default function GameRoomPage() {
     }, [emit, router]);
 
     const handleCellClick = useCallback((cellIndex: number) => {
-        emit('game:action', { 
-            roomCode, 
-            action: 'move', 
-            data: { cellIndex } 
+        emit('game:action', {
+            roomCode,
+            action: 'move',
+            data: { cellIndex }
         });
     }, [emit, roomCode]);
 
     const handlePlayAgain = useCallback(() => {
-        emit('game:action', { 
-            roomCode, 
-            action: 'restart', 
-            data: {} 
+        emit('game:action', {
+            roomCode,
+            action: 'restart',
+            data: {}
         });
     }, [emit, roomCode]);
 
@@ -268,7 +268,17 @@ export default function GameRoomPage() {
     const isFinished = room?.status === 'finished';
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-950 to-blue-950 relative overflow-hidden">
+            {/* Background Decoration */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-10">
+                <div className="absolute top-10 left-10 text-9xl font-black text-white -rotate-12 select-none">X</div>
+                <div className="absolute top-1/2 left-1/4 text-8xl font-black text-white rotate-12 select-none">O</div>
+                <div className="absolute bottom-20 left-20 text-[10rem] font-black text-white -rotate-6 select-none">X</div>
+                <div className="absolute top-20 right-20 text-[8rem] font-black text-white rotate-45 select-none">O</div>
+                <div className="absolute bottom-1/3 right-10 text-9xl font-black text-white -rotate-12 select-none">X</div>
+                <div className="absolute bottom-10 right-1/4 text-[12rem] font-black text-white rotate-12 select-none">O</div>
+            </div>
+
             <Header />
 
             <main className="pt-24 pb-12 px-4">
@@ -290,9 +300,15 @@ export default function GameRoomPage() {
                     <WaitingRoom
                         roomCode={roomCode}
                         players={players}
+                        currentSessionId={guest?.sessionId || ''}
                         isHost={isHost}
+                        minPlayers={2}
+                        maxPlayers={2}
                         onStart={handleStartGame}
                         onLeave={handleLeaveRoom}
+                        gameTitle="Tic Tac Toe"
+                        accentColor="#3b82f6"
+                        headerContent={<div className="text-6xl mb-2">❌⭕</div>}
                     />
                 )}
 
@@ -322,9 +338,8 @@ export default function GameRoomPage() {
                                     <p className="text-xl text-slate-300 mb-2">
                                         {winner.winner.username}
                                     </p>
-                                    <span className={`text-4xl font-bold ${
-                                        winner.winner.symbol === 'X' ? 'text-blue-400' : 'text-red-400'
-                                    }`}>
+                                    <span className={`text-4xl font-bold ${winner.winner.symbol === 'X' ? 'text-blue-400' : 'text-red-400'
+                                        }`}>
                                         {winner.winner.symbol}
                                     </span>
                                 </div>

@@ -14,6 +14,7 @@ import { roomApi } from '@/lib/api';
 export default function MonopolyPage() {
     const router = useRouter();
     const { guest, loading, login } = useGuest();
+    const { user } = useAuth();
 
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
@@ -48,10 +49,6 @@ export default function MonopolyPage() {
         }
     };
 
-    const { user } = useAuth();
-
-    // ...
-
     const handleCreateRoom = async (sessionId?: string) => {
         const sid = sessionId || guest?.sessionId;
 
@@ -82,7 +79,7 @@ export default function MonopolyPage() {
             } else {
                 setError(res.message || 'Failed to create room');
             }
-        } catch {
+        } catch (err) {
             setError('Failed to create room');
         }
 
@@ -111,7 +108,7 @@ export default function MonopolyPage() {
             } else {
                 setError(res.message || 'Room not found');
             }
-        } catch {
+        } catch (err) {
             setError('Failed to join room');
         }
 
@@ -123,7 +120,6 @@ export default function MonopolyPage() {
             setPendingAction('join');
             setShowLoginModal(true);
         } else if (user && !guest) {
-            // Auto-login for join flow if user is auth'd but no guest session
             setIsLoading(true);
             const result = await login(user.username);
             setIsLoading(false);
@@ -137,24 +133,22 @@ export default function MonopolyPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#0f0f0f] flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-2 border-[#16a34a] border-t-transparent rounded-full" />
+            <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#0f0f0f]">
+        <div className="min-h-screen bg-[var(--background)]">
             <Header />
 
             <main className="pt-24 pb-12 px-4">
                 <div className="max-w-4xl mx-auto">
                     {/* Title */}
                     <div className="text-center mb-12">
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                            <span className="text-[#16a34a]">Monopoly</span>
-                        </h1>
-                        <p className="text-[#888] max-w-md mx-auto">
+                        <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">Monopoly</h1>
+                        <p className="text-[var(--text-muted)] max-w-md mx-auto">
                             The classic property trading game! Buy properties, collect rent, and bankrupt your opponents to win.
                         </p>
                     </div>
@@ -162,30 +156,26 @@ export default function MonopolyPage() {
                     {/* Action Cards */}
                     <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
                         <Card className="p-8 text-center">
-                            <div className="w-16 h-16 bg-[#16a34a]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-8 h-8 text-[#16a34a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
+                            <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <span className="text-3xl">🎩</span>
                             </div>
-                            <h2 className="text-xl font-semibold text-white mb-2">Create Room</h2>
-                            <p className="text-sm text-[#888] mb-6">Start a new game and invite your friends</p>
+                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Create Room</h2>
+                            <p className="text-sm text-[var(--text-muted)] mb-6">Start a new game and invite your friends</p>
                             <Button
                                 onClick={() => handleCreateRoom()}
                                 loading={isLoading && pendingAction === 'create'}
-                                className="w-full !bg-[#16a34a] hover:!bg-[#15803d]"
+                                className="w-full"
                             >
                                 Create Room
                             </Button>
                         </Card>
 
                         <Card className="p-8 text-center">
-                            <div className="w-16 h-16 bg-[#3b82f6]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-8 h-8 text-[#3b82f6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
+                            <div className="w-16 h-16 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <span className="text-3xl">🏠</span>
                             </div>
-                            <h2 className="text-xl font-semibold text-white mb-2">Join Room</h2>
-                            <p className="text-sm text-[#888] mb-6">Enter a room code to join an existing game</p>
+                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Join Room</h2>
+                            <p className="text-sm text-[var(--text-muted)] mb-6">Enter a room code to join an existing game</p>
                             <Button
                                 variant="secondary"
                                 onClick={openJoinModal}
@@ -198,7 +188,7 @@ export default function MonopolyPage() {
 
                     {/* Rules */}
                     <div className="mt-16 max-w-2xl mx-auto">
-                        <h3 className="text-xl font-semibold text-white mb-6 text-center">How to Play</h3>
+                        <h3 className="text-xl font-semibold text-[var(--text)] mb-6 text-center">How to Play</h3>
                         <div className="grid sm:grid-cols-2 gap-4">
                             {[
                                 { icon: '🎲', text: 'Roll dice to move around the board' },
@@ -206,13 +196,68 @@ export default function MonopolyPage() {
                                 { icon: '💰', text: 'Collect rent from other players' },
                                 { icon: '🏆', text: 'Last player standing wins!' },
                             ].map((rule, i) => (
-                                <div key={i} className="flex items-center gap-3 p-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
+                                <div key={i} className="flex items-center gap-3 p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg">
                                     <span className="text-2xl">{rule.icon}</span>
-                                    <span className="text-sm text-[#888]">{rule.text}</span>
+                                    <span className="text-sm text-[var(--text-muted)]">{rule.text}</span>
                                 </div>
                             ))}
                         </div>
                     </div>
+
+                    {/* SEO Content Section */}
+                    <section className="mt-20 max-w-3xl mx-auto">
+                        <h2 className="text-2xl font-bold text-[var(--text)] mb-6 text-center">
+                            Why Play Monopoly Online?
+                        </h2>
+
+                        <div className="grid sm:grid-cols-2 gap-6 mb-10">
+                            {[
+                                { icon: '🌍', title: 'Global Tycoon', desc: 'Experience the classic property trading game online.' },
+                                { icon: '🎩', title: 'Strategy & Luck', desc: 'Combine smart investments with a bit of luck.' },
+                                { icon: '👥', title: 'Multiplayer Fun', desc: 'Play with friends or family in private rooms.' },
+                                { icon: '⚡', title: 'Fast Paced', desc: 'Automated banking makes the game go much faster!' },
+                            ].map((feature, i) => (
+                                <div key={i} className="p-5 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-soft">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="text-2xl">{feature.icon}</span>
+                                        <h3 className="font-semibold text-[var(--text)]">{feature.title}</h3>
+                                    </div>
+                                    <p className="text-sm text-[var(--text-muted)]">{feature.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* FAQ Section */}
+                        <div className="mt-12">
+                            <h2 className="text-xl font-bold text-[var(--text)] mb-6 text-center">
+                                Frequently Asked Questions
+                            </h2>
+                            <div className="space-y-4">
+                                {[
+                                    {
+                                        q: 'Is this Monopoly game free?',
+                                        a: 'Yes, our version of the property trading game is completely free to play.'
+                                    },
+                                    {
+                                        q: 'How many players can join?',
+                                        a: 'You can play with 2 to 4 players in a single private room.'
+                                    },
+                                    {
+                                        q: 'Does it save my progress?',
+                                        a: 'The game state is maintained as long as the room is active, so you can reconnect if you lose connection.'
+                                    },
+                                ].map((faq, i) => (
+                                    <details key={i} className="p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg group">
+                                        <summary className="font-medium text-[var(--text)] cursor-pointer list-none flex justify-between items-center">
+                                            {faq.q}
+                                            <span className="text-[var(--text-muted)] group-open:rotate-180 transition-transform">▼</span>
+                                        </summary>
+                                        <p className="mt-3 text-sm text-[var(--text-muted)] leading-relaxed">{faq.a}</p>
+                                    </details>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </main>
 
