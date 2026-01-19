@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { Gamepad2, Users, User } from 'lucide-react';
 import { HeroBackground } from '@/components/landing/HeroBackground';
 
 interface Game {
@@ -115,6 +116,14 @@ export default function HomePage() {
     const scrollRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [games, setGames] = useState<Game[]>(GAMES);
+    const [activeTab, setActiveTab] = useState<'all' | 'multiplayer' | 'single'>('all');
+
+    const filteredGames = GAMES.filter(game => {
+        if (activeTab === 'all') return true;
+        if (activeTab === 'multiplayer') return game.players !== '1 Player';
+        if (activeTab === 'single') return game.players === '1 Player';
+        return true;
+    });
 
     const scrollToGames = () => {
         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -322,14 +331,49 @@ export default function HomePage() {
                             <div className="h-px bg-border flex-grow ml-8 hidden md:block" />
                         </div>
 
+                        {/* Category Tabs */}
+                        <div className="flex justify-center mb-12">
+                            <div className="inline-flex p-1.5 bg-surface/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg relative">
+                                {[
+                                    { id: 'all', label: 'All Games', icon: Gamepad2 },
+                                    { id: 'multiplayer', label: 'Multiplayer', icon: Users },
+                                    { id: 'single', label: 'Single Player', icon: User }
+                                ].map((tab) => {
+                                    const Icon = tab.icon;
+                                    const isActive = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id as any)}
+                                            className={`
+                                                relative px-6 py-3 rounded-full font-bold text-sm transition-colors duration-300 flex items-center gap-2 z-10
+                                                ${isActive ? 'text-white' : 'text-muted-foreground hover:text-foreground'}
+                                            `}
+                                        >
+                                            {isActive && (
+                                                <motion.div
+                                                    layoutId="activeTab"
+                                                    className="absolute inset-0 bg-primary rounded-full shadow-md -z-10"
+                                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                                />
+                                            )}
+                                            <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'currentColor'}`} />
+                                            <span>{tab.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {GAMES.map((game, i) => (
+                            {filteredGames.map((game, i) => (
                                 <Link
                                     key={game.id}
                                     href={game.available ? game.href : '#'}
                                     className="block h-full"
                                 >
                                     <motion.div
+                                        layout
                                         initial={{ opacity: 0, y: 20 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
