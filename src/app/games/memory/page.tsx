@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { useGuest } from '@/hooks/useGuest';
-import { roomApi } from '@/lib/api';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -18,34 +17,10 @@ export default function MemoryLobby() {
 
     const handleCreateGame = async () => {
         setIsCreating(true);
-        let currentGuest = guest;
-
-        if (!currentGuest) {
-            if (!username.trim()) {
-                setIsCreating(false);
-                return;
-            }
-            currentGuest = await login(username);
-            if (!currentGuest) {
-                console.error('Failed to create guest session');
-                setIsCreating(false);
-                return;
-            }
-        }
-
-        try {
-            const response = await roomApi.create(currentGuest.sessionId, 'memory');
-            if (response.success && response.data) {
-                router.push(`/games/memory/${response.data.code}`);
-            } else {
-                console.error('Failed to create game:', response.message);
-                setIsCreating(false);
-            }
-        } catch (error) {
-            console.error('Failed to create game:', error);
-            setIsCreating(false);
-        }
+        // For single-player, navigate directly to the play page
+        router.push('/games/memory/play');
     };
+
 
     if (loading) {
         return (

@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import { useGuest } from '@/hooks/useGuest';
-import { roomApi } from '@/lib/api';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -19,36 +18,11 @@ export default function SudokuLobby() {
     const handleCreateGame = async () => {
         setIsCreating(true);
 
-        let currentGuest = guest;
-
-        // If no guest session, create one
-        if (!currentGuest) {
-            if (!username.trim()) {
-                setIsCreating(false);
-                return;
-            }
-            currentGuest = await login(username);
-            if (!currentGuest) {
-                console.error('Failed to create guest session');
-                setIsCreating(false);
-                return;
-            }
-        }
-
-        try {
-            // Create a room specifically for sudoku
-            const response = await roomApi.create(currentGuest.sessionId, 'sudoku');
-            if (response.success && response.data) {
-                router.push(`/games/sudoku/${response.data.code}`);
-            } else {
-                console.error('Failed to create game:', response.message);
-                setIsCreating(false);
-            }
-        } catch (error) {
-            console.error('Failed to create game:', error);
-            setIsCreating(false);
-        }
+        // For single-player, we just navigate directly to the play page
+        // No need for guest session or room creation
+        router.push('/games/sudoku/play');
     };
+
 
     if (loading) {
         return (
