@@ -73,9 +73,9 @@ export default function CandyPage() {
         setError('');
 
         try {
-            const res = await roomApi.create(sid, 'candy-chakachak');
+            const res = await roomApi.create(sid, 'candy-curse');
             if (res.success && res.data) {
-                router.push(`/games/candy-chakachak/${res.data.code}`);
+                router.push(`/games/candy-curse/${res.data.code}`);
             } else {
                 setError(res.message || 'Failed to create room');
             }
@@ -104,7 +104,7 @@ export default function CandyPage() {
         try {
             const res = await roomApi.join(roomCode.toUpperCase(), guest.sessionId);
             if (res.success && res.data) {
-                router.push(`/games/candy-chakachak/${res.data.code}`);
+                router.push(`/games/candy-curse/${res.data.code}`);
             } else {
                 setError(res.message || 'Room not found');
             }
@@ -148,7 +148,7 @@ export default function CandyPage() {
                     {/* Title */}
                     <div className="text-center mb-12">
                         <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">
-                            Candy Chakachak
+                            Candy Curse
                         </h1>
                         <p className="text-[var(--text-muted)] max-w-md mx-auto">
                             Swap, match, and crush candies in this sweet puzzle adventure!
@@ -209,7 +209,7 @@ export default function CandyPage() {
                     {/* SEO Content Section */}
                     <section className="mt-20 max-w-3xl mx-auto">
                         <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mb-6 text-center">
-                            Why Play Candy Chakachak Online?
+                            Why Play Candy Curse Online?
                         </h2>
 
                         <div className="grid sm:grid-cols-2 gap-6 mb-10">
@@ -237,8 +237,8 @@ export default function CandyPage() {
                             <div className="space-y-4">
                                 {[
                                     {
-                                        q: 'What is Candy Chakachak?',
-                                        a: 'It is a match-3 puzzle game where you swap gems to create lines of 3 or more matching colors.'
+                                        q: "What is Candy's Curse?",
+                                        a: "It is a match-3 puzzle game where you swap gems to create lines of 3 or more matching colors."
                                     },
                                     {
                                         q: 'How do I win?',

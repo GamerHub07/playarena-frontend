@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import { useGuest } from '@/hooks/useGuest';
 import { CandyState } from '@/types/candy';
-import { CandyBoard } from '@/components/games/candy-chakachak/CandyBoard';
+import { CandyBoard } from '@/components/games/candy-curse/CandyBoard'
 import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import { roomApi } from '@/lib/api';
 import { Loader2, RefreshCw, Trophy, Target, Move } from 'lucide-react';
@@ -106,7 +106,7 @@ export default function CandyRoom() {
                     maxPlayers={1}
                     onStart={handleStartGame}
                     onLeave={handleLeaveRoom}
-                    gameTitle="Candy Chakachak"
+                    gameTitle="Candy's Curse"
                     accentColor="#ec4899"
                     headerContent={<div className="text-6xl mb-2">🍬</div>}
                 />
@@ -143,7 +143,7 @@ export default function CandyRoom() {
                 <div className="flex justify-between items-start mb-6">
                     <div>
                         <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-pink-500 to-purple-600 bg-clip-text text-transparent">
-                            Candy Chakachak
+                            Candy's Curse
                         </h1>
                         <p className="text-zinc-500 text-sm mt-1">Match 3 to win!</p>
                     </div>

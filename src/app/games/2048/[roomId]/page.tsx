@@ -9,6 +9,7 @@ import { GameOverlay2048 } from '@/components/games/2048/GameOverlay2048';
 import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import { roomApi } from '@/lib/api';
 import { Game2048State, Direction } from '@/types/game2048';
+import { calculateNextState } from '@/lib/games/2048/logic';
 import { Loader2, RefreshCw, Trophy } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
@@ -88,9 +89,9 @@ export default function Room2048() {
         if (!gameState || gameState.gameOver || (gameState.won && !gameState.keepPlaying)) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Prevent spamming
+            // Reduced throttle for better responsiveness
             const now = Date.now();
-            if (now - lastActionTime < 100) return; // 100ms throttle
+            if (now - lastActionTime < 50) return;
 
             let direction: Direction | null = null;
 
@@ -104,11 +105,21 @@ export default function Room2048() {
             if (direction && roomId) {
                 e.preventDefault();
                 setLastActionTime(now);
-                emit('game:action', {
-                    roomCode: roomId,
-                    action: 'move',
-                    data: { direction }
-                });
+
+                // Optimistic Update
+                const optimisticState = calculateNextState(gameState, direction);
+
+                if (optimisticState) {
+                    // Apply local state immediately (slide/merge happens instantly)
+                    setGameState(optimisticState);
+
+                    // Send to server to validate and spawn random tile
+                    emit('game:action', {
+                        roomCode: roomId,
+                        action: 'move',
+                        data: { direction }
+                    });
+                }
             }
         };
 

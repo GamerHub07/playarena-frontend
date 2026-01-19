@@ -101,11 +101,11 @@ const GAMES: Game[] = [
         description: 'Test your memory! Flip cards, find pairs, and race against your own best score.',
     },
     {
-        id: 'candy-chakachak',
-        title: 'Candy Chakachak',
+        id: 'candy-curse',
+        title: 'Candy’s Curse',
         players: '1 Player',
-        image: '/games/candy.png', // Placeholder, will generate
-        href: '/games/candy-chakachak',
+        image: '/games/candy1.png', // Placeholder, will generate
+        href: '/games/candy-curse',
         available: true,
         description: 'Match 3 or more sweet treats in this vibrant and juicy puzzle adventure.',
     },
