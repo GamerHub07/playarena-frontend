@@ -56,6 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(data.token);
     setUser(data);
 
+    // Clear guest session
+    localStorage.removeItem('guest_session');
+
     // Reconnect socket with new token
     const socket = getSocket();
     socket.auth = { token: data.token };
@@ -69,6 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('token', data.token);
     setToken(data.token);
     setUser(data);
+
+    // Clear guest session
+    localStorage.removeItem('guest_session');
 
     // Reconnect socket with new token
     const socket = getSocket();

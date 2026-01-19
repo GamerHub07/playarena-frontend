@@ -358,7 +358,16 @@ export default function MonopolyGameRoom() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0f0f0f]">
+        <div className="min-h-screen bg-gradient-to-br from-emerald-950 via-green-900 to-emerald-950 relative overflow-hidden">
+            {/* Background Decoration */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5">
+                <div className="absolute top-10 left-[10%] text-9xl select-none">🎩</div>
+                <div className="absolute bottom-20 right-[10%] text-9xl select-none">🎲</div>
+                <div className="absolute top-1/3 left-[5%] text-[10rem] select-none text-emerald-200">$</div>
+                <div className="absolute bottom-1/3 right-[5%] text-[8rem] select-none text-emerald-200">$</div>
+                {/* Grid Pattern Overlay */}
+                <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(#10b981 1px, transparent 1px), linear-gradient(90deg, #10b981 1px, transparent 1px)', backgroundSize: '100px 100px', opacity: 0.1 }}></div>
+            </div>
             <Header />
 
 
@@ -400,6 +409,7 @@ export default function MonopolyGameRoom() {
                         gameTitle="Monopoly"
                         accentColor="#16a34a"
                         playerEmojis={Object.values(PLAYER_TOKENS).map(t => t.emoji)}
+                        headerContent={<div className="text-6xl mb-2">🎩💰</div>}
                     />
                 )}
 

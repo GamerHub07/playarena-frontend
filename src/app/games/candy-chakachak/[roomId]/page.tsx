@@ -6,6 +6,8 @@ import { useSocket } from '@/hooks/useSocket';
 import { useGuest } from '@/hooks/useGuest';
 import { CandyState } from '@/types/candy';
 import { CandyBoard } from '@/components/games/candy-chakachak/CandyBoard';
+import WaitingRoom from '@/components/games/shared/WaitingRoom';
+import { roomApi } from '@/lib/api';
 import { Loader2, RefreshCw, Trophy, Target, Move } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
@@ -17,6 +19,19 @@ export default function CandyRoom() {
 
     const [gameState, setGameState] = useState<CandyState | null>(null);
 
+    const [room, setRoom] = useState<any>(null);
+    const [players, setPlayers] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!roomId) return;
+        roomApi.get(roomId as string).then(res => {
+            if (res.success && res.data) {
+                setRoom(res.data);
+                setPlayers(res.data.players);
+            }
+        });
+    }, [roomId]);
+
     // Join Room
     useEffect(() => {
         if (!isConnected || !guest || !roomId) return;
@@ -27,8 +42,13 @@ export default function CandyRoom() {
             username: guest.username
         });
 
+        const unsubJoined = on('room:playerJoined', (data: any) => {
+            if (data.players) setPlayers(data.players);
+        });
+
         const unsubStart = on('game:start', (data: any) => {
             setGameState(data.state);
+            setRoom((prev: any) => prev ? { ...prev, status: 'playing' } : prev);
         });
 
         const unsubState = on('game:state', (data: any) => {
@@ -36,11 +56,20 @@ export default function CandyRoom() {
         });
 
         return () => {
+            unsubJoined();
             unsubStart();
             unsubState();
             emit('room:leave', { roomCode: roomId });
         };
     }, [isConnected, guest, roomId, emit, on]);
+
+    const handleStartGame = () => {
+        emit('game:start', { roomCode: roomId });
+    };
+
+    const handleLeaveRoom = () => {
+        router.push('/');
+    };
 
     const handleSwap = useCallback((r1: number, c1: number, r2: number, c2: number) => {
         if (!roomId || gameState?.isComplete) return;
@@ -57,6 +86,34 @@ export default function CandyRoom() {
         emit('game:action', { roomCode: roomId, action: 'restart' });
     }, [roomId, emit]);
 
+    if (!isConnected) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+                <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
+            </div>
+        );
+    }
+
+    if (room?.status === 'waiting' && guest) {
+        return (
+            <div className="flex flex-col items-center min-h-screen bg-zinc-50 dark:bg-zinc-950 py-8 px-4">
+                <WaitingRoom
+                    roomCode={roomId as string}
+                    players={players}
+                    currentSessionId={guest.sessionId}
+                    isHost={players.find(p => p.sessionId === guest.sessionId)?.isHost || false}
+                    minPlayers={1}
+                    maxPlayers={1}
+                    onStart={handleStartGame}
+                    onLeave={handleLeaveRoom}
+                    gameTitle="Candy Chakachak"
+                    accentColor="#ec4899"
+                    headerContent={<div className="text-6xl mb-2">🍬</div>}
+                />
+            </div>
+        );
+    }
+
     if (!isConnected || !gameState) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-zinc-50 dark:bg-zinc-950">
@@ -66,7 +123,21 @@ export default function CandyRoom() {
     }
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-zinc-50 dark:bg-zinc-950 py-8 px-4">
+        <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-pink-100 dark:from-[#2a0a18] dark:via-[#1a0b1e] dark:to-[#2a0a18] relative overflow-hidden py-8 px-4">
+            {/* Background Decoration */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-full opacity-30 dark:opacity-10"
+                    style={{ backgroundImage: 'radial-gradient(#ec4899 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+                <div className="absolute -top-10 -left-10 w-64 h-64 rounded-full bg-pink-400/20 blur-3xl"></div>
+                <div className="absolute top-1/2 -right-20 w-80 h-80 rounded-full bg-purple-500/20 blur-3xl"></div>
+                <div className="absolute -bottom-20 left-1/3 w-72 h-72 rounded-full bg-yellow-400/20 blur-3xl"></div>
+
+                {/* Floating Candies */}
+                <div className="absolute top-20 left-[10%] text-6xl opacity-20 animate-pulse">🍬</div>
+                <div className="absolute bottom-20 right-[15%] text-7xl opacity-20 animate-bounce" style={{ animationDuration: '3s' }}>🍭</div>
+                <div className="absolute top-1/3 right-[5%] text-5xl opacity-20">🧁</div>
+                <div className="absolute bottom-1/3 left-[5%] text-8xl opacity-10 rotate-12">🍩</div>
+            </div>
             <div className="w-full max-w-[500px]">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-6">

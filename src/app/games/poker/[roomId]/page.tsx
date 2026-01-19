@@ -819,6 +819,7 @@ export default function PokerGameRoom() {
                         onLeave={() => router.push('/games/poker')}
                         gameTitle="Texas Hold'em Poker"
                         accentColor="#10b981"
+                        headerContent={<div className="text-6xl mb-2">🃏</div>}
                     />
                 </main>
             </div>

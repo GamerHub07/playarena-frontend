@@ -502,7 +502,8 @@ export default function ChessRoomPage() {
                 maxPlayers={2}
                 onStart={handleStartGame}
                 onLeave={handleLeaveRoom}
-                currentSessionId={""}
+                currentSessionId={guest?.sessionId || ''}
+                headerContent={<div className="text-6xl mb-2">♟️♛</div>}
               />
             </main>
           </>

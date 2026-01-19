@@ -11,9 +11,13 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
 import { DifficultySelectionModal } from '@/components/games/sudoku/DifficultySelectionModal';
+import WaitingRoom from '@/components/games/shared/WaitingRoom';
+import { roomApi } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 export default function SudokuRoom() {
     const { roomId } = useParams();
+    const router = useRouter();
     const { socket, isConnected, emit, on } = useSocket();
     const { guest } = useGuest();
 
@@ -25,6 +29,19 @@ export default function SudokuRoom() {
     const [isGameLostModalOpen, setIsGameLostModalOpen] = useState(false);
     const [now, setNow] = useState(Date.now());
 
+    const [room, setRoom] = useState<any>(null);
+    const [players, setPlayers] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (!roomId) return;
+        roomApi.get(roomId as string).then(res => {
+            if (res.success && res.data) {
+                setRoom(res.data);
+                setPlayers(res.data.players);
+            }
+        });
+    }, [roomId]);
+
     // Join Room
     useEffect(() => {
         if (!isConnected || !guest || !roomId) return;
@@ -35,6 +52,10 @@ export default function SudokuRoom() {
             username: guest.username
         });
 
+        const unsubJoined = on('room:playerJoined', (data: any) => {
+            if (data.players) setPlayers(data.players);
+        });
+
         const unsubState = on('game:state', (data: any) => {
             setGameState(data.state);
         });
@@ -42,6 +63,7 @@ export default function SudokuRoom() {
         const unsubStart = on('game:start', (data: any) => {
             console.log('Received game:start', data);
             setGameState(data.state);
+            setRoom((prev: any) => prev ? { ...prev, status: 'playing' } : prev);
         });
 
         const unsubError = on('error', (err: any) => {
@@ -49,12 +71,21 @@ export default function SudokuRoom() {
         });
 
         return () => {
+            unsubJoined();
             unsubState();
             unsubStart();
             unsubError();
             emit('room:leave', { roomCode: roomId });
         };
     }, [isConnected, guest, roomId, emit, on]);
+
+    const handleStartGame = () => {
+        emit('game:start', { roomCode: roomId });
+    };
+
+    const handleLeaveRoom = () => {
+        router.push('/');
+    };
 
     // Timer updater
     useEffect(() => {
@@ -178,6 +209,26 @@ export default function SudokuRoom() {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [activeCell, handleNumberInput, handleClearCell, gameState?.isComplete]);
 
+    if (room?.status === 'waiting' && guest) {
+        return (
+            <div className="flex flex-col items-center min-h-screen bg-zinc-50 dark:bg-zinc-950 py-8 px-4">
+                <WaitingRoom
+                    roomCode={roomId as string}
+                    players={players}
+                    currentSessionId={guest.sessionId}
+                    isHost={players.find(p => p.sessionId === guest.sessionId)?.isHost || false}
+                    minPlayers={1}
+                    maxPlayers={1}
+                    onStart={handleStartGame}
+                    onLeave={handleLeaveRoom}
+                    gameTitle="Sudoku"
+                    accentColor="#f97316"
+                    headerContent={<div className="text-6xl mb-2">🔢</div>}
+                />
+            </div>
+        );
+    }
+
     // Helper to format time
     const formatTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -201,7 +252,15 @@ export default function SudokuRoom() {
         : null;
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-zinc-50 dark:bg-zinc-950 py-8 px-4">
+        <div className="flex flex-col items-center min-h-screen bg-[#fff7ed] dark:bg-[#1c1917] relative overflow-hidden py-8 px-4 transition-colors duration-500">
+            {/* Background Decoration - Zen Circles/Grid */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.03] dark:opacity-[0.05]">
+                <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full border-[20px] border-orange-500/20"></div>
+                <div className="absolute top-1/2 -right-20 w-80 h-80 rounded-full bg-orange-500/10 blur-3xl"></div>
+                <div className="absolute bottom-0 left-1/3 w-64 h-64 rounded-full bg-yellow-500/10 blur-3xl"></div>
+                {/* Grid Pattern */}
+                <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, #f97316 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+            </div>
             <div className="w-full max-w-2xl flex flex-col items-center">
 
                 {/* Header */}
