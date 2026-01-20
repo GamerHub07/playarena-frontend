@@ -10,6 +10,7 @@ import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import { roomApi } from '@/lib/api';
 import { Loader2, RefreshCw, Trophy, Target, Move } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import Header from '@/components/layout/Header';
 
 export default function CandyRoom() {
     const { roomId } = useParams();
@@ -123,7 +124,8 @@ export default function CandyRoom() {
     }
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-pink-100 dark:from-[#2a0a18] dark:via-[#1a0b1e] dark:to-[#2a0a18] relative overflow-hidden py-8 px-4">
+        <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-pink-100 dark:from-[#2a0a18] dark:via-[#1a0b1e] dark:to-[#2a0a18] relative overflow-hidden pt-24 pb-8 px-4">
+            <Header />
             {/* Background Decoration */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-0 w-full h-full opacity-30 dark:opacity-10"

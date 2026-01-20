@@ -156,8 +156,8 @@ export default function SudokuPage() {
                     </div>
 
                     {/* Action Cards */}
-                    <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-                        <Card className="p-8 text-center">
+                    <div className="flex justify-center max-w-2xl mx-auto">
+                        <Card className="p-8 text-center w-full max-w-md">
                             <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                                 <span className="text-3xl">🔢</span>
                             </div>
@@ -169,21 +169,6 @@ export default function SudokuPage() {
                                 className="w-full"
                             >
                                 Start Game
-                            </Button>
-                        </Card>
-
-                        <Card className="p-8 text-center">
-                            <div className="w-16 h-16 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <span className="text-3xl">🏆</span>
-                            </div>
-                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Join Challenge</h2>
-                            <p className="text-sm text-[var(--text-muted)] mb-6">Enter code to join a Sudoku race</p>
-                            <Button
-                                variant="secondary"
-                                onClick={openJoinModal}
-                                className="w-full"
-                            >
-                                Join Room
                             </Button>
                         </Card>
                     </div>

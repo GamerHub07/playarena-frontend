@@ -12,6 +12,7 @@ import { Game2048State, Direction } from '@/types/game2048';
 import { calculateNextState } from '@/lib/games/2048/logic';
 import { Loader2, RefreshCw, Trophy } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import Header from '@/components/layout/Header';
 
 export default function Room2048() {
     const { roomId } = useParams();
@@ -164,7 +165,8 @@ export default function Room2048() {
     }
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-[#faf8ef] dark:bg-[#1e1e18] relative overflow-hidden py-8 px-4">
+        <div className="flex flex-col items-center min-h-screen bg-[#faf8ef] dark:bg-[#1e1e18] relative overflow-hidden pt-24 pb-8 px-4">
+            <Header />
             {/* Background Decoration */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5">
                 <div className="absolute top-20 left-10 text-8xl font-bold text-[#776e65]">2</div>
