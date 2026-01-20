@@ -140,7 +140,7 @@ export default function CandyRoom() {
                 <div className="absolute top-1/3 right-[5%] text-5xl opacity-20">🧁</div>
                 <div className="absolute bottom-1/3 left-[5%] text-8xl opacity-10 rotate-12">🍩</div>
             </div>
-            <div className="w-full max-w-[500px]">
+            <div className="w-full max-w-[95vw] sm:max-w-[500px] lg:max-w-[600px] mx-auto">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-6">
                     <div>

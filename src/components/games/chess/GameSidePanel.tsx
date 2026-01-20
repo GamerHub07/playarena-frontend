@@ -46,7 +46,7 @@ export default function GameSidePanel({
     const [activeTab, setActiveTab] = useState<"moves" | "themes">("moves");
 
     return (
-        <div className="flex flex-col bg-[#262522] rounded overflow-hidden" style={{ width: 340, height: 848 }}>
+        <div className="flex flex-col bg-[#262522] rounded overflow-hidden w-full h-auto lg:h-[600px] max-h-[50vh] lg:max-h-none">
             {/* Tabs */}
             <div className="flex border-b border-[#3d3935]">
                 <button

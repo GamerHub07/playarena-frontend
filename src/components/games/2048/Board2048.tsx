@@ -16,7 +16,7 @@ export const Board2048 = ({ grid }: Board2048Props) => {
     });
 
     return (
-        <div className="relative w-full max-w-[500px] aspect-square bg-[#bbada0] rounded p-1 md:p-2">
+        <div className="relative w-full aspect-square bg-[#bbada0] rounded-lg p-1 md:p-2">
             {/* Background Grid */}
             <div className="grid grid-cols-4 grid-rows-4 w-full h-full gap-2 md:gap-3">
                 {Array(16).fill(null).map((_, i) => (

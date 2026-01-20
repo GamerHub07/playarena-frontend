@@ -136,7 +136,7 @@ export default function MemoryRoom() {
                 {/* Grid Pattern */}
                 <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(30deg, #6366f1 1px, transparent 1px)', backgroundSize: '50px 50px', opacity: 0.2 }}></div>
             </div>
-            <div className="w-full max-w-[500px]">
+            <div className="w-full max-w-[95vw] sm:max-w-[500px] lg:max-w-[700px] mx-auto">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-8">
                     <div>
