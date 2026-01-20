@@ -173,6 +173,9 @@ export default function HomePage() {
                             </motion.div> */}
 
                             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.9] mb-6 text-foreground">
+                                <span className="sr-only">
+                                    VersusArena – Play Multiplayer Games Online
+                                </span>
                                 <span className="block overflow-hidden">
                                     <motion.span
                                         initial={{ y: "100%" }}
@@ -280,6 +283,7 @@ export default function HomePage() {
                                                         src={game.image}
                                                         alt={game.title}
                                                         fill
+                                                        priority={index === 0}
                                                         className="object-cover"
                                                         draggable={false}
                                                     />
@@ -461,9 +465,19 @@ export default function HomePage() {
                             ))}
                         </div>
                     </div>
+                    <div className="sr-only">
+                        <a href="/games/ludo">Play Ludo Online</a>
+                        <a href="/games/poker">Play Poker Online</a>
+                        <a href="/games/chess">Play Chess Online</a>
+                        <a href="/games/monopoly">Play Business Online</a>
+                        <a href="/games/monopoly">Play Monopoly Online</a>
+                        <a href="/games/sudoku">Play Sudoku Online</a>
+                        <a href="/games/snake-ladder">Play Snake Ladder Online</a>
+                        <a href="/games/tictactoe">Play Tic Tac Toe Online</a>
+                        <a href="/games/memory">Play Memory Game Online</a>
+                    </div>
                 </section>
             </main>
-
             <Footer />
         </div>
     );
