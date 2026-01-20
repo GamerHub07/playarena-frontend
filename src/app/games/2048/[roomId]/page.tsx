@@ -175,7 +175,7 @@ export default function Room2048() {
                 <div className="absolute bottom-40 right-10 text-[10rem] font-bold text-[#f59563]">16</div>
                 <div className="absolute top-1/2 left-10 text-8xl font-bold text-[#f67c5f]">32</div>
             </div>
-            <div className="w-full max-w-[500px]">
+            <div className="w-full max-w-[95vw] sm:max-w-[500px] lg:max-w-[600px] mx-auto">
                 {/* Header */}
                 <div className="flex justify-between items-start mb-8">
                     <div>
