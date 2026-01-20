@@ -3,8 +3,8 @@ import { ImageResponse } from 'next/og'
 
 // Image metadata
 export const size = {
-  width: 32,
-  height: 32,
+  width: 48,
+  height: 48,
 }
 export const contentType = 'image/png'
 
@@ -22,12 +22,12 @@ export default function Icon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: '8px',
+          borderRadius: '12px', // Increased radius for larger size
         }}
       >
         <svg
-          width="24"
-          height="24"
+          width="32"
+          height="32"
           viewBox="0 0 40 40"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
