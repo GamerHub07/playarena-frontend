@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import { useGuest } from '@/hooks/useGuest';
 import { SudokuBoard } from '@/components/games/sudoku/SudokuBoard';
@@ -13,7 +13,7 @@ import Button from '@/components/ui/Button';
 import { DifficultySelectionModal } from '@/components/games/sudoku/DifficultySelectionModal';
 import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import { roomApi } from '@/lib/api';
-import { useRouter } from 'next/navigation';
+import Header from '@/components/layout/Header';
 
 export default function SudokuRoom() {
     const { roomId } = useParams();
@@ -252,7 +252,8 @@ export default function SudokuRoom() {
         : null;
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-[#fff7ed] dark:bg-[#1c1917] relative overflow-hidden py-8 px-4 transition-colors duration-500">
+        <div className="flex flex-col items-center min-h-screen bg-[#fff7ed] dark:bg-[#1c1917] relative overflow-hidden pt-24 pb-8 px-4 transition-colors duration-500">
+            <Header />
             {/* Background Decoration - Zen Circles/Grid */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-[0.03] dark:opacity-[0.05]">
                 <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full border-[20px] border-orange-500/20"></div>

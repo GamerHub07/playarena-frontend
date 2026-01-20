@@ -10,6 +10,7 @@ import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import { roomApi } from '@/lib/api';
 import { Loader2, RefreshCw, Trophy } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import Header from '@/components/layout/Header';
 
 export default function MemoryRoom() {
     const { roomId } = useParams();
@@ -123,7 +124,8 @@ export default function MemoryRoom() {
     }
 
     return (
-        <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50 to-slate-100 dark:from-[#0f1020] dark:via-[#151730] dark:to-[#0f1020] relative overflow-hidden py-8 px-4">
+        <div className="flex flex-col items-center min-h-screen bg-gradient-to-br from-slate-100 via-indigo-50 to-slate-100 dark:from-[#0f1020] dark:via-[#151730] dark:to-[#0f1020] relative overflow-hidden pt-24 pb-8 px-4">
+            <Header />
             {/* Background Decoration */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5 dark:opacity-10">
                 <div className="absolute top-10 left-10 text-9xl font-black text-indigo-500 -rotate-12 select-none">?</div>
