@@ -57,6 +57,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://versusarenas.in",
   },
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+  },
 };
 
 // JSON-LD Structured Data for the homepage
@@ -149,11 +153,11 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <Providers>
+          <Providers>
+            <AuthProvider>
               {children}
-            </Providers>
-          </AuthProvider>
+            </AuthProvider>
+          </Providers>
           <Analytics />
         </ThemeProvider>
       </body>

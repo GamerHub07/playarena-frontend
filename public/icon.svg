@@ -1,29 +1,21 @@
-<svg width="32" height="32" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="logo-gradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor="#D97706" />
-      <stop offset="100%" stopColor="#7e22ce" />
+    <linearGradient id="fire-gradient" x1="0" y1="5" x2="32" y2="27" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fcd34d" />   <!-- Light Amber -->
+      <stop offset="50%" stop-color="#f97316" />  <!-- Bright Orange -->
+      <stop offset="100%" stop-color="#db2777" /> <!-- Pink/Red -->
     </linearGradient>
   </defs>
-  <path
-    d="M8 12 L20 34 L32 12"
-    stroke="url(#logo-gradient)"
-    strokeWidth="4"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  />
-  <path
-    d="M14 23 L26 23"
-    stroke="#7e22ce"
-    strokeWidth="3"
-    strokeLinecap="round"
-  />
-  <rect
-    x="18"
-    y="8"
-    width="4"
-    height="4"
-    transform="rotate(45 20 10)"
-    fill="#7e22ce"
-  />
+  
+  <!-- Gamepad Body (Full Width) -->
+  <rect x="0" y="5" width="32" height="22" rx="6" fill="url(#fire-gradient)"/>
+  
+  <!-- D-Pad Outline (Moved Inwards) -->
+  <path d="M9 12v8M5 16h8" stroke="#9d174d" stroke-width="4" stroke-linecap="round"/>
+  <!-- D-Pad Main -->
+  <path d="M9 12v8M5 16h8" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+  
+  <!-- Buttons (Moved Inwards) -->
+  <circle cx="23" cy="17" r="2.5" fill="#ffffff" stroke="#9d174d" stroke-width="1"/>
+  <circle cx="27" cy="13" r="2.5" fill="#ffffff" stroke="#9d174d" stroke-width="1"/>
 </svg>
