@@ -12,7 +12,8 @@ import {
     Heart,
     Headset
 } from 'lucide-react';
-import { FaTwitter, FaDiscord, FaGithub } from 'react-icons/fa';
+import { FaDiscord, FaInstagram } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 
 const FOOTER_LINKS = {
     Games: [
@@ -37,9 +38,9 @@ const FOOTER_LINKS = {
 };
 
 const SOCIALS = [
-    { icon: FaTwitter, href: '#', label: 'Twitter', color: 'hover:text-[#1DA1F2]' },
+    { icon: FaXTwitter, href: 'https://x.com/VersusAren11483', label: 'X', target: '_blank', color: 'hover:text-foreground' },
     { icon: FaDiscord, href: '#', label: 'Discord', color: 'hover:text-[#5865F2]' },
-    { icon: FaGithub, href: '#', label: 'Github', color: 'hover:text-foreground' },
+    { icon: FaInstagram, href: 'https://www.instagram.com/versusarenaog?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==', label: 'Instagram', target: '_blank', color: 'hover:text-[#E1306C]' },
 ];
 
 export default function Footer() {

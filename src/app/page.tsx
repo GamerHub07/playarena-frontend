@@ -535,15 +535,26 @@ export default function HomePage() {
                     </div>
 
                     <div className="sr-only">
-                        <a href="/games/ludo">Play Ludo Online</a>
-                        <a href="/games/poker">Play Poker Online</a>
-                        <a href="/games/chess">Play Chess Online</a>
-                        <a href="/games/monopoly">Play Business Online</a>
-                        <a href="/games/monopoly">Play Monopoly Online</a>
-                        <a href="/games/sudoku">Play Sudoku Online</a>
-                        <a href="/games/snake-ladder">Play Snake Ladder Online</a>
-                        <a href="/games/tictactoe">Play Tic Tac Toe Online</a>
-                        <a href="/games/memory">Play Memory Game Online</a>
+                        <h3>About VersusArenas</h3>
+                        <p>
+                            VersusArenas is the best platform to play free online multiplayer games with friends.
+                            Enjoy classic board games like Ludo, Snakes and Ladders, Business (Monopoly), and Chess without any downloads or registration.
+                            Create private rooms, challenge your friends, and play instantly in your browser.
+                            Whether you are looking for 2 player games, 4 player games, or strategy games, VersusArenas has it all.
+                            Join the fun and start gaming today!
+                        </p>
+                        <ul>
+                            <li><a href="/games/ludo">Play Ludo Online Multiplayer Free</a></li>
+                            <li><a href="/games/poker">Play Poker Online with Friends</a></li>
+                            <li><a href="/games/chess">Play Chess Online Two Player</a></li>
+                            <li><a href="/games/monopoly">Play Business Board Game Online</a></li>
+                            <li><a href="/games/snake-ladder">Snakes and Ladders Online Multiplayer</a></li>
+                            <li><a href="/games/tictactoe">Tic Tac Toe Online 2 Player</a></li>
+                            <li><a href="/games/sudoku">Free Online Sudoku Puzzles</a></li>
+                            <li><a href="/games/2048">Play 2048 Game Online</a></li>
+                            <li><a href="/games/memory">Memory Card Game Online</a></li>
+                            <li><a href="/games/candy-curse">Play Candy Curse Match 3 Game</a></li>
+                        </ul>
                     </div>
                 </section>
             </main>
