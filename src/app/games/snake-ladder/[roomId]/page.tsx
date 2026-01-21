@@ -730,7 +730,7 @@ export default function SnakeLadderRoomPage() {
 
                                     {/* Click token prompt - shows when it's time to move */}
                                     {gameState.turnPhase === 'move' && gameState.currentPlayer === myPlayerIndex && !animatingToken && (
-                                        <div className="mt-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/50 animate-pulse">
+                                        <div className="mt-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600/20 to-yellow-500/20 border border-amber-500/50 animate-pulse">
                                             <p className="text-sm text-amber-200 font-bold text-center drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]">
                                                 👆 Click your token to move {gameState.diceValue} spaces!
                                             </p>

@@ -345,7 +345,7 @@ export function evaluateHand(holeCards: Card[], communityCards: Card[]): HandEva
             rank: 'Two Pair',
             description: 'Two Pair',
             strength: 3,
-            color: '#3b82f6',
+            color: '#D97706',
             emoji: '✌️'
         };
     }

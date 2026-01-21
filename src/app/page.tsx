@@ -6,7 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import { Gamepad2, Users, User } from 'lucide-react';
+import { Gamepad2, Users, User, Sparkles, ArrowRight, CheckCircle } from 'lucide-react';
 import { HeroBackground } from '@/components/landing/HeroBackground';
 
 interface Game {
@@ -426,45 +426,114 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                {/* How It Works Section (Simplified) */}
-                <section id="how-it-works" className="py-20 md:py-32 bg-background relative overflow-hidden">
-                    <div className="container mx-auto px-4 relative z-10">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="text-center max-w-3xl mx-auto mb-20"
-                        >
-                            <h2 className="text-4xl md:text-5xl font-black text-foreground mb-6">SIMPLE AS 1-2-3</h2>
-                            <p className="text-xl text-muted-foreground">
-                                No registration. No download. Just share a link and play.
-                            </p>
-                        </motion.div>
+                {/* How It Works Section */}
+                <section id="how-it-works" className="py-24 md:py-40 bg-background relative overflow-hidden">
+                    {/* Ambient Decorations */}
+                    <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
 
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {[
-                                { title: 'Pick a Name', desc: 'Choose any username. No passwords needed.', step: '01' },
-                                { title: 'Create Room', desc: 'Get a unique code to share with friends.', step: '02' },
-                                { title: 'Start Playing', desc: 'Wait for them to join and let the fun begin!', step: '03' },
-                            ].map((item, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    whileHover={{ y: -10 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: i * 0.2 }}
-                                    className="bg-surface p-10 rounded-3xl border border-border relative overflow-hidden group hover:border-primary/30 transition-colors"
-                                >
-                                    <div className="absolute top-0 right-0 p-8 opacity-10 font-black text-8xl text-foreground select-none group-hover:opacity-20 transition-opacity">
-                                        {item.step}
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-foreground mb-4 relative z-10">{item.title}</h3>
-                                    <p className="text-muted-foreground leading-relaxed relative z-10">{item.desc}</p>
-                                </motion.div>
-                            ))}
+                    <div className="container mx-auto px-6 relative z-10">
+                        <div className="flex flex-col items-center mb-24 text-center">
+
+
+                            <motion.h2
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                className="text-4xl md:text-7xl font-black text-foreground mb-8 tracking-tighter"
+                            >
+                                READY TO <span className="text-primary tracking-tight">VERSUS</span>?
+                            </motion.h2>
+
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 }}
+                                className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed font-medium"
+                            >
+                                Skip the downloads and messy registrations. We've built the fastest way to get your crew into the game.
+                            </motion.p>
                         </div>
+
+                        <div className="relative">
+                            {/* Connecting Line (Desktop) */}
+                            <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-border to-transparent hidden lg:block -translate-y-12" />
+
+                            <div className="grid md:grid-cols-3 gap-12 lg:gap-16 relative z-10">
+                                {[
+                                    {
+                                        title: 'Identify Yourself',
+                                        desc: 'Pick a unique username. No passwords, no credit cards, zero friction.',
+                                        icon: User,
+                                        step: '01',
+                                        color: 'bg-primary'
+                                    },
+                                    {
+                                        title: 'Assemble Squad',
+                                        desc: 'Create a private room and get a unique link to share with your friends.',
+                                        icon: Users,
+                                        step: '02',
+                                        color: 'bg-secondary'
+                                    },
+                                    {
+                                        title: 'Enter the Arena',
+                                        desc: 'Wait for the lobby to fill and dive into high-stakes classic gaming.',
+                                        icon: Gamepad2,
+                                        step: '03',
+                                        color: 'bg-accent'
+                                    },
+                                ].map((item, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, y: 40 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: i * 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                                        className="relative group"
+                                    >
+                                        <div className="flex flex-col items-center text-center">
+                                            {/* Icon Circle */}
+                                            <div className="relative mb-8">
+                                                <motion.div
+                                                    whileHover={{ scale: 1.1, rotate: 5 }}
+                                                    className={`w-24 h-24 rounded-[2.5rem] ${item.color}/10 border border-${item.color}/20 flex items-center justify-center text-${item.color} relative z-10 shadow-xl backdrop-blur-sm group-hover:border-${item.color}/40 transition-colors`}
+                                                >
+                                                    <item.icon size={36} strokeWidth={1.5} />
+                                                </motion.div>
+
+                                                {/* Step Number Badge */}
+                                                <div className={`absolute -top-3 -right-3 w-10 h-10 rounded-2xl bg-surface border border-border flex items-center justify-center text-sm font-black shadow-lg z-20 group-hover:text-primary transition-colors`}>
+                                                    {item.step}
+                                                </div>
+
+                                                {/* Ambient Background Glow */}
+                                                <div className={`absolute inset-0 ${item.color}/20 blur-2xl rounded-full scale-50 group-hover:scale-100 transition-transform duration-700 opacity-0 group-hover:opacity-100`} />
+                                            </div>
+
+                                            <h3 className="text-2xl md:text-3xl font-black text-foreground mb-4 tracking-tight group-hover:text-primary transition-colors duration-300">
+                                                {item.title}
+                                            </h3>
+
+                                            <p className="text-muted-foreground leading-relaxed font-medium max-w-xs">
+                                                {item.desc}
+                                            </p>
+
+                                            {/* Flow Indicator (Desktop) */}
+                                            {i < 2 && (
+                                                <div className="absolute top-12 left-[calc(100%+2rem)] hidden lg:flex items-center text-border pointer-events-none">
+                                                    <ArrowRight size={24} className="" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+
+
                     </div>
+
                     <div className="sr-only">
                         <a href="/games/ludo">Play Ludo Online</a>
                         <a href="/games/poker">Play Poker Online</a>

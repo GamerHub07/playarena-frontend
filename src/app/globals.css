@@ -11,18 +11,20 @@
     /* Soft beige/grey for cards */
     --surface-alt: #EAE8E0;
 
-    /* Bold Solid Colors */
-    --primary: #3B82F6;
-    --secondary: #F59E0B;
-    --accent: #EC4899;
-    --success: #10B981;
+    /* Bold Solid Colors - Rich Amber-600 */
+    --primary: oklch(66.6% 0.179 58.318);
+    --secondary: oklch(45% 0.05 250);
+    /* Slate balance */
+    --accent: oklch(49.6% 0.265 301.924);
+    /* Purple-700 */
+    --success: #059669;
     --dark: #1E1B18;
     /* Softer black */
 
     --border: #E6E2D8;
     --text: #1E1B18;
-    --text-muted: #78716C;
-    /* Warm gray */
+    --text-muted: #716B64;
+    /* Warm walnut gray */
 }
 
 .dark {
@@ -31,14 +33,15 @@
     --surface: #292524;
     --surface-alt: #44403C;
 
-    --primary: #60A5FA;
-    --secondary: #FBBF24;
-    --accent: #F472B6;
+    --primary: oklch(66.6% 0.179 58.318);
+    --secondary: #94A3B8;
+    --accent: oklch(55% 0.25 301.924);
+    /* Slightly lighter purple for dark mode visibility */
     --success: #34D399;
     --dark: #FAFAF9;
 
     --border: #44403C;
-    --text: #E7E5E4;
+    --text: #F5F5F4;
     --text-muted: #A8A29E;
 }
 
