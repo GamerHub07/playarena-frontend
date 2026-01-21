@@ -538,6 +538,7 @@ export default function ChessRoomPage() {
                     pieceTheme={pieceTheme}
                     size={800}
                     winner={isFinished ? gameState.winner : null}
+                    isInCheck={gameState.status === "check"}
                   />
                   {/* History Mode Indicator */}
                   {isViewingHistory && (
