@@ -2,55 +2,63 @@
 
 import * as React from "react"
 import { useTheme } from "next-themes"
+import { motion, AnimatePresence } from "framer-motion"
+import { Sun, Moon } from "lucide-react"
 
 export function ThemeToggle() {
     const { setTheme, theme } = useTheme()
+    const [mounted, setMounted] = React.useState(false)
+
+    // Avoid hydration mismatch
+    React.useEffect(() => setMounted(true), [])
+    if (!mounted) return <div className="w-14 h-8" />
+
+    const isDark = theme === "dark"
 
     return (
         <button
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="relative p-2 rounded-full bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 transition-colors backdrop-blur-sm border border-black/5 dark:border-white/10 group"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            className="relative w-14 h-8 flex items-center p-1 rounded-full bg-surface-alt/40 border border-border/40 backdrop-blur-md cursor-pointer transition-colors hover:border-primary/30 group overflow-hidden"
             aria-label="Toggle theme"
         >
-            <div className="relative w-5 h-5">
-                {/* Sun Icon */}
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="absolute inset-0 w-full h-full text-amber-500 transition-all duration-300 rotate-0 scale-100 dark:-rotate-90 dark:scale-0"
-                >
-                    <circle cx="12" cy="12" r="5" />
-                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                </svg>
+            {/* Background Sliding Indicator */}
+            <motion.div
+                className="absolute w-6 h-6 rounded-full bg-white dark:bg-primary shadow-sm dark:shadow-[0_0_15px_rgba(234,179,8,0.4)] z-0"
+                animate={{
+                    x: isDark ? 24 : 0,
+                }}
+                transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 30
+                }}
+            />
 
-                {/* Moon Icon */}
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="absolute inset-0 w-full h-full text-indigo-400 transition-all duration-300 rotate-90 scale-0 dark:rotate-0 dark:scale-100"
+            {/* Icons Container */}
+            <div className="relative flex justify-between items-center w-full px-1 z-10 pointer-events-none">
+                <motion.div
+                    animate={{
+                        scale: isDark ? 0.7 : 1,
+                        opacity: isDark ? 0.5 : 1,
+                        rotate: isDark ? -45 : 0
+                    }}
                 >
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    <path d="M12 2v1" className="opacity-0 dark:opacity-50" />
-                    <path d="M12 21v1" className="opacity-0 dark:opacity-50" />
-                    <path d="M4.22 4.22l.71.71" className="opacity-0 dark:opacity-50" />
-                    <path d="M19.07 19.07l.71.71" className="opacity-0 dark:opacity-50" />
-                    <path d="M1 12h1" className="opacity-0 dark:opacity-50" />
-                    <path d="M22 12h1" className="opacity-0 dark:opacity-50" />
-                    <path d="M4.22 19.78l.71-.71" className="opacity-0 dark:opacity-50" />
-                    <path d="M19.07 4.93l.71-.71" className="opacity-0 dark:opacity-50" />
-                </svg>
+                    <Sun size={14} className={isDark ? "text-text-muted" : "text-amber-500"} fill={isDark ? "none" : "currentColor"} />
+                </motion.div>
+
+                <motion.div
+                    animate={{
+                        scale: isDark ? 1 : 0.7,
+                        opacity: isDark ? 1 : 0.5,
+                        rotate: isDark ? 0 : 45
+                    }}
+                >
+                    <Moon size={14} className={isDark ? "text-white" : "text-text-muted"} fill={isDark ? "currentColor" : "none"} />
+                </motion.div>
             </div>
-            <span className="sr-only">Toggle theme</span>
+
+            {/* Subtle Gradient Overlay on Hover */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-500 pointer-events-none" />
         </button>
     )
 }

@@ -321,7 +321,7 @@ function PlayerSeat({
                     border: isMe
                         ? '2px solid #10B981' // Emerald-500
                         : isCurrentTurn
-                            ? '2px solid #FBBF24' // Amber-400
+                            ? '2px solid #F59E0B' // Amber-500
                             : '1px solid rgba(148, 163, 184, 0.2)', // Slate-400, low opacity
                     boxShadow: isCurrentTurn ? '0 0 15px rgba(251, 191, 36, 0.1)' : 'none',
                     minWidth: '140px',

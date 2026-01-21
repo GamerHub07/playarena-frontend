@@ -251,7 +251,7 @@ export default function SnakeLadderBoard({
                             { body: '#4ADE80', bodyDark: '#22C55E', belly: '#86EFAC', spots: '#166534', cheek: '#FB7185' }, // Happy Green
                             { body: '#FB923C', bodyDark: '#F97316', belly: '#FED7AA', spots: '#C2410C', cheek: '#F472B6' }, // Friendly Orange  
                             { body: '#F87171', bodyDark: '#EF4444', belly: '#FECACA', spots: '#B91C1C', cheek: '#FDA4AF' }, // Cute Red
-                            { body: '#60A5FA', bodyDark: '#3B82F6', belly: '#BFDBFE', spots: '#1E40AF', cheek: '#F9A8D4' }, // Cool Blue
+                            { body: '#D97706', bodyDark: '#D97706', belly: '#FEF3C7', spots: '#92400E', cheek: '#F9A8D4' }, // Happy Amber
                             { body: '#C084FC', bodyDark: '#A855F7', belly: '#E9D5FF', spots: '#7E22CE', cheek: '#FBCFE8' }, // Playful Purple
                         ];
                         const theme = cartoonThemes[index % cartoonThemes.length];
