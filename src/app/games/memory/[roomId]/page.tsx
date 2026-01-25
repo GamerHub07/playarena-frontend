@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import { useGuest } from '@/hooks/useGuest';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { MemoryState, MemoryCard as MemoryCardType } from '@/types/memory';
 import { MemoryBoard } from '@/components/games/memory/MemoryBoard';
 import WaitingRoom from '@/components/games/shared/WaitingRoom';
@@ -21,6 +22,11 @@ export default function MemoryRoom() {
     const [gameState, setGameState] = useState<MemoryState | null>(null);
     const [room, setRoom] = useState<any>(null);
     const [players, setPlayers] = useState<any[]>([]);
+
+    // Sound effects
+    const { playCardFlip, playMatch, playMismatch, playWin } = useSoundEffects();
+    const prevMatchesRef = useRef<number>(0);
+    const prevFlippedCountRef = useRef<number>(0);
 
     // Fetch room data
     useEffect(() => {
@@ -53,7 +59,30 @@ export default function MemoryRoom() {
         });
 
         const unsubState = on('game:state', (data: any) => {
-            setGameState(data.state);
+            const newState = data.state as MemoryState;
+
+            // Check for match (matches increased)
+            if (newState?.matches > prevMatchesRef.current) {
+                playMatch();
+                prevMatchesRef.current = newState.matches;
+            }
+
+            // Check for mismatch (cards flipped back - less cards facing up than before)
+            const flippedCount = newState?.cards?.filter((c: MemoryCardType) => c.isFlipped && !c.isMatched).length || 0;
+            if (flippedCount === 0 && prevFlippedCountRef.current === 2) {
+                // Only play mismatch if we had 2 cards flipped and now have 0 (not a match)
+                if (newState?.matches === prevMatchesRef.current) {
+                    playMismatch();
+                }
+            }
+            prevFlippedCountRef.current = flippedCount;
+
+            // Check for game win
+            if (newState?.isComplete && !gameState?.isComplete) {
+                playWin();
+            }
+
+            setGameState(newState);
         });
 
         return () => {
@@ -62,7 +91,7 @@ export default function MemoryRoom() {
             unsubState();
             emit('room:leave', { roomCode: roomId });
         };
-    }, [isConnected, guest, roomId, emit, on]);
+    }, [isConnected, guest, roomId, emit, on, playMatch, playMismatch, playWin, gameState?.isComplete]);
 
     const handleStartGame = () => {
         emit('game:start', { roomCode: roomId });
@@ -75,12 +104,14 @@ export default function MemoryRoom() {
     const handleCardClick = useCallback((card: MemoryCardType) => {
         if (!roomId || card.isFlipped || card.isMatched) return;
 
+        playCardFlip(); // Play flip sound
+
         emit('game:action', {
             roomCode: roomId,
             action: 'flip',
             data: { cardId: card.id }
         });
-    }, [roomId, emit]);
+    }, [roomId, emit, playCardFlip]);
 
     const handleRestart = useCallback(() => {
         if (!roomId) return;

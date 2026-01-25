@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import { useGuest } from '@/hooks/useGuest';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { Board2048 } from '@/components/games/2048/Board2048';
 import { GameOverlay2048 } from '@/components/games/2048/GameOverlay2048';
 import WaitingRoom from '@/components/games/shared/WaitingRoom';
@@ -22,6 +23,12 @@ export default function Room2048() {
 
     const [gameState, setGameState] = useState<Game2048State | null>(null);
     const [lastActionTime, setLastActionTime] = useState(0);
+
+    // Sound effects
+    const { playTileSlide, playTileMerge, playWin, playLose } = useSoundEffects();
+    const prevScoreRef = useRef<number>(0);
+    const prevWonRef = useRef<boolean>(false);
+    const prevGameOverRef = useRef<boolean>(false);
 
     const [room, setRoom] = useState<any>(null);
     const [players, setPlayers] = useState<any[]>([]);
@@ -56,7 +63,21 @@ export default function Room2048() {
         });
 
         const unsubState = on('game:state', (data: any) => {
-            setGameState(data.state);
+            const newState = data.state as Game2048State;
+
+            // Check for win (reached 2048)
+            if (newState?.won && !prevWonRef.current) {
+                playWin();
+                prevWonRef.current = true;
+            }
+
+            // Check for game over
+            if (newState?.gameOver && !prevGameOverRef.current) {
+                playLose();
+                prevGameOverRef.current = true;
+            }
+
+            setGameState(newState);
         });
 
         return () => {
@@ -65,7 +86,7 @@ export default function Room2048() {
             unsubState();
             emit('room:leave', { roomCode: roomId });
         };
-    }, [isConnected, guest, roomId, emit, on]);
+    }, [isConnected, guest, roomId, emit, on, playWin, playLose]);
 
     const handleStartGame = () => {
         emit('game:start', { roomCode: roomId });
@@ -111,6 +132,14 @@ export default function Room2048() {
                 const optimisticState = calculateNextState(gameState, direction);
 
                 if (optimisticState) {
+                    // Play slide sound
+                    playTileSlide();
+
+                    // Check if score increased (merge happened)
+                    if (optimisticState.score > gameState.score) {
+                        setTimeout(() => playTileMerge(), 50);
+                    }
+
                     // Apply local state immediately (slide/merge happens instantly)
                     setGameState(optimisticState);
 
