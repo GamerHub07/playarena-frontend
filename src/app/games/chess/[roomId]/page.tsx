@@ -50,6 +50,9 @@ export default function ChessRoomPage() {
   const [viewMoveIndex, setViewMoveIndex] = useState<number | null>(null);
   const [rematchOffer, setRematchOffer] = useState<{ from: string; username: string } | null>(null);
   const [rematchRejectedNotif, setRematchRejectedNotif] = useState(false);
+  const [rematchPending, setRematchPending] = useState(false);
+  const [showResignConfirm, setShowResignConfirm] = useState(false);
+  const [resignedBy, setResignedBy] = useState<string | null>(null);
 
   const currentPlayer = players.find((p) => p.sessionId === guest?.sessionId);
   const isHost = currentPlayer?.isHost ?? false;
@@ -204,7 +207,11 @@ export default function ChessRoomPage() {
     const unsubAborted = on("game:aborted", (data: any) => {
       setAbortedBy(data.by || "a player");
       setRoom((prev) => prev && { ...prev, status: "finished" });
-      setTimeout(() => setAbortedBy(null), 5000);
+    });
+
+    const unsubResigned = on("game:resigned", (data: any) => {
+      setResignedBy(data.by || "a player");
+      setRoom((prev) => prev && { ...prev, status: "finished" });
     });
 
     const unsubRematchOffer = on("game:rematchOffer", (data: any) => {
@@ -213,6 +220,7 @@ export default function ChessRoomPage() {
 
     const unsubRematchAccepted = on("game:rematchAccepted", () => {
       setRematchOffer(null);
+      setRematchPending(false);
       setWhiteTime(selectedTime * 60);
       setBlackTime(selectedTime * 60);
       setTimerStarted(false);
@@ -221,6 +229,7 @@ export default function ChessRoomPage() {
 
     const unsubRematchRejected = on("game:rematchRejected", () => {
       setRematchOffer(null);
+      setRematchPending(false);
       setRematchRejectedNotif(true);
       setTimeout(() => setRematchRejectedNotif(false), 3000);
     });
@@ -241,6 +250,7 @@ export default function ChessRoomPage() {
       unsubDrawAccepted();
       unsubDrawRejected();
       unsubAborted();
+      unsubResigned();
       unsubRematchOffer();
       unsubRematchAccepted();
       unsubRematchRejected();
@@ -343,7 +353,25 @@ export default function ChessRoomPage() {
     setShowAbortConfirm(false);
   };
 
+  const handleResign = () => {
+    setShowResignConfirm(true);
+  };
+
+  const confirmResign = () => {
+    emit("game:action", {
+      roomCode,
+      action: "resign",
+      payload: { username: guest?.username },
+    });
+    setShowResignConfirm(false);
+  };
+
+  const cancelResign = () => {
+    setShowResignConfirm(false);
+  };
+
   const handleOfferRematch = () => {
+    setRematchPending(true);
     emit("game:action", {
       roomCode,
       action: "offerRematch",
@@ -369,6 +397,60 @@ export default function ChessRoomPage() {
     return null;
   };
 
+  // Determine game end reason
+  const getGameEndReason = (): "checkmate" | "timeout" | "resign" | "draw" | "stalemate" | "abort" | null => {
+    if (!isFinished) return null;
+    // Check gameState status first (from backend) - checkmate has priority
+    if (gameState?.status === "checkmate" && gameState?.winner) return "checkmate";
+    if (gameState?.status === "draw") return "draw";
+    // Then check local states
+    if (abortedBy) return "abort";
+    if (resignedBy) return "resign";
+    if (whiteTime === 0 || blackTime === 0) return "timeout";
+    // Fallback: if there's a winner, treat as checkmate
+    if (gameState?.winner) return "checkmate";
+    // No winner and game over = stalemate
+    if (!gameState?.winner && gameState?.status !== "playing" && gameState?.status !== "check") return "stalemate";
+    return null;
+  };
+
+  // Get winner and loser usernames (handles both checkmate and timeout)
+  const getWinnerUsername = () => {
+    if (!isFinished) return null;
+    // Check for timeout - the player whose time ran out loses
+    if (whiteTime === 0) {
+      // White ran out of time, so black wins
+      return myColor === "black" ? guest?.username : opponent?.username;
+    }
+    if (blackTime === 0) {
+      // Black ran out of time, so white wins
+      return myColor === "white" ? guest?.username : opponent?.username;
+    }
+    // Check for regular win (checkmate, resignation)
+    if (gameState?.winner) {
+      return gameState.winner === myColor ? guest?.username : opponent?.username;
+    }
+    return null;
+  };
+
+  const getLoserUsername = () => {
+    if (!isFinished) return null;
+    // Check for timeout - the player whose time ran out loses
+    if (whiteTime === 0) {
+      // White ran out of time, white loses
+      return myColor === "white" ? guest?.username : opponent?.username;
+    }
+    if (blackTime === 0) {
+      // Black ran out of time, black loses
+      return myColor === "black" ? guest?.username : opponent?.username;
+    }
+    // Check for regular win (checkmate, resignation)
+    if (gameState?.winner) {
+      return gameState.winner === myColor ? opponent?.username : guest?.username;
+    }
+    return null;
+  };
+
   /* ---------------- RENDER ---------------- */
   if (loading || guestLoading) {
     return <div className="min-h-screen bg-[#302e2b]" />;
@@ -378,6 +460,9 @@ export default function ChessRoomPage() {
   const isPlaying = room?.status === "playing";
   const isFinished = room?.status === "finished";
   const winner = getWinner();
+  const gameEndReason = getGameEndReason();
+  const winnerUsername = getWinnerUsername();
+  const loserUsername = getLoserUsername();
 
   return (
     <LudoThemeProvider>
@@ -417,7 +502,8 @@ export default function ChessRoomPage() {
                 maxPlayers={2}
                 onStart={handleStartGame}
                 onLeave={handleLeaveRoom}
-                currentSessionId={""}
+                currentSessionId={guest?.sessionId || ''}
+                headerContent={<div className="text-6xl mb-2">♟️♛</div>}
               />
             </main>
           </>
@@ -452,6 +538,7 @@ export default function ChessRoomPage() {
                     pieceTheme={pieceTheme}
                     size={800}
                     winner={isFinished ? gameState.winner : null}
+                    isInCheck={gameState.status === "check"}
                   />
                   {/* History Mode Indicator */}
                   {isViewingHistory && (
@@ -485,7 +572,7 @@ export default function ChessRoomPage() {
                 isFinished={isFinished}
                 winner={winner || null}
                 onOfferDraw={handleOfferDraw}
-                onAbort={handleAbort}
+                onResign={handleResign}
                 onOfferRematch={handleOfferRematch}
                 myUsername={guest?.username || ""}
                 opponentUsername={opponent?.username || ""}
@@ -514,6 +601,22 @@ export default function ChessRoomPage() {
           drawRejectedNotif={drawRejectedNotif}
           rematchRejectedNotif={rematchRejectedNotif}
           abortedBy={abortedBy}
+          // Winner popup props
+          isGameOver={isFinished}
+          winner={gameState?.winner}
+          myColor={myColor}
+          winnerUsername={winnerUsername}
+          loserUsername={loserUsername}
+          myUsername={guest?.username}
+          opponentUsername={opponent?.username}
+          gameEndReason={gameEndReason}
+          onOfferRematch={handleOfferRematch}
+          onLeaveRoom={handleLeaveRoom}
+          rematchPending={rematchPending}
+          // Resign confirmation props
+          showResignConfirm={showResignConfirm}
+          onCancelResign={cancelResign}
+          onConfirmResign={confirmResign}
         />
       </div>
     </LudoThemeProvider>

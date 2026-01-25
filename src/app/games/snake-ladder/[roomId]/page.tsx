@@ -4,8 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import Header from '@/components/layout/Header';
-import WaitingRoom from '@/components/games/ludo/WaitingRoom';
-import { LudoThemeProvider } from '@/contexts/LudoThemeContext';
+import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import SnakeLadderBoard from '@/components/games/snake-ladder/SnakeLadderBoard';
 import Dice from '@/components/games/ludo/Dice';
 import Card from '@/components/ui/Card';
@@ -20,6 +19,7 @@ import { PlayerColor } from '@/types/ludo';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import { LudoThemeProvider } from '@/contexts/LudoThemeContext';
 
 export default function SnakeLadderRoomPage() {
     const params = useParams();
@@ -65,6 +65,7 @@ export default function SnakeLadderRoomPage() {
     // Fetch room data and handle join flow
     useEffect(() => {
         if (guestLoading) return;
+        // ... (rest of useEffect is fine, just removing the useLudoTheme hook call above)
 
         const fetchRoom = async () => {
             try {
@@ -225,16 +226,21 @@ export default function SnakeLadderRoomPage() {
             });
             setDisplayedPositions(finalPositions);
             setAnimatingToken(null);
+
+            // If I am the one animating, tell server I'm done so next turn can start
+            if (animatingToken.playerIndex === myPlayerIndex) {
+                emit('game:action', { roomCode, action: 'completeTurn' });
+            }
             return;
         }
 
-        // Schedule next step
+        // Schedule next step - 200ms delay for fast visible movement
         const timer = setTimeout(() => {
             setAnimatingToken(prev => prev ? { ...prev, currentStep: prev.currentStep + 1 } : null);
         }, 200);
 
         return () => clearTimeout(timer);
-    }, [animatingToken, gameState]);
+    }, [animatingToken, gameState, myPlayerIndex, roomCode, emit]);
 
     // Play snake bite sound when landing on a snake
     useEffect(() => {
@@ -254,9 +260,24 @@ export default function SnakeLadderRoomPage() {
         }
     }, [animatingToken, playSnakeBite]);
 
+    // Recovery: If we reconnect/load into 'animating' phase but have no local animation running,
+    // complete the turn to prevent getting stuck.
+    useEffect(() => {
+        if (gameState?.turnPhase === 'animating' && gameState.currentPlayer === myPlayerIndex && !animatingToken) {
+            console.log('Recovering from interrupted animation...');
+            emit('game:action', { roomCode, action: 'completeTurn' });
+        }
+    }, [gameState?.turnPhase, gameState?.currentPlayer, myPlayerIndex, animatingToken, roomCode, emit]);
+
+    // Celebration effect
     // Celebration effect
     useEffect(() => {
         if (gameState?.winner !== null && gameState?.winner !== undefined) {
+            // Wait for visual animation to reach grid 100
+            const winnerPos = displayedPositions[gameState.winner];
+            if (winnerPos !== 100) return;
+
+            // ... existing confetti code ...
             const duration = 15 * 1000;
             const animationEnd = Date.now() + duration;
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
@@ -274,7 +295,7 @@ export default function SnakeLadderRoomPage() {
 
             return () => clearInterval(interval);
         }
-    }, [gameState?.winner]);
+    }, [gameState?.winner, displayedPositions]);
 
     // Socket join room
     useEffect(() => {
@@ -308,6 +329,13 @@ export default function SnakeLadderRoomPage() {
         playDiceRoll(); // Play dice roll sound
         emit('game:action', { roomCode, action: 'roll' });
     }, [emit, roomCode, gameState, playDiceRoll]);
+
+    // Handle token click - moves the token after dice is rolled
+    const handleMoveToken = useCallback(() => {
+        if (!gameState || gameState.turnPhase !== 'move') return;
+        if (gameState.currentPlayer !== myPlayerIndex) return;
+        emit('game:action', { roomCode, action: 'move' });
+    }, [emit, roomCode, gameState, myPlayerIndex]);
 
     // Handle join via shared link (creates session and joins room)
     const handleJoinViaLink = async () => {
@@ -391,6 +419,9 @@ export default function SnakeLadderRoomPage() {
     const isWaiting = room?.status === 'waiting';
     const isPlaying = room?.status === 'playing';
     const isFinished = room?.status === 'finished';
+
+    // Only show game over screens when the winner physically reaches the end
+    const showGameOver = isFinished && gameState && gameState.winner != null && displayedPositions[gameState.winner] === 100;
 
     return (
         <LudoThemeProvider>
@@ -586,11 +617,15 @@ export default function SnakeLadderRoomPage() {
                         <WaitingRoom
                             roomCode={roomCode}
                             players={players}
+                            currentSessionId={guest?.sessionId || ''}
                             isHost={isHost}
                             minPlayers={room.minPlayers}
                             maxPlayers={room.maxPlayers}
                             onStart={handleStartGame}
                             onLeave={handleLeaveRoom}
+                            gameTitle="Snake & Ladder"
+                            accentColor="#10b981"
+                            headerContent={<div className="text-6xl mb-2">🐍🪜</div>}
                         />
                     )}
 
@@ -613,7 +648,7 @@ export default function SnakeLadderRoomPage() {
                     {(isPlaying || isFinished) && gameState && guest && (
                         <div className="w-full max-w-5xl mx-auto relative">
                             {/* Game Over Overlay */}
-                            {isFinished && gameState.winner !== null && (
+                            {showGameOver && (
                                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                                     <div className="max-w-md w-full mx-4 text-center">
                                         <Card className="p-8">
@@ -628,9 +663,9 @@ export default function SnakeLadderRoomPage() {
                                                     <>
                                                         <span
                                                             className="font-semibold"
-                                                            style={{ color: PLAYER_COLORS[gameState.winner]?.hex }}
+                                                            style={{ color: PLAYER_COLORS[gameState.winner!]?.hex }}
                                                         >
-                                                            {players[gameState.winner]?.username}
+                                                            {players[gameState.winner!]?.username}
                                                         </span> wins!
                                                     </>
                                                 )}
@@ -643,7 +678,7 @@ export default function SnakeLadderRoomPage() {
                                 </div>
                             )}
 
-                            <div className={`flex flex-col lg:flex-row gap-6 items-start justify-center ${isFinished ? 'brightness-50 pointer-events-none' : ''}`}>
+                            <div className={`flex flex-col lg:flex-row gap-6 items-start justify-center ${showGameOver ? 'brightness-50 pointer-events-none' : ''}`}>
                                 {/* Left Panel - Game Info */}
                                 <div className="w-full lg:w-72 order-2 lg:order-1 flex-shrink-0">
                                     <div
@@ -691,8 +726,17 @@ export default function SnakeLadderRoomPage() {
                                             </p>
                                         )}
 
-                                        {gameState.canRollAgain && gameState.currentPlayer === myPlayerIndex && (
+                                        {gameState.canRollAgain && gameState.currentPlayer === myPlayerIndex && gameState.turnPhase === 'roll' && (
                                             <p className="text-sm text-emerald-300 font-bold text-center animate-pulse drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]">🎲 Roll again!</p>
+                                        )}
+
+                                        {/* Click token prompt - shows when it's time to move */}
+                                        {gameState.turnPhase === 'move' && gameState.currentPlayer === myPlayerIndex && !animatingToken && (
+                                            <div className="mt-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-600/20 to-yellow-500/20 border border-amber-500/50 animate-pulse">
+                                                <p className="text-sm text-amber-200 font-bold text-center drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]">
+                                                    👆 Click your token to move {gameState.diceValue} spaces!
+                                                </p>
+                                            </div>
                                         )}
 
                                         {/* Players */}
@@ -735,6 +779,9 @@ export default function SnakeLadderRoomPage() {
                                         displayedPositions={displayedPositions}
                                         currentSessionId={guest.sessionId}
                                         isAnimating={!!animatingToken}
+                                        onTokenClick={handleMoveToken}
+                                        myPlayerIndex={myPlayerIndex}
+                                        canMove={gameState.turnPhase === 'move' && gameState.currentPlayer === myPlayerIndex}
                                     />
                                 </div>
                             </div>

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import Header from '@/components/layout/Header';
-import WaitingRoom from '@/components/games/ludo/WaitingRoom';
+import WaitingRoom from '@/components/games/shared/WaitingRoom';
 import Board from '@/components/games/ludo/Board';
 import Dice from '@/components/games/ludo/Dice';
 import ThemeSelector from '@/components/games/ludo/ThemeSelector';
@@ -730,11 +730,19 @@ function GameRoomContent() {
                     <WaitingRoom
                         roomCode={roomCode}
                         players={players}
+                        currentSessionId={guest?.sessionId || ''}
                         isHost={isHost}
                         minPlayers={room.minPlayers}
                         maxPlayers={room.maxPlayers}
                         onStart={handleStartGame}
                         onLeave={handleLeaveRoom}
+                        gameTitle="Ludo"
+                        accentColor={theme.ui.accentColor}
+                        headerContent={<div className="text-6xl mb-2">🎲</div>}
+                        playerColors={Object.values(theme.playerColors).map((c, i) => ({
+                            hex: c.bg,
+                            name: ['Red', 'Green', 'Yellow', 'Blue'][i] || 'Player'
+                        }))}
                     />
                 )}
 

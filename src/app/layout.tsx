@@ -57,6 +57,10 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://versusarenas.in",
   },
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+  },
 };
 
 // JSON-LD Structured Data for the homepage
@@ -125,7 +129,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         {/* JSON-LD Structured Data for SEO */}
         <script
@@ -145,15 +149,15 @@ export default function RootLayout({
 
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="dark"
+          enableSystem={false}
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <Providers>
+          <Providers>
+            <AuthProvider>
               {children}
-            </Providers>
-          </AuthProvider>
+            </AuthProvider>
+          </Providers>
           <Analytics />
         </ThemeProvider>
       </body>

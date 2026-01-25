@@ -10,12 +10,14 @@ import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import Card from '@/components/ui/Card';
 import { useGuest } from '@/hooks/useGuest';
+import { useAuth } from '@/contexts/AuthContext';
 import { roomApi } from '@/lib/api';
 import { PokerHandsGuideButton } from '@/components/games/poker/PokerHandsGuide';
 
 export default function PokerPage() {
     const router = useRouter();
     const { guest, loading, login } = useGuest();
+    const { user } = useAuth();
 
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
@@ -52,6 +54,18 @@ export default function PokerPage() {
 
     const handleCreateRoom = async (sessionId?: string) => {
         const sid = sessionId || guest?.sessionId;
+
+        // If user is logged in but no guest session exists, auto-create one
+        if (user && !guest) {
+            setIsLoading(true);
+            const result = await login(user.username);
+            setIsLoading(false);
+            if (result) {
+                handleCreateRoom(result.sessionId);
+            }
+            return;
+        }
+
         if (!sid) {
             setPendingAction('create');
             setShowLoginModal(true);
@@ -104,10 +118,17 @@ export default function PokerPage() {
         setIsLoading(false);
     };
 
-    const openJoinModal = () => {
-        if (!guest) {
+    const openJoinModal = async () => {
+        if (!guest && !user) {
             setPendingAction('join');
             setShowLoginModal(true);
+        } else if (user && !guest) {
+            setIsLoading(true);
+            const result = await login(user.username);
+            setIsLoading(false);
+            if (result) {
+                setShowJoinModal(true);
+            }
         } else {
             setShowJoinModal(true);
         }
@@ -122,51 +143,48 @@ export default function PokerPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-red-900 via-gray-900 to-black">
+        <div className="min-h-screen bg-[var(--background)]">
             <Header />
 
             <main className="pt-24 pb-12 px-4">
                 <div className="max-w-4xl mx-auto">
                     {/* Title */}
                     <div className="text-center mb-12">
-                        <div className="flex justify-center gap-4 text-6xl mb-4">
-                            <span>🃏</span>
-                            <span>♠️</span>
-                            <span>♥️</span>
-                        </div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Texas Hold'em Poker</h1>
-                        <p className="text-gray-400 max-w-md mx-auto">
+                        <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">
+                            Texas Hold'em Poker
+                        </h1>
+                        <p className="text-[var(--text-muted)] max-w-md mx-auto">
                             The ultimate card game of skill and strategy. Bluff, bet, and take the pot!
                         </p>
                     </div>
 
                     {/* Action Cards */}
                     <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-                        <Card className="p-8 text-center bg-gray-800/50 border-gray-700">
-                            <div className="w-16 h-16 bg-red-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <Card className="p-8 text-center">
+                            <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                                 <span className="text-3xl">🎰</span>
                             </div>
-                            <h2 className="text-xl font-semibold text-white mb-2">Create Table</h2>
-                            <p className="text-sm text-gray-400 mb-6">Start a new poker table and invite friends</p>
+                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Create Table</h2>
+                            <p className="text-sm text-[var(--text-muted)] mb-6">Start a new poker table and invite friends</p>
                             <Button
                                 onClick={() => handleCreateRoom()}
                                 loading={isLoading && pendingAction === 'create'}
-                                className="w-full bg-red-600 text-white hover:bg-red-700"
+                                className="w-full"
                             >
                                 Create Table
                             </Button>
                         </Card>
 
-                        <Card className="p-8 text-center bg-gray-800/50 border-gray-700">
-                            <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <Card className="p-8 text-center">
+                            <div className="w-16 h-16 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                                 <span className="text-3xl">🎴</span>
                             </div>
-                            <h2 className="text-xl font-semibold text-white mb-2">Join Table</h2>
-                            <p className="text-sm text-gray-400 mb-6">Enter a room code to join an existing table</p>
+                            <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Join Table</h2>
+                            <p className="text-sm text-[var(--text-muted)] mb-6">Enter a room code to join an existing table</p>
                             <Button
                                 variant="secondary"
                                 onClick={openJoinModal}
-                                className="w-full border-gray-600 text-white hover:bg-gray-700"
+                                className="w-full"
                             >
                                 Join Table
                             </Button>
@@ -175,15 +193,15 @@ export default function PokerPage() {
 
                     {/* Hand Rankings Card */}
                     <div className="mt-8 max-w-2xl mx-auto">
-                        <Card className="p-6 text-center bg-gradient-to-br from-purple-900/50 to-indigo-900/50 border-purple-500/30">
+                        <Card className="p-6 text-center bg-[var(--surface-alt)]">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center">
+                                    <div className="w-14 h-14 bg-[var(--primary)]/20 rounded-2xl flex items-center justify-center">
                                         <span className="text-3xl">📖</span>
                                     </div>
                                     <div className="text-left">
-                                        <h3 className="text-lg font-semibold text-white">New to Poker?</h3>
-                                        <p className="text-sm text-purple-300">Learn the hand rankings before you play!</p>
+                                        <h3 className="text-lg font-semibold text-[var(--text)]">New to Poker?</h3>
+                                        <p className="text-sm text-[var(--text-muted)]">Learn the hand rankings before you play!</p>
                                     </div>
                                 </div>
                                 <PokerHandsGuideButton />
@@ -193,7 +211,7 @@ export default function PokerPage() {
 
                     {/* Rules */}
                     <div className="mt-12 max-w-2xl mx-auto">
-                        <h3 className="text-xl font-semibold text-white mb-6 text-center">How to Play</h3>
+                        <h3 className="text-xl font-semibold text-[var(--text)] mb-6 text-center">How to Play</h3>
                         <div className="grid sm:grid-cols-2 gap-4">
                             {[
                                 { icon: '🃏', text: '2 hole cards are dealt to each player' },
@@ -201,9 +219,9 @@ export default function PokerPage() {
                                 { icon: '💰', text: 'Bet, raise, call, check, or fold' },
                                 { icon: '🏆', text: 'Best 5-card hand wins the pot' },
                             ].map((rule, i) => (
-                                <div key={i} className="flex items-center gap-3 p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
+                                <div key={i} className="flex items-center gap-3 p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg">
                                     <span className="text-2xl">{rule.icon}</span>
-                                    <span className="text-sm text-gray-300">{rule.text}</span>
+                                    <span className="text-sm text-[var(--text-muted)]">{rule.text}</span>
                                 </div>
                             ))}
                         </div>
@@ -211,7 +229,7 @@ export default function PokerPage() {
 
                     {/* Features Section */}
                     <section className="mt-20 max-w-3xl mx-auto">
-                        <h2 className="text-2xl font-bold text-white mb-6 text-center">
+                        <h2 className="text-2xl font-bold text-[var(--text)] mb-6 text-center">
                             Why Play Poker at VersusArenas?
                         </h2>
 
@@ -224,19 +242,19 @@ export default function PokerPage() {
                                 { icon: '🔒', title: 'Private Tables', desc: 'Only friends with the code can join your table.' },
                                 { icon: '🎭', title: 'Hidden Cards', desc: 'Your cards are hidden from other players until showdown.' },
                             ].map((feature, i) => (
-                                <div key={i} className="p-5 bg-gray-800/50 border border-gray-700 rounded-xl">
+                                <div key={i} className="p-5 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-soft">
                                     <div className="flex items-center gap-3 mb-2">
                                         <span className="text-2xl">{feature.icon}</span>
-                                        <h3 className="font-semibold text-white">{feature.title}</h3>
+                                        <h3 className="font-semibold text-[var(--text)]">{feature.title}</h3>
                                     </div>
-                                    <p className="text-sm text-gray-400">{feature.desc}</p>
+                                    <p className="text-sm text-[var(--text-muted)]">{feature.desc}</p>
                                 </div>
                             ))}
                         </div>
 
-                        {/* FAQ Section for SEO */}
+                        {/* FAQ Section */}
                         <div className="mt-12">
-                            <h2 className="text-xl font-bold text-white mb-6 text-center">
+                            <h2 className="text-xl font-bold text-[var(--text)] mb-6 text-center">
                                 Frequently Asked Questions
                             </h2>
                             <div className="space-y-4">
@@ -262,12 +280,12 @@ export default function PokerPage() {
                                         a: 'If you disconnect, you have 15 seconds to reconnect. If you don\'t return in time, your turn will be auto-folded. After 3 missed turns, you\'ll be removed from the game.'
                                     },
                                 ].map((faq, i) => (
-                                    <details key={i} className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg group">
-                                        <summary className="font-medium text-white cursor-pointer list-none flex justify-between items-center">
+                                    <details key={i} className="p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg group">
+                                        <summary className="font-medium text-[var(--text)] cursor-pointer list-none flex justify-between items-center">
                                             {faq.q}
-                                            <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                                            <span className="text-[var(--text-muted)] group-open:rotate-180 transition-transform">▼</span>
                                         </summary>
-                                        <p className="mt-3 text-sm text-gray-400 leading-relaxed">{faq.a}</p>
+                                        <p className="mt-3 text-sm text-[var(--text-muted)] leading-relaxed">{faq.a}</p>
                                     </details>
                                 ))}
                             </div>

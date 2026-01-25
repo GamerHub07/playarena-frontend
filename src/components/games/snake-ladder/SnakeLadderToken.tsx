@@ -34,8 +34,9 @@ export default function SnakeLadderToken({
     const pawnSize = size * 0.85;
 
     return (
+        //change duration 200 to 500 to fasten the token movement
         <div
-            className="absolute transition-all duration-300 ease-out hover:z-50"
+            className="absolute transition-all duration-200 ease-out hover:z-50"
             style={{
                 width: pawnSize,
                 height: pawnSize,

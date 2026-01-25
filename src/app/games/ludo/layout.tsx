@@ -5,6 +5,8 @@ export const metadata: Metadata = {
   description:
     'Play Ludo online with friends for free! Classic multiplayer Ludo board game - no download or signup required. Create a room, share the code, and enjoy the timeless dice game instantly in your browser.',
   keywords: [
+    'ludo king',
+    'poki ludo',
     'ludo online',
     'play ludo',
     'ludo multiplayer',

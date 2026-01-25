@@ -33,6 +33,21 @@ export default function Dice({ value, rolling, canRoll, onRoll, playerColor }: D
 
     return (
         <div className="flex flex-col items-center gap-1.5 sm:gap-4">
+            {/* Custom slow spin animation */}
+            <style jsx>{`
+                @keyframes slowClockwiseSpin {
+                    from {
+                        transform: rotate(0deg);
+                    }
+                    to {
+                        transform: rotate(360deg);
+                    }
+                }
+                .dice-slow-spin {
+                    animation: slowClockwiseSpin 3.5s linear infinite;
+                }
+            `}</style>
+
             {/* Dice Container */}
             <button
                 onClick={onRoll}
@@ -40,7 +55,7 @@ export default function Dice({ value, rolling, canRoll, onRoll, playerColor }: D
                 className={`
           relative w-12 h-12 sm:w-20 md:w-24 sm:h-20 md:h-24 rounded-lg sm:rounded-xl
           transition-all duration-300 transform
-          ${rolling ? 'animate-spin' : ''}
+          ${rolling ? 'dice-slow-spin' : ''}
           ${canRoll && !rolling ? 'hover:scale-110 hover:rotate-12 cursor-pointer' : 'opacity-70 cursor-not-allowed'}
         `}
                 style={{

@@ -14,6 +14,7 @@ import { roomApi } from '@/lib/api';
 export default function SnakeLadderPage() {
     const router = useRouter();
     const { guest, loading, login } = useGuest();
+    const { user } = useAuth();
 
     const [showLoginModal, setShowLoginModal] = useState(false);
     const [showJoinModal, setShowJoinModal] = useState(false);
@@ -48,10 +49,6 @@ export default function SnakeLadderPage() {
         }
     };
 
-    const { user } = useAuth();
-
-    // ...
-
     const handleCreateRoom = async (sessionId?: string) => {
         const sid = sessionId || guest?.sessionId;
 
@@ -82,7 +79,7 @@ export default function SnakeLadderPage() {
             } else {
                 setError(res.message || 'Failed to create room');
             }
-        } catch {
+        } catch (err) {
             setError('Failed to create room');
         }
 
@@ -111,7 +108,7 @@ export default function SnakeLadderPage() {
             } else {
                 setError(res.message || 'Room not found');
             }
-        } catch {
+        } catch (err) {
             setError('Failed to join room');
         }
 
@@ -123,7 +120,6 @@ export default function SnakeLadderPage() {
             setPendingAction('join');
             setShowLoginModal(true);
         } else if (user && !guest) {
-            // Auto-login for join flow if user is auth'd but no guest session
             setIsLoading(true);
             const result = await login(user.username);
             setIsLoading(false);
@@ -138,7 +134,7 @@ export default function SnakeLadderPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-2 border-[var(--success)] border-t-transparent rounded-full" />
+                <div className="animate-spin w-8 h-8 border-2 border-[var(--primary)] border-t-transparent rounded-full" />
             </div>
         );
     }
@@ -152,7 +148,7 @@ export default function SnakeLadderPage() {
                     {/* Title */}
                     <div className="text-center mb-12">
                         <h1 className="text-4xl md:text-5xl font-bold text-[var(--text)] mb-4">
-                            🐍 Snake & Ladder 🪜
+                            Snake & Ladder
                         </h1>
                         <p className="text-[var(--text-muted)] max-w-md mx-auto">
                             Classic board game for 2-4 players. Roll the dice, climb ladders, avoid snakes, and race to 100!
@@ -162,10 +158,8 @@ export default function SnakeLadderPage() {
                     {/* Action Cards */}
                     <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
                         <Card className="p-8 text-center">
-                            <div className="w-16 h-16 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-8 h-8 text-[var(--success)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
+                            <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <span className="text-3xl">🎲</span>
                             </div>
                             <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Create Room</h2>
                             <p className="text-sm text-[var(--text-muted)] mb-6">Start a new game and invite your friends</p>
@@ -179,10 +173,8 @@ export default function SnakeLadderPage() {
                         </Card>
 
                         <Card className="p-8 text-center">
-                            <div className="w-16 h-16 bg-[var(--primary)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-8 h-8 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
+                            <div className="w-16 h-16 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                <span className="text-3xl">🪜</span>
                             </div>
                             <h2 className="text-xl font-semibold text-[var(--text)] mb-2">Join Room</h2>
                             <p className="text-sm text-[var(--text-muted)] mb-6">Enter a room code to join an existing game</p>
@@ -213,6 +205,61 @@ export default function SnakeLadderPage() {
                             ))}
                         </div>
                     </div>
+
+                    {/* SEO Content Section */}
+                    <section className="mt-20 max-w-3xl mx-auto">
+                        <h2 className="text-2xl font-bold text-[var(--text)] mb-6 text-center">
+                            Why Play Snake & Ladder Online?
+                        </h2>
+
+                        <div className="grid sm:grid-cols-2 gap-6 mb-10">
+                            {[
+                                { icon: '🎲', title: 'Classic Fun', desc: 'Relive the childhood nostalgia with this classic board game.' },
+                                { icon: '🎢', title: 'Ups and Downs', desc: 'Experience the thrill of climbing ladders and sliding down snakes.' },
+                                { icon: '👥', title: 'Multiplayer', desc: 'Play with up to 4 players in real-time.' },
+                                { icon: '🌐', title: 'Play Anywhere', desc: 'Accessible on any device, anytime, anywhere.' },
+                            ].map((feature, i) => (
+                                <div key={i} className="p-5 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-soft">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="text-2xl">{feature.icon}</span>
+                                        <h3 className="font-semibold text-[var(--text)]">{feature.title}</h3>
+                                    </div>
+                                    <p className="text-sm text-[var(--text-muted)]">{feature.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* FAQ Section */}
+                        <div className="mt-12">
+                            <h2 className="text-xl font-bold text-[var(--text)] mb-6 text-center">
+                                Frequently Asked Questions
+                            </h2>
+                            <div className="space-y-4">
+                                {[
+                                    {
+                                        q: 'Is this game free?',
+                                        a: 'Yes, Snake & Ladder is completely free to play.'
+                                    },
+                                    {
+                                        q: 'How many players can play?',
+                                        a: 'You can play with 2 to 4 players.'
+                                    },
+                                    {
+                                        q: 'Do I need a dice?',
+                                        a: 'No, the game involves a digital dice that rolls automatically.'
+                                    },
+                                ].map((faq, i) => (
+                                    <details key={i} className="p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg group">
+                                        <summary className="font-medium text-[var(--text)] cursor-pointer list-none flex justify-between items-center">
+                                            {faq.q}
+                                            <span className="text-[var(--text-muted)] group-open:rotate-180 transition-transform">▼</span>
+                                        </summary>
+                                        <p className="mt-3 text-sm text-[var(--text-muted)] leading-relaxed">{faq.a}</p>
+                                    </details>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </main>
 

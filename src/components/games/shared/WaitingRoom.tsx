@@ -28,6 +28,7 @@ interface WaitingRoomProps {
     accentColor?: string;
     playerColors?: { hex: string; name: string }[];
     playerEmojis?: string[];
+    headerContent?: React.ReactNode;
 }
 
 export default function WaitingRoom({
@@ -40,9 +41,10 @@ export default function WaitingRoom({
     onStart,
     onLeave,
     gameTitle = 'Game',
-    accentColor = '#3b82f6',
+    accentColor = '#D97706',
     playerColors = DEFAULT_PLAYER_COLORS,
     playerEmojis,
+    headerContent,
 }: WaitingRoomProps) {
     const [copied, setCopied] = useState(false);
     const [linkCopied, setLinkCopied] = useState(false);
@@ -66,13 +68,18 @@ export default function WaitingRoom({
             <Card className="p-8">
                 {/* Title */}
                 <div className="text-center mb-4">
-                    <h2 className="text-2xl font-bold text-white">{gameTitle}</h2>
-                    <p className="text-[#888] text-sm">Waiting for players...</p>
+                    {headerContent && (
+                        <div className="flex justify-center mb-4">
+                            {headerContent}
+                        </div>
+                    )}
+                    <h2 className="text-2xl font-bold text-[var(--text)]">{gameTitle}</h2>
+                    <p className="text-[var(--text-muted)] text-sm">Waiting for players...</p>
                 </div>
 
                 {/* Room Code */}
                 <div className="text-center mb-4">
-                    <p className="text-sm text-[#888] mb-2">Room Code</p>
+                    <p className="text-sm text-[var(--text-muted)] mb-2">Room Code</p>
                     <button
                         onClick={copyCode}
                         className="group flex items-center justify-center gap-2 mx-auto cursor-pointer"
@@ -89,7 +96,7 @@ export default function WaitingRoom({
                             </svg>
                         ) : (
                             <svg
-                                className="w-5 h-5 text-[#888] group-hover:text-white transition-colors"
+                                className="w-5 h-5 text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -98,7 +105,7 @@ export default function WaitingRoom({
                             </svg>
                         )}
                     </button>
-                    <p className={`text-xs mt-2 transition-colors ${copied ? 'text-green-500 font-medium' : 'text-[#555]'}`}>
+                    <p className={`text-xs mt-2 transition-colors ${copied ? 'text-green-500 font-medium' : 'text-[var(--text-muted)]'}`}>
                         {copied ? 'Code copied!' : 'Click to copy code'}
                     </p>
                 </div>
@@ -107,11 +114,10 @@ export default function WaitingRoom({
                 <div className="mb-8">
                     <button
                         onClick={copyLink}
-                        className="w-full py-3 px-4 rounded-lg border-2 border-dashed transition-all flex items-center justify-center gap-2 group"
-                        style={{
-                            borderColor: linkCopied ? '#22c55e' : '#2a2a2a',
-                            backgroundColor: linkCopied ? 'rgba(34, 197, 94, 0.1)' : 'transparent'
-                        }}
+                        className={`w-full py-3 px-4 rounded-lg border-2 border-dashed transition-all flex items-center justify-center gap-2 group ${linkCopied
+                            ? 'border-green-500 bg-green-500/10'
+                            : 'border-[var(--border)] hover:border-[var(--primary)] bg-transparent'
+                            }`}
                     >
                         {linkCopied ? (
                             <>
@@ -123,20 +129,20 @@ export default function WaitingRoom({
                         ) : (
                             <>
                                 <svg
-                                    className="w-5 h-5 text-[#888] group-hover:text-white transition-colors"
+                                    className="w-5 h-5 text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
                                 >
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                 </svg>
-                                <span className="text-[#888] group-hover:text-white transition-colors">
+                                <span className="text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors">
                                     Share invite link
                                 </span>
                             </>
                         )}
                     </button>
-                    <p className="text-xs text-center text-[#555] mt-2">
+                    <p className="text-xs text-center text-[var(--text-muted)] mt-2">
                         Friends can join directly by opening the link
                     </p>
                 </div>
@@ -144,8 +150,8 @@ export default function WaitingRoom({
                 {/* Players List */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-4">
-                        <p className="text-sm text-[#888]">Players</p>
-                        <p className="text-sm text-[#888]">{players.length}/{maxPlayers}</p>
+                        <p className="text-sm text-[var(--text-muted)]">Players</p>
+                        <p className="text-sm text-[var(--text-muted)]">{players.length}/{maxPlayers}</p>
                     </div>
 
                     <div className="space-y-3">
@@ -158,21 +164,21 @@ export default function WaitingRoom({
                                 <div
                                     key={i}
                                     className={`
-                                        flex items-center gap-3 p-4 rounded-lg border
+                                        flex items-center gap-3 p-4 rounded-lg border transition-colors
                                         ${player
-                                            ? 'bg-[#0f0f0f] border-[#2a2a2a]'
-                                            : 'bg-[#0f0f0f]/50 border-dashed border-[#2a2a2a]'
+                                            ? 'bg-[var(--surface-alt)] border-[var(--border)]'
+                                            : 'bg-[var(--surface-alt)]/50 border-dashed border-[var(--border)]'
                                         }
                                     `}
                                 >
                                     <div
                                         className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                                        style={{ backgroundColor: player ? colorInfo.hex : '#2a2a2a' }}
+                                        style={{ backgroundColor: player ? colorInfo.hex : 'var(--border)' }}
                                     >
                                         {emoji || (player ? player.username.charAt(0).toUpperCase() : '?')}
                                     </div>
                                     <div className="flex-1">
-                                        <p className={`font-medium ${player ? 'text-white' : 'text-[#555]'}`}>
+                                        <p className={`font-medium ${player ? 'text-[var(--text)]' : 'text-[var(--text-muted)]'}`}>
                                             {player ? player.username : 'Waiting...'}
                                         </p>
                                         <div className="flex gap-2">
@@ -180,12 +186,12 @@ export default function WaitingRoom({
                                                 <span className="text-xs" style={{ color: accentColor }}>Host</span>
                                             )}
                                             {player?.sessionId === currentSessionId && (
-                                                <span className="text-xs text-[#888]">You</span>
+                                                <span className="text-xs text-[var(--text-muted)]">You</span>
                                             )}
                                         </div>
                                     </div>
                                     {player && (
-                                        <div className={`w-2 h-2 rounded-full ${player.isConnected ? 'bg-[#22c55e]' : 'bg-[#ef4444]'}`} />
+                                        <div className={`w-2 h-2 rounded-full ${player.isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
                                     )}
                                 </div>
                             );
@@ -205,12 +211,12 @@ export default function WaitingRoom({
                             >
                                 {canStart ? 'Start Game' : `Need ${minPlayers - players.length} more player(s)`}
                             </Button>
-                            <p className="text-xs text-center text-[#555]">
+                            <p className="text-xs text-center text-[var(--text-muted)]">
                                 Share the room code with your friends
                             </p>
                         </>
                     ) : (
-                        <p className="text-center text-[#888]">
+                        <p className="text-center text-[var(--text-muted)]">
                             Waiting for host to start the game...
                         </p>
                     )}

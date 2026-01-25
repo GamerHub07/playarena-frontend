@@ -13,7 +13,7 @@ interface GameSidePanelProps {
     isFinished: boolean;
     winner: string | null;
     onOfferDraw: () => void;
-    onAbort: () => void;
+    onResign: () => void;
     onOfferRematch: () => void;
     myUsername: string;
     opponentUsername: string;
@@ -33,7 +33,7 @@ export default function GameSidePanel({
     isFinished,
     winner,
     onOfferDraw,
-    onAbort,
+    onResign,
     onOfferRematch,
     myUsername,
     opponentUsername,
@@ -52,8 +52,8 @@ export default function GameSidePanel({
                 <button
                     onClick={() => setActiveTab("moves")}
                     className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${activeTab === "moves"
-                            ? "text-white border-b-2 border-[#81b64c]"
-                            : "text-gray-500 hover:text-white"
+                        ? "text-white border-b-2 border-[#81b64c]"
+                        : "text-gray-500 hover:text-white"
                         }`}
                 >
                     Moves
@@ -61,8 +61,8 @@ export default function GameSidePanel({
                 <button
                     onClick={() => setActiveTab("themes")}
                     className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${activeTab === "themes"
-                            ? "text-white border-b-2 border-[#81b64c]"
-                            : "text-gray-500 hover:text-white"
+                        ? "text-white border-b-2 border-[#81b64c]"
+                        : "text-gray-500 hover:text-white"
                         }`}
                 >
                     Themes
@@ -78,7 +78,7 @@ export default function GameSidePanel({
                     isFinished={isFinished}
                     winner={winner}
                     onOfferDraw={onOfferDraw}
-                    onAbort={onAbort}
+                    onResign={onResign}
                     onOfferRematch={onOfferRematch}
                     myUsername={myUsername}
                     opponentUsername={opponentUsername}

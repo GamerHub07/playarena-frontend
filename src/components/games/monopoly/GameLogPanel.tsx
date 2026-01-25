@@ -1,13 +1,13 @@
 'use client';
 
 import { GameLogEntry, GameLogType } from '@/types/monopoly';
-import { 
-  GiCash, 
-  GiPayMoney, 
-  GiReceiveMoney, 
-  GiHouse, 
-  GiPriceTag, 
-  GiPoliceOfficerHead, 
+import {
+  GiCash,
+  GiPayMoney,
+  GiReceiveMoney,
+  GiHouse,
+  GiPriceTag,
+  GiPoliceOfficerHead,
   GiCardRandom,
   GiScrollUnfurled
 } from 'react-icons/gi';
@@ -22,16 +22,16 @@ const LOG_ICONS: Record<GameLogType, React.ReactNode> = {
   RENT_PAID: <GiPayMoney className="text-red-500" />,
   RENT_RECEIVED: <GiReceiveMoney className="text-green-500" />,
   TAX_PAID: <GiPayMoney className="text-orange-500" />,
-  PROPERTY_BOUGHT: <GiHouse className="text-blue-500" />,
+  PROPERTY_BOUGHT: <GiHouse className="text-amber-600" />,
   PROPERTY_SOLD: <GiPriceTag className="text-gray-500" />,
-  JAIL_FINE: <GiPoliceOfficerHead className="text-blue-700" />,
+  JAIL_FINE: <GiPoliceOfficerHead className="text-amber-700" />,
   CARD_COLLECT: <GiCardRandom className="text-purple-500" />,
   CARD_PAY: <GiCardRandom className="text-purple-500" />,
   CARD_TRANSFER: <GiCardRandom className="text-purple-500" />,
   HOUSE_BUILT: <GiHouse className="text-green-600" />,
   HOUSE_SOLD: <GiHouse className="text-orange-600" />,
   HOTEL_BUILT: <FaHotel className="text-red-600" />,
-  TRADE_PROPOSED: <GiScrollUnfurled className="text-blue-400" />,
+  TRADE_PROPOSED: <GiScrollUnfurled className="text-amber-600" />,
   TRADE_ACCEPTED: <GiCash className="text-green-500" />,
   TRADE_REJECTED: <GiPayMoney className="text-red-500" />,
   TRADE_CANCELLED: <GiPriceTag className="text-gray-500" />,
@@ -43,7 +43,7 @@ export default function GameLogPanel({ logs }: GameLogPanelProps) {
       <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
         <GiScrollUnfurled className="text-yellow-600" /> Game Log
       </h4>
-      
+
       {(!logs || logs.length === 0) ? (
         <p className="text-xs text-[#666] text-center py-4">No events yet...</p>
       ) : (
@@ -58,7 +58,7 @@ export default function GameLogPanel({ logs }: GameLogPanelProps) {
                 <span className="text-white font-medium mr-1">{log.playerName}:</span>
                 <span>{log.description}</span>
                 <div className="text-[10px] text-[#555] mt-0.5">
-                    {new Date(log.timestamp).toLocaleTimeString()}
+                  {new Date(log.timestamp).toLocaleTimeString()}
                 </div>
               </div>
             </div>

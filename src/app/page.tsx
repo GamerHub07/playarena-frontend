@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { Gamepad2, Users, User, Sparkles, ArrowRight, CheckCircle } from 'lucide-react';
 import { HeroBackground } from '@/components/landing/HeroBackground';
 
 interface Game {
@@ -56,6 +57,15 @@ const GAMES: Game[] = [
         description: 'Bluff, bet, and win big in the world\'s most popular card game.',
     },
     {
+        id: 'tictactoe',
+        title: 'Tic Tac Toe',
+        players: '2 Players',
+        image: '/games/tictactoe.png',
+        href: '/games/tictactoe',
+        available: true,
+        description: 'The classic game of X and O. Simple, quick, and fun!',
+    },
+    {
         id: 'chess',
         title: 'Chess',
         players: '2 Players',
@@ -64,13 +74,56 @@ const GAMES: Game[] = [
         available: true,
         description: 'The ultimate game of strategy. Checkmate your opponent in this timeless classic.',
     },
-
+    {
+        id: 'sudoku',
+        title: 'Sudoku',
+        players: '1 Player',
+        image: '/games/sudoku2.png',
+        href: '/games/sudoku',
+        available: true,
+        description: 'Challenge your mind with the classic number puzzle game.',
+    },
+    {
+        id: '2048',
+        title: '2048',
+        players: '1 Player',
+        image: '/games/2048-.png',
+        href: '/games/2048',
+        available: true,
+        description: 'Join the numbers and reach the 2048 tile in this addictive puzzle.',
+    },
+    {
+        id: 'memory',
+        title: 'Memory Flip',
+        players: '1 Player',
+        image: '/games/memory1.png',
+        href: '/games/memory',
+        available: true,
+        description: 'Test your memory! Flip cards, find pairs, and race against your own best score.',
+    },
+    {
+        id: 'candy-curse',
+        title: 'Candy’s Curse',
+        players: '1 Player',
+        image: '/games/candy1.png', // Placeholder, will generate
+        href: '/games/candy-curse',
+        available: true,
+        description: 'Match 3 or more sweet treats in this vibrant and juicy puzzle adventure.',
+    },
 ];
 
 export default function HomePage() {
     const scrollRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [games, setGames] = useState<Game[]>(GAMES);
+    const [activeTab, setActiveTab] = useState<'all' | 'multiplayer' | 'single'>('all');
+
+    const filteredGames = GAMES.filter(game => {
+        if (activeTab === 'all') return true;
+        if (activeTab === 'multiplayer') return game.players !== '1 Player';
+        if (activeTab === 'single') return game.players === '1 Player';
+        return true;
+    });
 
     const scrollToGames = () => {
         scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -120,6 +173,9 @@ export default function HomePage() {
                             </motion.div> */}
 
                             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.9] mb-6 text-foreground">
+                                <span className="sr-only">
+                                    VersusArena – Play Multiplayer Games Online
+                                </span>
                                 <span className="block overflow-hidden">
                                     <motion.span
                                         initial={{ y: "100%" }}
@@ -227,6 +283,7 @@ export default function HomePage() {
                                                         src={game.image}
                                                         alt={game.title}
                                                         fill
+                                                        priority={index === 0}
                                                         className="object-cover"
                                                         draggable={false}
                                                     />
@@ -278,14 +335,49 @@ export default function HomePage() {
                             <div className="h-px bg-border flex-grow ml-8 hidden md:block" />
                         </div>
 
+                        {/* Category Tabs */}
+                        <div className="flex justify-center mb-12">
+                            <div className="inline-flex p-1.5 bg-surface/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg relative">
+                                {[
+                                    { id: 'all', label: 'All Games', icon: Gamepad2 },
+                                    { id: 'multiplayer', label: 'Multiplayer', icon: Users },
+                                    { id: 'single', label: 'Single Player', icon: User }
+                                ].map((tab) => {
+                                    const Icon = tab.icon;
+                                    const isActive = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id as any)}
+                                            className={`
+                                                relative px-6 py-3 rounded-full font-bold text-sm transition-colors duration-300 flex items-center gap-2 z-10
+                                                ${isActive ? 'text-white' : 'text-muted-foreground hover:text-foreground'}
+                                            `}
+                                        >
+                                            {isActive && (
+                                                <motion.div
+                                                    layoutId="activeTab"
+                                                    className="absolute inset-0 bg-primary rounded-full shadow-md -z-10"
+                                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                                />
+                                            )}
+                                            <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'currentColor'}`} />
+                                            <span>{tab.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {GAMES.map((game, i) => (
+                            {filteredGames.map((game, i) => (
                                 <Link
                                     key={game.id}
                                     href={game.available ? game.href : '#'}
                                     className="block h-full"
                                 >
                                     <motion.div
+                                        layout
                                         initial={{ opacity: 0, y: 20 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
@@ -334,48 +426,138 @@ export default function HomePage() {
                     </div>
                 </section>
 
-                {/* How It Works Section (Simplified) */}
-                <section id="how-it-works" className="py-20 md:py-32 bg-background relative overflow-hidden">
-                    <div className="container mx-auto px-4 relative z-10">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="text-center max-w-3xl mx-auto mb-20"
-                        >
-                            <h2 className="text-4xl md:text-5xl font-black text-foreground mb-6">SIMPLE AS 1-2-3</h2>
-                            <p className="text-xl text-muted-foreground">
-                                No registration. No download. Just share a link and play.
-                            </p>
-                        </motion.div>
+                {/* How It Works Section */}
+                <section id="how-it-works" className="py-24 md:py-40 bg-background relative overflow-hidden">
+                    {/* Ambient Decorations */}
+                    <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[150px] pointer-events-none" />
 
-                        <div className="grid md:grid-cols-3 gap-8">
-                            {[
-                                { title: 'Pick a Name', desc: 'Choose any username. No passwords needed.', step: '01' },
-                                { title: 'Create Room', desc: 'Get a unique code to share with friends.', step: '02' },
-                                { title: 'Start Playing', desc: 'Wait for them to join and let the fun begin!', step: '03' },
-                            ].map((item, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    whileHover={{ y: -10 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: i * 0.2 }}
-                                    className="bg-surface p-10 rounded-3xl border border-border relative overflow-hidden group hover:border-primary/30 transition-colors"
-                                >
-                                    <div className="absolute top-0 right-0 p-8 opacity-10 font-black text-8xl text-foreground select-none group-hover:opacity-20 transition-opacity">
-                                        {item.step}
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-foreground mb-4 relative z-10">{item.title}</h3>
-                                    <p className="text-muted-foreground leading-relaxed relative z-10">{item.desc}</p>
-                                </motion.div>
-                            ))}
+                    <div className="container mx-auto px-6 relative z-10">
+                        <div className="flex flex-col items-center mb-24 text-center">
+
+
+                            <motion.h2
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                className="text-4xl md:text-7xl font-black text-foreground mb-8 tracking-tighter"
+                            >
+                                READY TO <span className="text-primary tracking-tight">VERSUS</span>?
+                            </motion.h2>
+
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 }}
+                                className="text-lg md:text-xl text-muted-foreground max-w-2xl leading-relaxed font-medium"
+                            >
+                                Skip the downloads and messy registrations. We've built the fastest way to get your crew into the game.
+                            </motion.p>
                         </div>
+
+                        <div className="relative">
+                            {/* Connecting Line (Desktop) */}
+                            <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-border to-transparent hidden lg:block -translate-y-12" />
+
+                            <div className="grid md:grid-cols-3 gap-12 lg:gap-16 relative z-10">
+                                {[
+                                    {
+                                        title: 'Identify Yourself',
+                                        desc: 'Pick a unique username. No passwords, no credit cards, zero friction.',
+                                        icon: User,
+                                        step: '01',
+                                        color: 'bg-primary'
+                                    },
+                                    {
+                                        title: 'Assemble Squad',
+                                        desc: 'Create a private room and get a unique link to share with your friends.',
+                                        icon: Users,
+                                        step: '02',
+                                        color: 'bg-secondary'
+                                    },
+                                    {
+                                        title: 'Enter the Arena',
+                                        desc: 'Wait for the lobby to fill and dive into high-stakes classic gaming.',
+                                        icon: Gamepad2,
+                                        step: '03',
+                                        color: 'bg-accent'
+                                    },
+                                ].map((item, i) => (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, y: 40 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: i * 0.2, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                                        className="relative group"
+                                    >
+                                        <div className="flex flex-col items-center text-center">
+                                            {/* Icon Circle */}
+                                            <div className="relative mb-8">
+                                                <motion.div
+                                                    whileHover={{ scale: 1.1, rotate: 5 }}
+                                                    className={`w-24 h-24 rounded-[2.5rem] ${item.color}/10 border border-${item.color}/20 flex items-center justify-center text-${item.color} relative z-10 shadow-xl backdrop-blur-sm group-hover:border-${item.color}/40 transition-colors`}
+                                                >
+                                                    <item.icon size={36} strokeWidth={1.5} />
+                                                </motion.div>
+
+                                                {/* Step Number Badge */}
+                                                <div className={`absolute -top-3 -right-3 w-10 h-10 rounded-2xl bg-surface border border-border flex items-center justify-center text-sm font-black shadow-lg z-20 group-hover:text-primary transition-colors`}>
+                                                    {item.step}
+                                                </div>
+
+                                                {/* Ambient Background Glow */}
+                                                <div className={`absolute inset-0 ${item.color}/20 blur-2xl rounded-full scale-50 group-hover:scale-100 transition-transform duration-700 opacity-0 group-hover:opacity-100`} />
+                                            </div>
+
+                                            <h3 className="text-2xl md:text-3xl font-black text-foreground mb-4 tracking-tight group-hover:text-primary transition-colors duration-300">
+                                                {item.title}
+                                            </h3>
+
+                                            <p className="text-muted-foreground leading-relaxed font-medium max-w-xs">
+                                                {item.desc}
+                                            </p>
+
+                                            {/* Flow Indicator (Desktop) */}
+                                            {i < 2 && (
+                                                <div className="absolute top-12 left-[calc(100%+2rem)] hidden lg:flex items-center text-border pointer-events-none">
+                                                    <ArrowRight size={24} className="" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                    <div className="sr-only">
+                        <h3>About VersusArenas</h3>
+                        <p>
+                            VersusArenas is the best platform to play free online multiplayer games with friends.
+                            Enjoy classic board games like Ludo, Snakes and Ladders, Business (Monopoly), and Chess without any downloads or registration.
+                            Create private rooms, challenge your friends, and play instantly in your browser.
+                            Whether you are looking for 2 player games, 4 player games, or strategy games, VersusArenas has it all.
+                            Join the fun and start gaming today!
+                        </p>
+                        <ul>
+                            <li><a href="/games/ludo">Play Ludo Online Multiplayer Free</a></li>
+                            <li><a href="/games/poker">Play Poker Online with Friends</a></li>
+                            <li><a href="/games/chess">Play Chess Online Two Player</a></li>
+                            <li><a href="/games/monopoly">Play Business Board Game Online</a></li>
+                            <li><a href="/games/snake-ladder">Snakes and Ladders Online Multiplayer</a></li>
+                            <li><a href="/games/tictactoe">Tic Tac Toe Online 2 Player</a></li>
+                            <li><a href="/games/sudoku">Free Online Sudoku Puzzles</a></li>
+                            <li><a href="/games/2048">Play 2048 Game Online</a></li>
+                            <li><a href="/games/memory">Memory Card Game Online</a></li>
+                            <li><a href="/games/candy-curse">Play Candy Curse Match 3 Game</a></li>
+                        </ul>
                     </div>
                 </section>
             </main>
-
             <Footer />
         </div>
     );

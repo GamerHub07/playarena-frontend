@@ -9,7 +9,7 @@ interface MoveHistoryPanelProps {
     isFinished: boolean;
     winner: string | null;
     onOfferDraw: () => void;
-    onAbort: () => void;
+    onResign: () => void;
     onOfferRematch: () => void;
     myUsername: string;
     opponentUsername: string;
@@ -23,7 +23,7 @@ export default function MoveHistoryPanel({
     isFinished,
     winner,
     onOfferDraw,
-    onAbort,
+    onResign,
     onOfferRematch,
     myUsername,
     opponentUsername,
@@ -90,8 +90,8 @@ export default function MoveHistoryPanel({
                                     </span>
                                     <span
                                         className={`flex-1 px-3 py-1.5 cursor-pointer transition-colors ${viewMoveIndex === whiteIdx
-                                                ? "bg-[#81b64c]/30 text-[#81b64c]"
-                                                : "hover:bg-[#454341]/50"
+                                            ? "bg-[#81b64c]/30 text-[#81b64c]"
+                                            : "hover:bg-[#454341]/50"
                                             }`}
                                         onClick={() => setViewMoveIndex(whiteIdx)}
                                     >
@@ -99,8 +99,8 @@ export default function MoveHistoryPanel({
                                     </span>
                                     <span
                                         className={`flex-1 px-3 py-1.5 cursor-pointer text-gray-400 transition-colors ${viewMoveIndex === blackIdx
-                                                ? "bg-[#81b64c]/30 text-[#81b64c]"
-                                                : move.black ? "hover:bg-[#454341]/50" : ""
+                                            ? "bg-[#81b64c]/30 text-[#81b64c]"
+                                            : move.black ? "hover:bg-[#454341]/50" : ""
                                             }`}
                                         onClick={() => move.black && setViewMoveIndex(blackIdx)}
                                     >
@@ -120,8 +120,8 @@ export default function MoveHistoryPanel({
                     onClick={handleFirst}
                     disabled={!canGoFirst}
                     className={`w-11 h-11 rounded-lg flex items-center justify-center transition-all ${canGoFirst
-                            ? "bg-[#3d3935] hover:bg-[#4d4945] active:scale-95 text-white"
-                            : "bg-[#2a2826] text-gray-600 cursor-not-allowed"
+                        ? "bg-[#3d3935] hover:bg-[#4d4945] active:scale-95 text-white"
+                        : "bg-[#2a2826] text-gray-600 cursor-not-allowed"
                         }`}
                     title="Starting position"
                 >
@@ -135,8 +135,8 @@ export default function MoveHistoryPanel({
                     onClick={handlePrev}
                     disabled={!canGoPrev}
                     className={`w-11 h-11 rounded-lg flex items-center justify-center transition-all ${canGoPrev
-                            ? "bg-[#3d3935] hover:bg-[#4d4945] active:scale-95 text-white"
-                            : "bg-[#2a2826] text-gray-600 cursor-not-allowed"
+                        ? "bg-[#3d3935] hover:bg-[#4d4945] active:scale-95 text-white"
+                        : "bg-[#2a2826] text-gray-600 cursor-not-allowed"
                         }`}
                     title="Previous move"
                 >
@@ -149,8 +149,8 @@ export default function MoveHistoryPanel({
                 <button
                     onClick={handleLast}
                     className={`px-4 h-11 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all ${isLive
-                            ? "bg-[#81b64c] text-white shadow-lg shadow-[#81b64c]/20"
-                            : "bg-[#3d3935] hover:bg-[#4d4945] text-gray-300"
+                        ? "bg-[#81b64c] text-white shadow-lg shadow-[#81b64c]/20"
+                        : "bg-[#3d3935] hover:bg-[#4d4945] text-gray-300"
                         }`}
                     title="Live position"
                 >
@@ -163,8 +163,8 @@ export default function MoveHistoryPanel({
                     onClick={handleNext}
                     disabled={!canGoNext}
                     className={`w-11 h-11 rounded-lg flex items-center justify-center transition-all ${canGoNext
-                            ? "bg-[#3d3935] hover:bg-[#4d4945] active:scale-95 text-white"
-                            : "bg-[#2a2826] text-gray-600 cursor-not-allowed"
+                        ? "bg-[#3d3935] hover:bg-[#4d4945] active:scale-95 text-white"
+                        : "bg-[#2a2826] text-gray-600 cursor-not-allowed"
                         }`}
                     title="Next move"
                 >
@@ -178,8 +178,8 @@ export default function MoveHistoryPanel({
                     onClick={handleLast}
                     disabled={!canGoLast}
                     className={`w-11 h-11 rounded-lg flex items-center justify-center transition-all ${canGoLast
-                            ? "bg-[#3d3935] hover:bg-[#4d4945] active:scale-95 text-white"
-                            : "bg-[#2a2826] text-gray-600 cursor-not-allowed"
+                        ? "bg-[#3d3935] hover:bg-[#4d4945] active:scale-95 text-white"
+                        : "bg-[#2a2826] text-gray-600 cursor-not-allowed"
                         }`}
                     title="Latest move (live)"
                 >
@@ -207,10 +207,13 @@ export default function MoveHistoryPanel({
                             <span className="text-lg">½</span> Draw
                         </button>
                         <button
-                            onClick={onAbort}
-                            className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors"
+                            onClick={onResign}
+                            className="flex items-center gap-1.5 text-gray-400 hover:text-red-400 transition-colors"
                         >
-                            <span className="text-base">🏳</span> Abort
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z" />
+                            </svg>
+                            Resign
                         </button>
                     </>
                 ) : (

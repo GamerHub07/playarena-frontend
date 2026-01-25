@@ -8,21 +8,35 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import LoginModal from '../auth/LoginModal';
+import { motion } from 'framer-motion';
+import { Gift, Sparkles, LogIn } from 'lucide-react';
 
 function SurpriseBox() {
     return (
-        <div className="hidden md:flex items-center gap-2 mr-3 px-3 py-1.5 rounded-xl bg-gradient-to-r from-yellow-500/10 to-purple-500/10 border border-yellow-500/20 backdrop-blur-sm shadow-[0_0_15px_rgba(234,179,8,0.2)] group cursor-default relative overflow-hidden animate-fade-in-up">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-            <span className="text-xl animate-[bounce_2s_infinite]">🎁</span>
-            <div className="flex flex-col">
-                <span className="text-xs font-bold text-yellow-600 dark:text-yellow-400 leading-tight">
-                    Signup to get 50 points
-                </span>
-                <span className="text-[10px] text-muted-foreground font-medium leading-tight">
-                    & more surprises coming soon
+        <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            whileHover={{ y: -2 }}
+            className="hidden lg:flex items-center gap-3 px-3 py-1 rounded-2xl bg-surface/30 backdrop-blur-md border border-primary/20 hover:border-primary/40 transition-all cursor-pointer group relative overflow-hidden mr-4"
+        >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl text-primary group-hover:bg-primary/20 transition-colors">
+                <Gift size={24} className="group-hover:rotate-12 transition-transform" />
+            </div>
+
+            <div className="flex flex-col pr-1">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-primary/80 leading-none">Special Offer</span>
+                    <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
+                </div>
+                <span className="text-xs font-bold text-foreground leading-none select-none">
+                    Claim 50 Welcome Points
                 </span>
             </div>
-        </div>
+
+            <Sparkles size={12} className="text-primary/40 absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </motion.div>
     );
 }
 
@@ -85,10 +99,10 @@ export default function Header() {
 
                     {/* Right Section */}
                     <div className="flex items-center gap-4">
-                        {/* Theme Toggle */}
-                        <ThemeToggle />
+                        {/* Theme Toggle - Only on homepage */}
+                        {isHome && <ThemeToggle />}
 
-                        <div className={`h-6 w-px transition-colors duration-300 ${isTransparent ? 'bg-white/20' : 'bg-border'}`} aria-hidden="true" />
+                        {isHome && <div className={`h-6 w-px transition-colors duration-300 ${isTransparent ? 'bg-white/20' : 'bg-border'}`} aria-hidden="true" />}
 
                         {/* Auth Section */}
                         {user ? (
@@ -141,22 +155,30 @@ export default function Header() {
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                                 </button>
                                 <SurpriseBox />
-                                <button
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
                                     onClick={() => setShowLoginModal(true)}
-                                    className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-white shadow transition-colors hover:bg-primary/90 cursor-pointer"
+                                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow cursor-pointer relative overflow-hidden group"
                                 >
-                                    Sign In
-                                </button>
+                                    <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
+                                    <LogIn size={16} />
+                                    <span className="relative z-10">Sign In</span>
+                                </motion.button>
                             </div>
                         ) : (
                             <>
                                 <SurpriseBox />
-                                <button
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
                                     onClick={() => setShowLoginModal(true)}
-                                    className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-white shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring cursor-pointer"
+                                    className="flex items-center gap-2 px-6 py-2 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow cursor-pointer relative overflow-hidden group"
                                 >
-                                    Login / Sign Up
-                                </button>
+                                    <div className="absolute inset-0 bg-white/10 -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
+                                    <LogIn size={16} />
+                                    <span className="relative z-10">Login / Sign Up</span>
+                                </motion.button>
                             </>
                         )}
                         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
