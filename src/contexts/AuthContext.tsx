@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authApi } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
+import { useToast } from './ToastContext';
 
 interface User {
   _id: string;
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     // Check for stored token
@@ -37,6 +39,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const onPoints = (data: { added: number; total: number; reason: string }) => {
+      setUser(prev => prev ? { ...prev, points: data.total } : null);
+      showToast(`+${data.added} Points! ${data.reason}`, 'reward');
+    };
+
+    socket.on('user:points', onPoints);
+
+    return () => {
+      socket.off('user:points', onPoints);
+    };
+  }, [showToast]);
 
   const loadUser = async (authToken: string) => {
     try {

@@ -175,7 +175,7 @@ export default function SudokuPage() {
 
                     {/* Rules */}
                     <div className="mt-16 max-w-2xl mx-auto">
-                        <h3 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50 mb-6 text-center">How to Play</h3>
+                        <h3 className="text-xl font-semibold text-[var(--text)] mb-6 text-center">How to Play</h3>
                         <div className="grid sm:grid-cols-2 gap-4">
                             {[
                                 { icon: '🔢', text: 'Fill grid with numbers 1-9' },
@@ -183,9 +183,9 @@ export default function SudokuPage() {
                                 { icon: '🧠', text: 'Use logic to deduce missing numbers' },
                                 { icon: '⚡', text: 'Challenge yourself with time limits!' },
                             ].map((rule, i) => (
-                                <div key={i} className="flex items-center gap-3 p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg shadow-sm">
+                                <div key={i} className="flex items-center gap-3 p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg shadow-sm">
                                     <span className="text-2xl">{rule.icon}</span>
-                                    <span className="text-sm text-zinc-600 dark:text-zinc-400">{rule.text}</span>
+                                    <span className="text-sm text-[var(--text-muted)]">{rule.text}</span>
                                 </div>
                             ))}
                         </div>
@@ -193,7 +193,7 @@ export default function SudokuPage() {
 
                     {/* SEO Content Section */}
                     <section className="mt-20 max-w-3xl mx-auto">
-                        <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mb-6 text-center">
+                        <h2 className="text-2xl font-bold text-[var(--text)] mb-6 text-center">
                             Why Play Sudoku Online at VersusArenas?
                         </h2>
 
@@ -206,19 +206,19 @@ export default function SudokuPage() {
                                 { icon: '🎨', title: 'Clean Design', desc: 'Distraction-free interface with Dark Mode support for late-night solving.' },
                                 { icon: '🚀', title: 'No Sign-up', desc: 'Start playing instantly. Just enter a name and go.' },
                             ].map((feature, i) => (
-                                <div key={i} className="p-5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm">
+                                <div key={i} className="p-5 bg-[var(--surface)] border border-[var(--border)] rounded-xl shadow-sm">
                                     <div className="flex items-center gap-3 mb-2">
                                         <span className="text-2xl">{feature.icon}</span>
-                                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">{feature.title}</h3>
+                                        <h3 className="font-semibold text-[var(--text)]">{feature.title}</h3>
                                     </div>
-                                    <p className="text-sm text-zinc-600 dark:text-zinc-400">{feature.desc}</p>
+                                    <p className="text-sm text-[var(--text-muted)]">{feature.desc}</p>
                                 </div>
                             ))}
                         </div>
 
                         {/* FAQ Section */}
                         <div className="mt-12">
-                            <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 mb-6 text-center">
+                            <h2 className="text-xl font-bold text-[var(--text)] mb-6 text-center">
                                 Frequently Asked Questions
                             </h2>
                             <div className="space-y-4">
@@ -240,12 +240,12 @@ export default function SudokuPage() {
                                         a: 'Absolutely! Our Sudoku is optimized for mobile play with touch-friendly controls.'
                                     },
                                 ].map((faq, i) => (
-                                    <details key={i} className="p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg group">
-                                        <summary className="font-medium text-zinc-900 dark:text-zinc-50 cursor-pointer list-none flex justify-between items-center">
+                                    <details key={i} className="p-4 bg-[var(--surface-alt)] border border-[var(--border)] rounded-lg group">
+                                        <summary className="font-medium text-[var(--text)] cursor-pointer list-none flex justify-between items-center">
                                             {faq.q}
-                                            <span className="text-zinc-400 group-open:rotate-180 transition-transform">▼</span>
+                                            <span className="text-[var(--text-muted)] group-open:rotate-180 transition-transform">▼</span>
                                         </summary>
-                                        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{faq.a}</p>
+                                        <p className="mt-3 text-sm text-[var(--text-muted)] leading-relaxed">{faq.a}</p>
                                     </details>
                                 ))}
                             </div>

@@ -211,10 +211,10 @@ export const THEMES: Record<string, LudoTheme> = {
       textPrimary: '#ffffff',
       textSecondary: '#888888',
       textMuted: '#555555',
-      accentColor: '#3b82f6',
-      buttonGradientStart: '#3b82f6',
-      buttonGradientEnd: '#2563eb',
-      buttonBorder: '#3b82f6',
+      accentColor: '#D97706',
+      buttonGradientStart: '#D97706',
+      buttonGradientEnd: '#D97706',
+      buttonBorder: '#D97706',
     },
 
     dice: {

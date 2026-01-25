@@ -29,26 +29,25 @@ export default function Board({
         return (
             <motion.div
                 initial={{ scale: 0, rotate: -180 }}
-                animate={{ 
-                    scale: 1, 
+                animate={{
+                    scale: 1,
                     rotate: 0,
-                    ...(isWinningCell && { 
+                    ...(isWinningCell && {
                         scale: [1, 1.1, 1],
                     })
                 }}
-                transition={{ 
-                    type: 'spring', 
-                    stiffness: 200, 
+                transition={{
+                    type: 'spring',
+                    stiffness: 200,
                     damping: 12,
                     ...(isWinningCell && {
                         scale: { repeat: Infinity, duration: 0.6 }
                     })
                 }}
-                className={`text-6xl md:text-7xl font-bold select-none ${
-                    value === 'X' 
-                        ? 'text-blue-400 drop-shadow-[0_0_12px_rgba(96,165,250,0.6)]' 
-                        : 'text-red-400 drop-shadow-[0_0_12px_rgba(248,113,113,0.6)]'
-                } ${isWinningCell ? 'animate-pulse' : ''}`}
+                className={`text-6xl md:text-7xl font-bold select-none ${value === 'X'
+                    ? 'text-amber-600 drop-shadow-[0_0_12px_rgba(217,119,6,0.6)]'
+                    : 'text-red-400 drop-shadow-[0_0_12px_rgba(248,113,113,0.6)]'
+                    } ${isWinningCell ? 'animate-pulse' : ''}`}
             >
                 {value}
             </motion.div>
@@ -69,18 +68,17 @@ export default function Board({
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className={`text-lg font-semibold px-6 py-2 rounded-full ${
-                            isMyTurn 
-                                ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                                : 'bg-slate-800/50 text-slate-400 border border-slate-700'
-                        }`}
+                        className={`text-lg font-semibold px-6 py-2 rounded-full ${isMyTurn
+                            ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                            : 'bg-slate-800/50 text-slate-400 border border-slate-700'
+                            }`}
                     >
-                        {gameState.winner !== null 
-                            ? '🎉 Game Over!' 
-                            : gameState.isDraw 
-                                ? '🤝 Draw!' 
-                                : isMyTurn 
-                                    ? `Your turn (${mySymbol})` 
+                        {gameState.winner !== null
+                            ? '🎉 Game Over!'
+                            : gameState.isDraw
+                                ? '🤝 Draw!'
+                                : isMyTurn
+                                    ? `Your turn (${mySymbol})`
                                     : "Opponent's turn"
                         }
                     </motion.div>
@@ -90,8 +88,8 @@ export default function Board({
             {/* Game Board */}
             <div className="relative">
                 {/* Glow effect behind board */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-red-500/20 blur-3xl" />
-                
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-600/20 via-purple-500/20 to-red-500/20 blur-3xl" />
+
                 <div className="relative grid grid-cols-3 gap-2 p-4 bg-slate-900/80 rounded-2xl border border-slate-700 backdrop-blur-sm shadow-2xl">
                     {board.map((cell, index) => {
                         const row = Math.floor(index / 3);
@@ -110,19 +108,19 @@ export default function Board({
                                     flex items-center justify-center
                                     rounded-xl
                                     transition-all duration-200
-                                    ${isWinningCell 
-                                        ? 'bg-gradient-to-br from-yellow-500/30 to-orange-500/30 border-2 border-yellow-500/50' 
+                                    ${isWinningCell
+                                        ? 'bg-gradient-to-br from-yellow-500/30 to-orange-500/30 border-2 border-yellow-500/50'
                                         : 'bg-slate-800/60 border border-slate-700 hover:border-slate-600'
                                     }
-                                    ${canClick(index) 
-                                        ? 'cursor-pointer hover:bg-slate-700/50' 
+                                    ${canClick(index)
+                                        ? 'cursor-pointer hover:bg-slate-700/50'
                                         : 'cursor-default'
                                     }
-                                    ${!cell && canClick(index) ? 'hover:shadow-lg hover:shadow-blue-500/10' : ''}
+                                    ${!cell && canClick(index) ? 'hover:shadow-lg hover:shadow-amber-600/10' : ''}
                                 `}
                             >
                                 {getCellContent(cell, index)}
-                                
+
                                 {/* Hover preview for empty cells */}
                                 {!cell && canClick(index) && (
                                     <span className="text-4xl text-slate-600 opacity-0 hover:opacity-30 transition-opacity">
@@ -138,13 +136,13 @@ export default function Board({
             {/* Symbol Legend */}
             <div className="flex gap-6 text-sm text-slate-400">
                 <div className="flex items-center gap-2">
-                    <span className={`text-xl font-bold ${myPlayerIndex === 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                    <span className={`text-xl font-bold ${myPlayerIndex === 0 ? 'text-amber-600' : 'text-red-400'}`}>
                         {mySymbol}
                     </span>
                     <span>You</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className={`text-xl font-bold ${myPlayerIndex === 0 ? 'text-red-400' : 'text-blue-400'}`}>
+                    <span className={`text-xl font-bold ${myPlayerIndex === 0 ? 'text-red-400' : 'text-amber-600'}`}>
                         {myPlayerIndex === 0 ? 'O' : 'X'}
                     </span>
                     <span>Opponent</span>

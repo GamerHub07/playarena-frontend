@@ -75,34 +75,34 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
   const board = gameState?.board;
   const [selectedProperty, setSelectedProperty] = useState<BoardSquare | null>(null);
   const [theme, setTheme] = useState<'dark' | 'classic'>('dark');
-  
+
   // Track animated token positions (for hop animation)
   const [animatedPositions, setAnimatedPositions] = useState<Record<string, number>>({});
   const prevPositionsRef = useRef<Record<string, number>>({});
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Effect to handle hop animation when player positions change
   useEffect(() => {
     players.forEach((player) => {
       const playerState = gameState.playerState[player.sessionId];
       if (!playerState) return;
-      
+
       const currentPos = playerState.position ?? 0;
       const prevPos = prevPositionsRef.current[player.sessionId] ?? currentPos;
       const animatedPos = animatedPositions[player.sessionId] ?? currentPos;
-      
+
       // If position changed and not currently animating to target
       if (currentPos !== prevPos && animatedPos !== currentPos) {
         // Calculate steps to animate through
         const steps: number[] = [];
         let pos = prevPos;
-        
+
         // Handle wrap-around (going past GO)
         while (pos !== currentPos) {
           pos = (pos + 1) % 40;
           steps.push(pos);
         }
-        
+
         // Animate through each step with 250ms delay
         steps.forEach((step, index) => {
           setTimeout(() => {
@@ -112,11 +112,11 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
             }));
           }, (index + 1) * 250);
         });
-        
+
         // Update prev position after animation starts
         prevPositionsRef.current[player.sessionId] = currentPos;
       }
-      
+
       // Initialize if first render
       if (prevPositionsRef.current[player.sessionId] === undefined) {
         prevPositionsRef.current[player.sessionId] = currentPos;
@@ -126,7 +126,7 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
         }));
       }
     });
-    
+
     return () => {
       if (animationTimeoutRef.current) {
         clearTimeout(animationTimeoutRef.current);
@@ -216,53 +216,53 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
     // Grid percentages (11 cells, corners are larger ~13%, regular ~7.4%)
     const cornerSize = 13;
     const regularSize = (100 - 2 * cornerSize) / 9;
-    
+
     // Position 0 = GO (bottom-right corner)
     // Position 10 = Jail (bottom-left corner)
     // Position 20 = Free Parking (top-left corner)
     // Position 30 = Go To Jail (top-right corner)
-    
+
     if (pos === 0) return { x: 100 - cornerSize / 2, y: 100 - cornerSize / 2 }; // GO
     if (pos === 10) return { x: cornerSize / 2, y: 100 - cornerSize / 2 }; // Jail
     if (pos === 20) return { x: cornerSize / 2, y: cornerSize / 2 }; // Free Parking
     if (pos === 30) return { x: 100 - cornerSize / 2, y: cornerSize / 2 }; // Go To Jail
-    
+
     // Bottom row (positions 1-9, right to left)
     if (pos >= 1 && pos <= 9) {
       const cellIndex = 9 - pos; // pos=1->8, pos=9->0 (right to left)
-      return { 
-        x: cornerSize + regularSize * cellIndex + regularSize / 2, 
-        y: 100 - cornerSize / 2 
+      return {
+        x: cornerSize + regularSize * cellIndex + regularSize / 2,
+        y: 100 - cornerSize / 2
       };
     }
-    
+
     // Left side (positions 11-19, bottom to top)
     if (pos >= 11 && pos <= 19) {
       const cellIndex = 8 - (pos - 11); // 8,7,6,5,4,3,2,1,0
-      return { 
-        x: cornerSize / 2, 
-        y: cornerSize + regularSize * cellIndex + regularSize / 2 
+      return {
+        x: cornerSize / 2,
+        y: cornerSize + regularSize * cellIndex + regularSize / 2
       };
     }
-    
+
     // Top row (positions 21-29, left to right)
     if (pos >= 21 && pos <= 29) {
       const cellIndex = pos - 21; // 0,1,2,3,4,5,6,7,8
-      return { 
-        x: cornerSize + regularSize * cellIndex + regularSize / 2, 
-        y: cornerSize / 2 
+      return {
+        x: cornerSize + regularSize * cellIndex + regularSize / 2,
+        y: cornerSize / 2
       };
     }
-    
+
     // Right side (positions 31-39, top to bottom)
     if (pos >= 31 && pos <= 39) {
       const cellIndex = pos - 31; // 0,1,2,3,4,5,6,7,8
-      return { 
-        x: 100 - cornerSize / 2, 
-        y: cornerSize + regularSize * cellIndex + regularSize / 2 
+      return {
+        x: 100 - cornerSize / 2,
+        y: cornerSize + regularSize * cellIndex + regularSize / 2
       };
     }
-    
+
     return { x: 50, y: 50 }; // fallback
   };
 
@@ -334,8 +334,8 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
       if (index === 20) { // Free Parking / Vacation
         return {
           bg: theme === 'dark' ? 'linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%)' : '#dbeafe',
-          border: '#60a5fa',
-          icon: <GiCityCar className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} text-[4vmin] drop-shadow-md`} />,
+          border: '#D97706',
+          icon: <GiCityCar className={`${theme === 'dark' ? 'text-amber-600' : 'text-amber-600'} text-[4vmin] drop-shadow-md`} />,
           label: 'PARKING',
           labelColor: theme === 'dark' ? 'text-white/90' : 'text-blue-800'
         };
@@ -761,11 +761,11 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
             {players.map((player, playerIdx) => {
               const playerState = gameState.playerState[player.sessionId];
               if (!playerState || playerState.bankrupt) return null;
-              
+
               // Use animated position for smooth hop animation
               const animPos = animatedPositions[player.sessionId] ?? playerState.position ?? 0;
               const coords = getSquarePosition(animPos);
-              
+
               // Calculate offset for multiple players on same square
               const playersOnSquare = players.filter(p => {
                 const ps = gameState.playerState[p.sessionId];
@@ -774,13 +774,13 @@ export default function Board({ gameState, players, currentSessionId, onBuildHou
               });
               const myIndexOnSquare = playersOnSquare.findIndex(p => p.sessionId === player.sessionId);
               const totalOnSquare = playersOnSquare.length;
-              
+
               // Offset calculation for multiple players
               const offsetAngle = (myIndexOnSquare * 360) / totalOnSquare;
               const offsetRadius = totalOnSquare > 1 ? 2.5 : 0;
               const offsetX = Math.cos(offsetAngle * Math.PI / 180) * offsetRadius;
               const offsetY = Math.sin(offsetAngle * Math.PI / 180) * offsetRadius;
-              
+
               return (
                 <div
                   key={player.sessionId}

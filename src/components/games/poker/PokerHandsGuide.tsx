@@ -89,7 +89,7 @@ const POKER_HANDS: PokerHand[] = [
             { rank: '2', suit: '♦' },
         ],
         emoji: '🃏',
-        color: '#3b82f6',
+        color: '#D97706',
         rarity: 'Uncommon',
     },
     {
