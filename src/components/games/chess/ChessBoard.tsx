@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { ChessPiece } from "./ChessPieces";
 
 export type BoardTheme = "green" | "wood" | "blue" | "purple" | "coral" | "ice" | "neon" | "dark" | "marble" | "forest" | "sunset" | "ocean" | "cherry" | "sand" | "midnight" | "emerald";
@@ -12,8 +12,11 @@ interface ChessBoardProps {
   canMove: boolean;
   theme?: BoardTheme;
   pieceTheme?: BoardTheme;
+  /** @deprecated Use className for responsive sizing instead */
   size?: number;
   winner?: "white" | "black" | null;
+  /** Optional className for responsive container sizing */
+  className?: string;
   isInCheck?: boolean; // Whether the current player's king is in check
 }
 
@@ -252,8 +255,9 @@ export default function ChessBoard({
   canMove,
   theme = "green",
   pieceTheme,
-  size = 600,
+  size,
   winner = null,
+  className,
   isInCheck = false,
 }: ChessBoardProps) {
   // Use pieceTheme if provided, otherwise fall back to theme
@@ -275,8 +279,39 @@ export default function ChessBoard({
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
+  // Responsive sizing: measure container width dynamically
+  const [containerSize, setContainerSize] = useState(size ?? 400);
+
+  useEffect(() => {
+    if (size) {
+      // If explicit size is provided, use it
+      setContainerSize(size);
+      return;
+    }
+
+    const updateSize = () => {
+      if (boardRef.current) {
+        const width = boardRef.current.offsetWidth;
+        if (width > 0) {
+          setContainerSize(width);
+        }
+      }
+    };
+
+    // Initial measure
+    updateSize();
+
+    // Use ResizeObserver for responsive updates
+    const resizeObserver = new ResizeObserver(updateSize);
+    if (boardRef.current) {
+      resizeObserver.observe(boardRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [size]);
+
   const colors = THEMES[theme];
-  const squareSize = size / 8;
+  const squareSize = containerSize / 8;
   const pieceSize = Math.floor(squareSize * 0.9);
 
   const board = parseFEN(fen);
@@ -577,12 +612,12 @@ export default function ChessBoard({
   }, [promotionData, executeMove]);
 
   return (
-    <div className="select-none">
+    <div className={`select-none ${className || ''}`}>
       {/* Board container */}
       <div
         ref={boardRef}
-        className="relative rounded-sm overflow-hidden"
-        style={{ width: size, height: size }}
+        className="relative rounded-sm overflow-hidden w-full aspect-square"
+        style={size ? { width: size, height: size } : undefined}
         onMouseMove={handleDragMove}
         onMouseUp={handleDragEnd}
         onMouseLeave={() => !promotionData && handleDragEnd}
@@ -615,10 +650,8 @@ export default function ChessBoard({
               return (
                 <div
                   key={square}
-                  className="relative flex items-center justify-center cursor-pointer"
+                  className="relative flex items-center justify-center cursor-pointer aspect-square"
                   style={{
-                    width: squareSize,
-                    height: squareSize,
                     backgroundColor: bgColor,
                   }}
                   onClick={(e) => handleSquareClick(e, square, piece, rowIndex, colIndex)}

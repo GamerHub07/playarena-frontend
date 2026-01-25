@@ -262,7 +262,7 @@ export default function SudokuRoom() {
                 {/* Grid Pattern */}
                 <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle, #f97316 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
             </div>
-            <div className="w-full max-w-2xl flex flex-col items-center">
+            <div className="w-full max-w-[95vw] sm:max-w-[500px] lg:max-w-[700px] flex flex-col items-center mx-auto">
 
                 {/* Header */}
                 <div className="flex w-full justify-between items-center mb-6">

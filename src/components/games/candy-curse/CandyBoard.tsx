@@ -32,7 +32,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({ grid, onSwap }) => {
 
     return (
         <div className="bg-zinc-900/40 p-2 sm:p-4 rounded-xl border border-white/10 backdrop-blur-sm shadow-2xl">
-            <div className="grid grid-cols-8 gap-1 sm:gap-2 w-full max-w-[400px] aspect-square mx-auto bg-black/20 p-2 rounded-lg">
+            <div className="grid grid-cols-8 gap-1 sm:gap-2 w-full aspect-square bg-black/20 p-2 rounded-lg">
                 {grid.map((row, r) => (
                     row.map((gem, c) => (
                         <div key={`${r}-${c}`} className="w-full h-full aspect-square">

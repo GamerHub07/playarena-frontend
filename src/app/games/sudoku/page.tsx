@@ -253,6 +253,32 @@ export default function SudokuPage() {
                     </section>
                 </div>
             </main>
+
+            {/* Login Modal */}
+            <Modal
+                isOpen={showLoginModal}
+                onClose={() => {
+                    setShowLoginModal(false);
+                    setPendingAction(null);
+                    setError('');
+                }}
+                title="Enter Your Name"
+                size="sm"
+            >
+                <div className="space-y-4">
+                    <Input
+                        placeholder="Your username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                        error={error}
+                        autoFocus
+                    />
+                    <Button onClick={handleLogin} loading={isLoading} className="w-full">
+                        Continue
+                    </Button>
+                </div>
+            </Modal>
         </div>
     );
 }

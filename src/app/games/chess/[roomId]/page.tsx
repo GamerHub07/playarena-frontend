@@ -511,10 +511,10 @@ export default function ChessRoomPage() {
 
         {/* GAME */}
         {(isPlaying || isFinished) && gameState && (
-          <div className="min-h-screen flex justify-center items-center py-6">
-            <div className="flex gap-4">
+          <div className="min-h-screen flex justify-center items-center py-4 px-2 sm:py-6 sm:px-4">
+            <div className="flex flex-col lg:flex-row gap-4 w-full max-w-[1200px]">
               {/* LEFT: BOARD SECTION */}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 w-full lg:w-auto lg:flex-shrink-0">
                 {/* Opponent Player Bar */}
                 <PlayerBar
                   username={opponent?.username || "Waiting..."}
@@ -527,8 +527,8 @@ export default function ChessRoomPage() {
                   isCurrentPlayer={false}
                 />
 
-                {/* Chess Board */}
-                <div className="rounded overflow-hidden shadow-lg relative">
+                {/* Chess Board - Responsive container */}
+                <div className="rounded overflow-hidden shadow-lg relative w-full max-w-[90vw] sm:max-w-[500px] lg:max-w-none lg:w-[700px] mx-auto">
                   <ChessBoard
                     fen={displayFen}
                     orientation={myColor}
@@ -536,14 +536,14 @@ export default function ChessRoomPage() {
                     onMove={handleMove}
                     theme={boardTheme}
                     pieceTheme={pieceTheme}
-                    size={800}
                     winner={isFinished ? gameState.winner : null}
+                    className="w-full"
                     isInCheck={gameState.status === "check"}
                   />
                   {/* History Mode Indicator */}
                   {isViewingHistory && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-2">
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium flex items-center gap-2">
+                      <svg className="w-3 h-3 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" />
                       </svg>
                       Viewing History
@@ -564,24 +564,26 @@ export default function ChessRoomPage() {
                 />
               </div>
 
-              {/* RIGHT: SIDE PANEL */}
-              <GameSidePanel
-                moveHistory={gameState.moveHistory}
-                viewMoveIndex={viewMoveIndex}
-                setViewMoveIndex={setViewMoveIndex}
-                isFinished={isFinished}
-                winner={winner || null}
-                onOfferDraw={handleOfferDraw}
-                onResign={handleResign}
-                onOfferRematch={handleOfferRematch}
-                myUsername={guest?.username || ""}
-                opponentUsername={opponent?.username || ""}
-                timeControlMinutes={selectedTime}
-                currentBoardTheme={boardTheme}
-                currentPieceTheme={pieceTheme}
-                onBoardThemeChange={setBoardTheme}
-                onPieceThemeChange={setPieceTheme}
-              />
+              {/* RIGHT: SIDE PANEL - Full width on mobile, fixed width on desktop */}
+              <div className="w-full lg:w-80">
+                <GameSidePanel
+                  moveHistory={gameState.moveHistory}
+                  viewMoveIndex={viewMoveIndex}
+                  setViewMoveIndex={setViewMoveIndex}
+                  isFinished={isFinished}
+                  winner={winner || null}
+                  onOfferDraw={handleOfferDraw}
+                  onResign={handleResign}
+                  onOfferRematch={handleOfferRematch}
+                  myUsername={guest?.username || ""}
+                  opponentUsername={opponent?.username || ""}
+                  timeControlMinutes={selectedTime}
+                  currentBoardTheme={boardTheme}
+                  currentPieceTheme={pieceTheme}
+                  onBoardThemeChange={setBoardTheme}
+                  onPieceThemeChange={setPieceTheme}
+                />
+              </div>
             </div>
           </div>
         )}
