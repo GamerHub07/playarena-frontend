@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import confetti from 'canvas-confetti';
 import Header from '@/components/layout/Header';
@@ -12,6 +12,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import { useGuest } from '@/hooks/useGuest';
 import { useSocket } from '@/hooks/useSocket';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { roomApi } from '@/lib/api';
 import { Room, Player } from '@/types/game';
 import {
@@ -47,6 +48,10 @@ export default function GameRoomPage() {
     const currentPlayer = players.find(p => p.sessionId === guest?.sessionId);
     const isHost = currentPlayer?.isHost || false;
     const myPlayerIndex = gamePlayers.findIndex(p => p.sessionId === guest?.sessionId);
+
+    // Sound effects
+    const { playPlaceX, playPlaceO, playWin, playSound } = useSoundEffects();
+    const prevBoardRef = useRef<(string | null)[]>([]);
 
     // Fetch room data
     useEffect(() => {
@@ -117,6 +122,23 @@ export default function GameRoomPage() {
 
         const unsubState = on('game:state', (data: unknown) => {
             const { state } = data as { state: TicTacToeGameState };
+
+            // Detect which cell was filled and play appropriate sound
+            if (state?.board && prevBoardRef.current.length > 0) {
+                for (let i = 0; i < state.board.length; i++) {
+                    if (state.board[i] !== prevBoardRef.current[i] && state.board[i]) {
+                        // A cell was just filled
+                        if (state.board[i] === 'X') {
+                            playPlaceX();
+                        } else {
+                            playPlaceO();
+                        }
+                        break;
+                    }
+                }
+            }
+            prevBoardRef.current = state?.board ? [...state.board] : [];
+
             setGameState(state);
         });
 
@@ -124,6 +146,13 @@ export default function GameRoomPage() {
             const winnerData = data as TicTacToeWinnerPayload;
             setWinner(winnerData);
             setRoom(prev => prev ? { ...prev, status: 'finished' } : null);
+
+            // Play appropriate sound
+            if (winnerData.isDraw) {
+                playSound('DRAW');
+            } else {
+                playWin();
+            }
 
             // Celebration confetti for winner
             if (winnerData.winner && !winnerData.isDraw) {
@@ -148,7 +177,7 @@ export default function GameRoomPage() {
             unsubWinner();
             unsubError();
         };
-    }, [guest, isConnected, on]);
+    }, [guest, isConnected, on, playPlaceX, playPlaceO, playWin, playSound]);
 
     // Socket join room
     useEffect(() => {

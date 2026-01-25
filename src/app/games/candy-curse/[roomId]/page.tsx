@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import { useGuest } from '@/hooks/useGuest';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { CandyState } from '@/types/candy';
 import { CandyBoard } from '@/components/games/candy-curse/CandyBoard'
 import WaitingRoom from '@/components/games/shared/WaitingRoom';
@@ -19,6 +20,11 @@ export default function CandyRoom() {
     const { guest } = useGuest();
 
     const [gameState, setGameState] = useState<CandyState | null>(null);
+
+    // Sound effects
+    const { playSwap, playMatch, playCascade, playWin, playLose } = useSoundEffects();
+    const prevScoreRef = useRef<number>(0);
+    const prevCompleteRef = useRef<boolean>(false);
 
     const [room, setRoom] = useState<any>(null);
     const [players, setPlayers] = useState<any[]>([]);
@@ -53,7 +59,31 @@ export default function CandyRoom() {
         });
 
         const unsubState = on('game:state', (data: any) => {
-            setGameState(data.state);
+            const newState = data.state as CandyState;
+
+            // Check for score increase (matches happened)
+            if (newState?.score > prevScoreRef.current) {
+                const scoreDiff = newState.score - prevScoreRef.current;
+                // Big score increase likely means cascade
+                if (scoreDiff > 50) {
+                    playCascade();
+                } else {
+                    playMatch();
+                }
+                prevScoreRef.current = newState.score;
+            }
+
+            // Check for game completion
+            if (newState?.isComplete && !prevCompleteRef.current) {
+                prevCompleteRef.current = true;
+                if (newState.score >= newState.targetScore) {
+                    playWin();
+                } else {
+                    playLose();
+                }
+            }
+
+            setGameState(newState);
         });
 
         return () => {
@@ -62,7 +92,7 @@ export default function CandyRoom() {
             unsubState();
             emit('room:leave', { roomCode: roomId });
         };
-    }, [isConnected, guest, roomId, emit, on]);
+    }, [isConnected, guest, roomId, emit, on, playMatch, playCascade, playWin, playLose]);
 
     const handleStartGame = () => {
         emit('game:start', { roomCode: roomId });
@@ -75,12 +105,14 @@ export default function CandyRoom() {
     const handleSwap = useCallback((r1: number, c1: number, r2: number, c2: number) => {
         if (!roomId || gameState?.isComplete) return;
 
+        playSwap(); // Play swap sound
+
         emit('game:action', {
             roomCode: roomId,
             action: 'swap',
             data: { row1: r1, col1: c1, row2: r2, col2: c2 }
         });
-    }, [roomId, emit, gameState]);
+    }, [roomId, emit, gameState, playSwap]);
 
     const handleRestart = useCallback(() => {
         if (!roomId) return;

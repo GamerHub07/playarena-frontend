@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSocket } from '@/hooks/useSocket';
 import { useGuest } from '@/hooks/useGuest';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { SudokuBoard } from '@/components/games/sudoku/SudokuBoard';
 import { SudokuControls } from '@/components/games/sudoku/SudokuControls';
 import { SudokuState, SudokuDifficulty } from '@/types/sudoku';
@@ -28,6 +29,11 @@ export default function SudokuRoom() {
     const [isGameWonModalOpen, setIsGameWonModalOpen] = useState(false);
     const [isGameLostModalOpen, setIsGameLostModalOpen] = useState(false);
     const [now, setNow] = useState(Date.now());
+
+    // Sound effects
+    const { playClick, playSuccess, playError, playWin, playLose } = useSoundEffects();
+    const prevMistakesRef = useRef<number>(0);
+    const prevCompleteRef = useRef<boolean>(false);
 
     const [room, setRoom] = useState<any>(null);
     const [players, setPlayers] = useState<any[]>([]);
@@ -57,13 +63,34 @@ export default function SudokuRoom() {
         });
 
         const unsubState = on('game:state', (data: any) => {
-            setGameState(data.state);
+            const newState = data.state as SudokuState;
+
+            // Check for mistake (mistakes increased in challenge mode)
+            if (newState?.challengeMode && newState?.mistakes > prevMistakesRef.current) {
+                playError();
+                prevMistakesRef.current = newState.mistakes;
+            }
+
+            // Check for game completion
+            if (newState?.isComplete && !prevCompleteRef.current) {
+                prevCompleteRef.current = true;
+                if (newState.isWon) {
+                    playWin();
+                } else {
+                    playLose();
+                }
+            }
+
+            setGameState(newState);
         });
 
         const unsubStart = on('game:start', (data: any) => {
             console.log('Received game:start', data);
             setGameState(data.state);
             setRoom((prev: any) => prev ? { ...prev, status: 'playing' } : prev);
+            // Reset refs for new game
+            prevMistakesRef.current = 0;
+            prevCompleteRef.current = false;
         });
 
         const unsubError = on('error', (err: any) => {
@@ -77,7 +104,7 @@ export default function SudokuRoom() {
             unsubError();
             emit('room:leave', { roomCode: roomId });
         };
-    }, [isConnected, guest, roomId, emit, on]);
+    }, [isConnected, guest, roomId, emit, on, playError, playWin, playLose]);
 
     const handleStartGame = () => {
         emit('game:start', { roomCode: roomId });
@@ -117,6 +144,8 @@ export default function SudokuRoom() {
     const handleNumberInput = useCallback((num: number) => {
         if (!activeCell || !gameState || !guest || gameState.isComplete) return;
 
+        playClick(); // Play click sound on input
+
         emit('game:action', {
             roomCode: roomId,
             action: 'move',
@@ -126,7 +155,7 @@ export default function SudokuRoom() {
                 value: num
             }
         });
-    }, [activeCell, gameState, guest, roomId, emit]);
+    }, [activeCell, gameState, guest, roomId, emit, playClick]);
 
     const handleClearCell = useCallback(() => {
         if (!activeCell || !gameState || !guest || gameState.isComplete) return;
