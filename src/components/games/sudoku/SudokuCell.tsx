@@ -17,12 +17,12 @@ export const SudokuCell = ({ cell, isActive, onClick }: SudokuCellProps) => {
     if (cell.isFixed) {
         colorClasses = "bg-zinc-100 dark:bg-zinc-900/50 text-zinc-900 dark:text-zinc-50 font-bold";
     } else if (cell.value) {
-        // User filled numbers - blueish to distinguish
-        colorClasses = "bg-white dark:bg-zinc-800 text-blue-600 dark:text-blue-400 font-medium";
+        // User filled numbers - amber to distinguish
+        colorClasses = "bg-white dark:bg-zinc-800 text-amber-600 dark:text-amber-600 font-medium";
     }
 
     if (isActive) {
-        colorClasses = "bg-blue-500 text-white dark:bg-blue-600 shadow-inner scale-105 z-10 rounded-sm";
+        colorClasses = "bg-amber-600 text-white dark:bg-amber-600 shadow-inner scale-105 z-10 rounded-sm";
         // Override text color for active state to ensure contrast
         if (cell.isFixed) {
             // Maybe keep fixed cells distinct even when active? Or just uniform?

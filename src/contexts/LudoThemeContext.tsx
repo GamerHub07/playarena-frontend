@@ -26,7 +26,7 @@ export interface ThemePreview {
 // Pre-computed minimal theme previews for the selector
 const THEME_PREVIEWS: ThemePreview[] = [
   { id: 'vintage', name: 'Vintage Classic', description: 'Classic wooden board game aesthetic', primaryColor: '#8B7355' },
-  { id: 'modern', name: 'Modern Dark', description: 'Sleek, contemporary dark theme', primaryColor: '#3b82f6' },
+  { id: 'modern', name: 'Modern Dark', description: 'Sleek, contemporary dark theme', primaryColor: '#D97706' },
   { id: 'ocean', name: 'Ocean Deep', description: 'Tranquil underwater adventure', primaryColor: '#1ABC9C' },
   { id: 'nature', name: 'Forest Garden', description: 'Calming natural green tones', primaryColor: '#27AE60' },
   { id: 'royal', name: 'Royal Palace', description: 'Luxurious purple and gold royalty', primaryColor: '#DAA520' },

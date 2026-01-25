@@ -204,13 +204,13 @@ export default function CandyRoom() {
                         </div>
                     </div>
 
-                    <div className="bg-blue-100 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-200 dark:border-blue-800 flex items-center justify-between">
+                    <div className="bg-amber-100 dark:bg-amber-900/20 p-3 rounded-xl border border-amber-200 dark:border-amber-800 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <div className="p-2 bg-blue-500 rounded-lg text-white">
+                            <div className="p-2 bg-amber-600 rounded-lg text-white">
                                 <Move className="w-5 h-5" />
                             </div>
                             <div>
-                                <div className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase">Moves Left</div>
+                                <div className="text-xs font-bold text-amber-600 dark:text-amber-500 uppercase">Moves Left</div>
                                 <div className="text-2xl font-black text-zinc-900 dark:text-white">{gameState.movesLeft}</div>
                             </div>
                         </div>

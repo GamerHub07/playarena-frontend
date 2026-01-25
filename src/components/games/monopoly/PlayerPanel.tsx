@@ -17,7 +17,7 @@ const COLOR_NAMES: Record<string, string> = {
     red: '#ef4444',        // red-500
     yellow: '#eab308',     // yellow-500
     green: '#22c55e',      // green-500
-    blue: '#3b82f6',       // blue-500
+    blue: '#D97706',       // amber-600
 };
 
 interface PlayerPanelProps {
@@ -110,7 +110,7 @@ export default function PlayerPanel({
                                 {player.username}
                             </h3>
                             {isMe && (
-                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-600/20 text-amber-600 border border-amber-600/30">
                                     You
                                 </span>
                             )}
@@ -152,11 +152,11 @@ export default function PlayerPanel({
 
                 {/* Stats Grid - Glass Effect Panels */}
                 {/* <div className="grid grid-cols-2 gap-2 mb-1"> */}
-                    {/* Cash Panel */}
-                    
+                {/* Cash Panel */}
 
-                    {/* Net Worth Panel */}
-                    {/* <div className="rounded-xl bg-[#0a0a0c]/60 p-3 border border-white/5 relative overflow-hidden">
+
+                {/* Net Worth Panel */}
+                {/* <div className="rounded-xl bg-[#0a0a0c]/60 p-3 border border-white/5 relative overflow-hidden">
                         <div className="flex flex-col">
                             <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-0.5 flex items-center gap-1">
                                 <IoTrendingUp className="text-slate-600" /> Net Worth
@@ -185,7 +185,7 @@ export default function PlayerPanel({
                         `}
                     >
                         <div className="flex items-center gap-2">
-                            <IoBusiness className={`text-base ${isExpanded ? 'text-blue-400' : 'text-slate-600'}`} />
+                            <IoBusiness className={`text-base ${isExpanded ? 'text-amber-600' : 'text-slate-600'}`} />
                             <span className="text-xs font-bold uppercase tracking-wider">Properties</span>
                             <span className="bg-[#2a2a35] text-slate-300 text-[9px] font-mono px-1.5 py-0.5 rounded border border-white/5">
                                 {ownedProperties.length}

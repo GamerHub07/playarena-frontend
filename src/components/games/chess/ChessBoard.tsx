@@ -17,6 +17,7 @@ interface ChessBoardProps {
   winner?: "white" | "black" | null;
   /** Optional className for responsive container sizing */
   className?: string;
+  isInCheck?: boolean; // Whether the current player's king is in check
 }
 
 // Theme colors
@@ -257,6 +258,7 @@ export default function ChessBoard({
   size,
   winner = null,
   className,
+  isInCheck = false,
 }: ChessBoardProps) {
   // Use pieceTheme if provided, otherwise fall back to theme
   const effectivePieceTheme = pieceTheme ?? theme;
@@ -313,6 +315,21 @@ export default function ChessBoard({
   const pieceSize = Math.floor(squareSize * 0.9);
 
   const board = parseFEN(fen);
+
+  // Find the checked king's position (if in check)
+  const checkedKingSquare = (() => {
+    if (!isInCheck) return null;
+    const fenTurn = fen.split(" ")[1]; // 'w' or 'b'
+    const kingToFind = fenTurn === "w" ? "K" : "k"; // Current player's king is in check
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (board[r][c] === kingToFind) {
+          return FILES[c] + (8 - r); // Convert to algebraic notation
+        }
+      }
+    }
+    return null;
+  })();
 
   // Flip board for black orientation
   const displayBoard = orientation === "black"
@@ -375,6 +392,19 @@ export default function ChessBoard({
         // Captures
         addMoveIfValid(fileIndex - 1, rank + direction, true);
         addMoveIfValid(fileIndex + 1, rank + direction, true);
+
+        // En passant - check FEN for en passant target square
+        const fenParts = fen.split(" ");
+        const enPassantSquare = fenParts[3]; // e.g., "e3" or "-"
+        if (enPassantSquare && enPassantSquare !== "-") {
+          const epFile = FILES.indexOf(enPassantSquare[0]);
+          const epRank = parseInt(enPassantSquare[1]);
+          // Check if this pawn can capture en passant (must be adjacent file and correct rank)
+          const enPassantCaptureRank = isWhite ? 5 : 4; // Pawn must be on 5th rank for white, 4th for black
+          if (rank === enPassantCaptureRank && Math.abs(fileIndex - epFile) === 1) {
+            moves.push(enPassantSquare);
+          }
+        }
         break;
       case 'n': // Knight
         [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]].forEach(([df, dr]) =>
@@ -397,7 +427,7 @@ export default function ChessBoard({
         break;
     }
     return moves;
-  }, [board]);
+  }, [board, fen]);
 
   const executeMove = useCallback((from: string, to: string, promotion?: string) => {
     console.log('🚀 executeMove called:', { from, to, promotion });
@@ -470,9 +500,11 @@ export default function ChessBoard({
         setSelectedSquare(null);
         setLegalMoves([]);
       } else if (legalMoves.includes(square) && selectedPiece) {
+        // This handles BOTH moves to empty squares AND captures
         console.log('✅ Moving piece from', selectedSquare, 'to', square);
         handleMoveAttempt(selectedSquare, square, selectedPiece, clickPosition);
       } else if (piece) {
+        // Clicked on a piece that's NOT a legal capture target
         const isPieceWhite = isWhitePiece(piece);
         const fenTurn = fen.split(" ")[1];
         const isOurTurn = (fenTurn === "w" && isPieceWhite) || (fenTurn === "b" && !isPieceWhite);
@@ -481,7 +513,7 @@ export default function ChessBoard({
           setSelectedSquare(square);
           setLegalMoves(calculateLegalMoves(square, piece));
         } else {
-          console.log('❌ Opponent piece - deselecting');
+          console.log('❌ Opponent piece not in legal moves - deselecting');
           setSelectedSquare(null);
           setLegalMoves([]);
         }
@@ -507,9 +539,16 @@ export default function ChessBoard({
   const handleDragStart = useCallback((
     e: React.MouseEvent | React.TouchEvent,
     square: string,
-    piece: string
+    piece: string,
+    fen: string
   ) => {
     if (!canMove || promotionData) return;
+
+    // Only allow dragging our own pieces
+    const isPieceWhite = isWhitePiece(piece);
+    const fenTurn = fen.split(" ")[1];
+    const isOurPiece = (fenTurn === "w" && isPieceWhite) || (fenTurn === "b" && !isPieceWhite);
+    if (!isOurPiece) return;
 
     e.preventDefault();
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
@@ -594,6 +633,7 @@ export default function ChessBoard({
               const isSelected = selectedSquare === square;
               const isDragSource = draggedPiece?.from === square;
               const isLastMoveSquare = lastMove?.from === square || lastMove?.to === square;
+              const isCheckedKing = checkedKingSquare === square;
 
               let bgColor = isLight ? colors.light : colors.dark;
               if (isLastMoveSquare) {
@@ -601,6 +641,10 @@ export default function ChessBoard({
               }
               if (isSelected) {
                 bgColor = isLight ? colors.lightSelected : colors.darkSelected;
+              }
+              // Red glow for checked king - override other colors
+              if (isCheckedKing) {
+                bgColor = "#e74c3c"; // Red color for check
               }
 
               return (
@@ -611,8 +655,8 @@ export default function ChessBoard({
                     backgroundColor: bgColor,
                   }}
                   onClick={(e) => handleSquareClick(e, square, piece, rowIndex, colIndex)}
-                  onMouseDown={(e) => piece && handleDragStart(e, square, piece)}
-                  onTouchStart={(e) => piece && handleDragStart(e, square, piece)}
+                  onMouseDown={(e) => piece && handleDragStart(e, square, piece, fen)}
+                  onTouchStart={(e) => piece && handleDragStart(e, square, piece, fen)}
                 >
                   {/* File/Rank labels */}
                   {colIndex === 0 && (

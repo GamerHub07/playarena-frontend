@@ -271,7 +271,7 @@ export default function GameRoomPage() {
     if (loading || guestLoading) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full" />
+                <div className="animate-spin w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full" />
             </div>
         );
     }
@@ -283,7 +283,7 @@ export default function GameRoomPage() {
                     <p className="text-red-400 mb-4">{error}</p>
                     <button
                         onClick={() => router.push('/games/tictactoe')}
-                        className="text-blue-400 hover:text-blue-300 transition-colors"
+                        className="text-amber-600 hover:text-amber-500 transition-colors"
                     >
                         Back to Tic Tac Toe
                     </button>
@@ -336,7 +336,7 @@ export default function GameRoomPage() {
                         onStart={handleStartGame}
                         onLeave={handleLeaveRoom}
                         gameTitle="Tic Tac Toe"
-                        accentColor="#3b82f6"
+                        accentColor="#D97706"
                         headerContent={<div className="text-6xl mb-2">❌⭕</div>}
                     />
                 )}
@@ -367,7 +367,7 @@ export default function GameRoomPage() {
                                     <p className="text-xl text-slate-300 mb-2">
                                         {winner.winner.username}
                                     </p>
-                                    <span className={`text-4xl font-bold ${winner.winner.symbol === 'X' ? 'text-blue-400' : 'text-red-400'
+                                    <span className={`text-4xl font-bold ${winner.winner.symbol === 'X' ? 'text-amber-600' : 'text-red-400'
                                         }`}>
                                         {winner.winner.symbol}
                                     </span>
